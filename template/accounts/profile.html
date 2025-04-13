@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emoji Profile Page</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow-x: hidden;
+    }
+    
+    .profile-card {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .profile-header {
+      text-align: center;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .emoji-container {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 20px;
+      position: relative;
+    }
+    
+    .emoji-face {
+      width: 120px;
+      height: 120px;
+      background: #FFCC4D;
+      border-radius: 50%;
+      position: absolute;
+      top: 30px;
+      left: 30px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .emoji-eye {
+      width: 25px;
+      height: 25px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 45px;
+    }
+    
+    .emoji-eye.left {
+      left: 35px;
+    }
+    
+    .emoji-eye.right {
+      right: 35px;
+    }
+    
+    .emoji-eye::after {
+      content: '';
+      width: 12px;
+      height: 12px;
+      background: #333;
+      border-radius: 50%;
+      position: absolute;
+      top: 7px;
+      left: 7px;
+    }
+    
+    .emoji-mouth {
+      width: 60px;
+      height: 30px;
+      border-bottom: 8px solid #333;
+      border-radius: 0 0 100px 100px;
+      position: absolute;
+      bottom: 35px;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    
+    .name {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #333;
+    }
+    
+    .dob {
+      font-size: 16px;
+      color: #777;
+      margin-bottom: 20px;
+    }
+    
+    .info-container {
+      margin-top: 30px;
+    }
+    
+    .info-item {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .info-item:last-child {
+      border-bottom: none;
+    }
+    
+    .info-label {
+      font-weight: 600;
+      min-width: 100px;
+    }
+    
+    .info-value {
+      flex-grow: 1;
+    }
+    
+    .floating-shapes {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      z-index: 1;
+      overflow: hidden;
+    }
+    
+    .shape {
+      position: absolute;
+      border-radius: 50%;
+      opacity: 0.5;
+    }
+    
+    .edit-btn {
+      background: #3498db;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: bold;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .edit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .edit-form {
+      margin-top: 20px;
+      display: none;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    
+    .save-btn {
+      background: #2ecc71;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-card">
+    <div class="floating-shapes"></div>
+    
+    <div class="profile-header">
+      <div class="emoji-container">
+        <div class="emoji-face">
+          <div class="emoji-eye left"></div>
+          <div class="emoji-eye right"></div>
+          <div class="emoji-mouth"></div>
+        </div>
+      </div>
+      <h1 class="name">User Name</h1>
+      <p class="dob">Born: January 1, 1990</p>
+      <button class="edit-btn">Edit Profile</button>
+    </div>
+    
+    <div class="info-container">
+      <div class="info-item">
+        <div class="info-label">Location:</div>
+        <div class="info-value">New York, USA</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Occupation:</div>
+        <div class="info-value">Designer</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">Interests:</div>
+        <div class="info-value">Photography, Travel, Music</div>
+      </div>
+    </div>
+    
+    <div class="edit-form">
+      <div class="form-group">
+        <label for="name-input">Name:</label>
+        <input type="text" id="name-input" placeholder="Enter your name">
+      </div>
+      <div class="form-group">
+        <label for="dob-input">Date of Birth:</label>
+        <input type="date" id="dob-input">
+      </div>
+      <div class="form-group">
+        <label for="location-input">Location:</label>
+        <input type="text" id="location-input" placeholder="Enter your location">
+      </div>
+      <div class="form-group">
+        <label for="occupation-input">Occupation:</label>
+        <input type="text" id="occupation-input" placeholder="Enter your occupation">
+      </div>
+      <div class="form-group">
+        <label for="interests-input">Interests:</label>
+        <input type="text" id="interests-input" placeholder="Enter your interests">
+      </div>
+      <button class="save-btn">Save Profile</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Create floating shapes
+      const shapeColors = ['#FF9FF3', '#FECA57', '#FF6B6B', '#48DBFB', '#1DD1A1'];
+      const shapeCount = 10;
+      const shapesContainer = document.querySelector('.floating-shapes');
+      
+      for (let i = 0; i < shapeCount; i++) {
+        const shape = document.createElement('div');
+        shape.classList.add('shape');
+        
+        const size = Math.random() * 30 + 10;
+        const color = shapeColors[Math.floor(Math.random() * shapeColors.length)];
+        
+        shape.style.width = `${size}px`;
+        shape.style.height = `${size}px`;
+        shape.style.backgroundColor = color;
+        shape.style.left = `${Math.random() * 100}%`;
+        shape.style.top = `${Math.random() * 100}%`;
+        
+        shapesContainer.appendChild(shape);
+        
+        // Animate each shape
+        gsap.to(shape, {
+          x: Math.random() * 100 - 50,
+          y: Math.random() * 100 - 50,
+          duration: Math.random() * 10 + 10,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut'
+        });
+      }
+      
+      // Initial animation for the profile card
+      const tl = gsap.timeline();
+      
+      tl.from('.profile-card', {
+        y: 50,
+        opacity: 0,
+        duration: 0.8,
+        ease: 'back.out(1.7)'
+      })
+      .from('.emoji-face', {
+        scale: 0,
+        rotation: -180,
+        duration: 0.8,
+        ease: 'elastic.out(1, 0.3)'
+      }, '-=0.3')
+      .from('.emoji-eye, .emoji-mouth', {
+        scale: 0,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: 'back.out(2)'
+      }, '-=0.2')
+      .from('.name, .dob', {
+        y: 20,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.1
+      }, '-=0.2')
+      .from('.info-item', {
+        x: -20,
+        opacity: 0,
+        duration: 0.4,
+        stagger: 0.1
+      }, '-=0.1')
+      .from('.edit-btn', {
+        scale: 0.8,
+        opacity: 0,
+        duration: 0.3
+      }, '-=0.1');
+      
+      // Animate emoji on hover
+      const emojiContainer = document.querySelector('.emoji-container');
+      
+      emojiContainer.addEventListener('mouseenter', () => {
+        gsap.to('.emoji-face', {
+          y: -10,
+          duration: 0.3,
+          ease: 'power1.out'
+        });
+        
+        gsap.to('.emoji-mouth', {
+          height: 40,
+          duration: 0.3,
+          ease: 'power1.out'
+        });
+      });
+      
+      emojiContainer.addEventListener('mouseleave', () => {
+        gsap.to('.emoji-face', {
+          y: 0,
+          duration: 0.3,
+          ease: 'power1.out'
+        });
+        
+        gsap.to('.emoji-mouth', {
+          height: 30,
+          duration: 0.3,
+          ease: 'power1.out'
+        });
+      });
+      
+      // Edit profile functionality
+      const editBtn = document.querySelector('.edit-btn');
+      const editForm = document.querySelector('.edit-form');
+      const saveBtn = document.querySelector('.save-btn');
+      const nameInput = document.getElementById('name-input');
+      const dobInput = document.getElementById('dob-input');
+      const locationInput = document.getElementById('location-input');
+      const occupationInput = document.getElementById('occupation-input');
+      const interestsInput = document.getElementById('interests-input');
+      
+      const nameElement = document.querySelector('.name');
+      const dobElement = document.querySelector('.dob');
+      const locationElement = document.querySelector('.info-item:nth-child(1) .info-value');
+      const occupationElement = document.querySelector('.info-item:nth-child(2) .info-value');
+      const interestsElement = document.querySelector('.info-item:nth-child(3) .info-value');
+      
+      // Initialize form with current values
+      nameInput.value = nameElement.textContent;
+      // Parse date for the input format
+      const dobText = dobElement.textContent.replace('Born: ', '');
+      const dobDate = new Date(dobText);
+      const dobFormatted = dobDate.toISOString().split('T')[0];
+      dobInput.value = dobFormatted;
+      
+      locationInput.value = locationElement.textContent;
+      occupationInput.value = occupationElement.textContent;
+      interestsInput.value = interestsElement.textContent;
+      
+      editBtn.addEventListener('click', () => {
+        if (editForm.style.display === 'block') {
+          gsap.to(editForm, {
+            height: 0,
+            opacity: 0,
+            duration: 0.3,
+            onComplete: () => {
+              editForm.style.display = 'none';
+            }
+          });
+          editBtn.textContent = 'Edit Profile';
+        } else {
+          editForm.style.display = 'block';
+          gsap.from(editForm, {
+            height: 0,
+            opacity: 0,
+            duration: 0.3
+          });
+          editBtn.textContent = 'Cancel';
+        }
+      });
+      
+      saveBtn.addEventListener('click', () => {
+        // Format date
+        const dobDate = new Date(dobInput.value);
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDob = dobDate.toLocaleDateString('en-US', options);
+        
+        // Update profile
+        nameElement.textContent = nameInput.value;
+        dobElement.textContent = `Born: ${formattedDob}`;
+        locationElement.textContent = locationInput.value;
+        occupationElement.textContent = occupationInput.value;
+        interestsElement.textContent = interestsInput.value;
+        
+        // Hide form
+        gsap.to(editForm, {
+          height: 0,
+          opacity: 0,
+          duration: 0.3,
+          onComplete: () => {
+            editForm.style.display = 'none';
+            editBtn.textContent = 'Edit Profile';
+          }
+        });
+        
+        // Animate updates
+        gsap.from([nameElement, dobElement], {
+          scale: 1.05,
+          color: '#3498db',
+          duration: 0.3,
+          stagger: 0.1
+        });
+        
+        gsap.from([locationElement, occupationElement, interestsElement], {
+          x: 5,
+          color: '#3498db',
+          duration: 0.3,
+          stagger: 0.1
+        });
+      });
+      
+      // Random color change for emoji face on click
+      emojiContainer.addEventListener('click', () => {
+        const colors = ['#FFCC4D', '#FF9FF3', '#FECA57', '#FF6B6B', '#48DBFB', '#1DD1A1'];
+        const randomColor = colors[Math.floor(Math.random() * colors.length)];
+        
+        gsap.to('.emoji-face', {
+          backgroundColor: randomColor,
+          scale: 1.1,
+          duration: 0.3,
+          yoyo: true,
+          repeat: 1
+        });
+      });
+    });
+  </script>
+</body>
+</html>

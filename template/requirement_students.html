@@ -1,0 +1,600 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Students - {{ requirement.company_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Container Styles */
+    .requirement-students-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    /* Tabs Styling */
+    .custom-tabs {
+        border-bottom: 2px solid #e9ecef;
+        margin-bottom: 20px;
+    }
+
+    .custom-tabs .nav-link {
+        color: #6c757d;
+        font-weight: 500;
+        padding: 15px 20px;
+        transition: all 0.3s ease;
+    }
+
+    .custom-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+    }
+
+    /* Filter Section */
+    .advanced-filter-section {
+        background-color: #f8f9fa;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+
+    .filter-group {
+        margin-bottom: 15px;
+    }
+
+    .filter-label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+
+    /* Bulk Action Bar */
+    .bulk-action-bar {
+        position: sticky;
+        top: 0;
+        background: white;
+        padding: 15px 0;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        z-index: 1000;
+        display: none;
+        margin-bottom: 20px;
+    }
+
+    .bulk-action-bar.visible {
+        display: block;
+    }
+
+    .selected-count {
+        font-size: 1.1rem;
+        color: #495057;
+    }
+
+    #selectedCount {
+        font-weight: 600;
+        color: #1976D2;
+    }
+
+    /* Student Card Styles */
+    .student-card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        background: #ffffff;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .student-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .student-card.selected {
+        border: 2px solid #1976D2;
+    }
+
+    .student-card-header {
+        background: linear-gradient(45deg, #2196F3, #1976D2);
+        padding: 20px;
+        color: white;
+    }
+
+    .student-name {
+        font-size: 1.25rem;
+        margin: 0;
+        font-weight: 600;
+        color: white;
+    }
+
+    /* Info Sections */
+    .student-info-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding: 20px;
+    }
+
+    .info-section {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+
+    .info-item:hover {
+        background-color: #e9ecef;
+    }
+
+    .info-label {
+        font-weight: 500;
+        color: #495057;
+        min-width: 80px;
+    }
+
+    .info-value {
+        color: #212529;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .status-pending { background-color: #ffd54f; color: #000; }
+    .status-selected { background-color: #4caf50; color: #fff; }
+    .status-rejected { background-color: #f44336; color: #fff; }
+
+    /* Selection Control */
+    .selection-control {
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Responsive Adjustments */
+    @media (max-width: 768px) {
+        .student-card {
+            margin-bottom: 15px;
+        }
+
+        .info-item {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .info-label {
+            min-width: auto;
+        }
+    }
+
+    /* Add to your existing styles */
+
+/* Schedule Status Badges */
+.status-not_scheduled { 
+    background-color: #6c757d; 
+    color: white; 
+}
+.status-scheduled { 
+    background-color: #28a745; 
+    color: white; 
+}
+.status-completed { 
+    background-color: #17a2b8; 
+    color: white; 
+}
+.status-cancelled { 
+    background-color: #dc3545; 
+    color: white; 
+}
+
+/* Requirement Counts */
+.requirement-counts {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.requirement-counts .badge {
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+.requirement-counts i {
+    margin-right: 5px;
+}
+
+/* Schedule Status Form */
+#scheduleStatusForm select {
+    min-width: 200px;
+}
+
+.card-title .status-badge {
+    margin-left: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- After the header section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0">Current Status: 
+                            <span class="status-badge status-{{ requirement.schedule_status }}">
+                                {{ requirement.get_schedule_status_display }}
+                            </span>
+                        </h5>
+                    </div>
+                    <div>
+                        <form method="POST" action="{% url 'update_requirement_schedule' requirement.id %}" 
+                              class="d-flex align-items-center" id="scheduleStatusForm">
+                            {% csrf_token %}
+                            <select name="schedule_status" class="form-select me-2" style="width: 200px;">
+                                {% for value, label in requirement.SCHEDULE_STATUS_CHOICES %}
+                                    <option value="{{ value }}" 
+                                            {% if requirement.schedule_status == value %}selected{% endif %}>
+                                        {{ label }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary">
+                                Update Status
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container requirement-students-container">
+    {% csrf_token %}
+    
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>Manage Students - <span class="text-primary">{{ requirement.company_name }}</span></h1>
+        </div>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <ul class="nav custom-tabs" id="studentTabs" role="tablist">
+        <li class="nav-item">
+            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#available-students">
+                Available Students <span class="badge bg-primary">{{ total_available }}</span>
+            </button>
+        </li>
+        <li class="nav-item">
+            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#assigned-students">
+                Assigned Students <span class="badge bg-primary">{{ total_assigned }}</span>
+            </button>
+        </li>
+    </ul>
+
+    <!-- Bulk Action Bar -->
+    <div class="bulk-action-bar" id="bulkActionBar">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="selected-count">
+                    <span id="selectedCount">0</span> students selected
+                </div>
+                <div class="action-buttons">
+                    <a href="{% url 'requirement_students' requirement.id %}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Add Students
+                    </a>
+                    <button class="btn btn-outline-secondary ms-2" id="clearSelectionBtn">
+                        <i class="fas fa-times"></i> Clear Selection
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Section -->
+    <div class="advanced-filter-section">
+        <form method="get" id="filterForm">
+            <div class="row">
+                <div class="col-md-4 filter-group">
+                    <label class="filter-label">Search</label>
+                    <input type="text" name="search" class="form-control" 
+                           placeholder="Search by name or mobile" 
+                           value="{{ filters.search }}">
+                </div>
+                <div class="col-md-4 filter-group">
+                    <label class="filter-label">Degree</label>
+                    <select name="degree" class="form-select" multiple>
+                        {% for degree in unique_degrees %}
+                            <option value="{{ degree }}" 
+                                    {% if degree in filters.degrees %}selected{% endif %}>
+                                {{ degree }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 filter-group">
+                    <label class="filter-label">Stream</label>
+                    <select name="stream" class="form-select" multiple>
+                        {% for stream in unique_streams %}
+                            <option value="{{ stream }}" 
+                                    {% if stream in filters.streams %}selected{% endif %}>
+                                {{ stream }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <a href="{% url 'requirement_students' requirement.id %}" 
+                       class="btn btn-outline-secondary ms-2">
+                        <i class="fas fa-times"></i> Clear Filters
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Student Cards -->
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="available-students">
+            <div class="row" id="availableStudentsGrid">
+                {% if page_obj %}
+                    {% for student in page_obj %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card student-card" data-student-id="{{ student.id }}">
+                                <div class="student-card-header">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="student-name">{{ student.name }}</h5>
+                                        <div class="status-badge status-pending">
+                                            Available
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="student-info-grid">
+                                    <div class="info-section">
+                                        <div class="info-item">
+                                            <i class="fas fa-phone"></i>
+                                            <span class="info-label">Mobile:</span>
+                                            <span class="info-value">{{ student.contact_number }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <i class="fas fa-graduation-cap"></i>
+                                            <span class="info-label">Degree:</span>
+                                            <span class="info-value">{{ student.degree }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <i class="fas fa-stream"></i>
+                                            <span class="info-label">Stream:</span>
+                                            <span class="info-value">{{ student.stream }}</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <i class="fas fa-percentage"></i>
+                                            <span class="info-label">Percentage:</span>
+                                            <span class="info-value">{{ student.degree_percent }}%</span>
+                                        </div>
+                                        <div class="requirement-counts mt-3">
+                                            <div class="d-flex justify-content-between">
+                                                <span class="badge bg-primary">
+                                                    <i class="fas fa-briefcase"></i> Total Requirements: {{ student.total_requirements }}
+                                                </span>
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-calendar-check"></i> Scheduled: {{ student.scheduled_requirements }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="selection-control">
+                                    <div class="form-check">
+                                        <input type="checkbox" class="form-check-input student-select-checkbox">
+                                        <label class="form-check-label">Select Student</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="col-12">
+                        <div class="alert alert-info">
+                            No students found matching your criteria.
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        <!-- Inside the tab-content div, after the available-students tab -->
+<div class="tab-pane fade" id="assigned-students">
+    <div class="row">
+        {% for rs in assigned_students %}
+            <div class="col-md-4 mb-4">
+                <div class="card student-card">
+                    <div class="student-card-header">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="student-name">{{ rs.student.name }}</h5>
+                            <div class="status-badge status-{{ rs.status }}">
+                                {{ rs.get_status_display }}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="student-info-grid">
+                        <div class="info-section">
+                            <div class="info-item">
+                                <i class="fas fa-phone"></i>
+                                <span class="info-label">Mobile:</span>
+                                <span class="info-value">{{ rs.student.contact_number }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-graduation-cap"></i>
+                                <span class="info-label">Degree:</span>
+                                <span class="info-value">{{ rs.student.degree }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-stream"></i>
+                                <span class="info-label">Stream:</span>
+                                <span class="info-value">{{ rs.student.stream }}</span>
+                            </div>
+                            <div class="info-item">
+                                <i class="fas fa-percentage"></i>
+                                <span class="info-label">Percentage:</span>
+                                <span class="info-value">{{ rs.student.degree_percent }}%</span>
+                            </div>
+                            <div class="requirement-counts">
+                                <div class="d-flex justify-content-between">
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-briefcase"></i> Total: {{ rs.student.total_requirements }}
+                                    </span>
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-calendar-check"></i> Scheduled: {{ rs.student.scheduled_requirements }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    No students have been assigned to this requirement yet.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bulkActionBar = document.getElementById('bulkActionBar');
+    const selectedCountElement = document.getElementById('selectedCount');
+    const addSelectedBtn = document.getElementById('addSelectedBtn');
+    const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+    const studentCards = document.querySelectorAll('.student-card');
+    let selectedStudents = new Set();
+
+    function handleStudentSelection(card, checkbox) {
+        const studentId = card.dataset.studentId;
+        
+        if (checkbox.checked) {
+            selectedStudents.add(studentId);
+            card.classList.add('selected');
+        } else {
+            selectedStudents.delete(studentId);
+            card.classList.remove('selected');
+        }
+        
+        updateBulkActionBar();
+    }
+
+    function updateBulkActionBar() {
+        const selectedCount = selectedStudents.size;
+        selectedCountElement.textContent = selectedCount;
+        
+        if (selectedCount > 0) {
+            bulkActionBar.classList.add('visible');
+        } else {
+            bulkActionBar.classList.remove('visible');
+        }
+    }
+
+    studentCards.forEach(card => {
+        const checkbox = card.querySelector('.student-select-checkbox');
+        
+        card.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('student-select-checkbox')) {
+                checkbox.checked = !checkbox.checked;
+                handleStudentSelection(card, checkbox);
+            }
+        });
+
+        checkbox.addEventListener('change', function() {
+            handleStudentSelection(card, this);
+        });
+    });
+
+    addSelectedBtn.addEventListener('click', function() {
+        if (selectedStudents.size === 0) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = window.location.href;
+
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrfmiddlewaretoken';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+
+        const actionInput = document.createElement('input');
+        actionInput.type = 'hidden';
+        actionInput.name = 'action';
+        actionInput.value = 'add';
+        form.appendChild(actionInput);
+
+        selectedStudents.forEach(studentId => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'student_ids';
+            input.value = studentId;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+
+    clearSelectionBtn.addEventListener('click', function() {
+        selectedStudents.clear();
+        studentCards.forEach(card => {
+            card.classList.remove('selected');
+            card.querySelector('.student-select-checkbox').checked = false;
+        });
+        updateBulkActionBar();
+    });
+});
+
+// Add this to your existing DOMContentLoaded event handler
+
+// Handle schedule status form submission
+const scheduleStatusForm = document.getElementById('scheduleStatusForm');
+if (scheduleStatusForm) {
+    scheduleStatusForm.addEventListener('submit', function(e) {
+        if (!confirm('Are you sure you want to update the schedule status? This will affect all assigned students.')) {
+            e.preventDefault();
+            return;
+        }
+    });
+}
+
+// Initialize tooltips
+var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+    return new bootstrap.Tooltip(tooltipTriggerEl)
+});
+</script>
+{% endblock %}

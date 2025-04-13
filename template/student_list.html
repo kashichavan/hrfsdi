@@ -1,0 +1,1007 @@
+{% extends 'base.html' %}
+{% load custom_filters %}  <!-- MUST be before content block -->
+
+{% block title %}Student List{% endblock %}
+
+{% block extra_css %}
+<!-- Google Fonts - Add to base.html or here -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
+<!-- Select2 CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.1.0-rc.0/css/select2.min.css">
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fe;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+    }
+
+    /* Canvas background */
+    #three-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        opacity: 0.3;
+    }
+    
+    /* Card styling */
+    .content-card {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.1);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .content-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(31, 38, 135, 0.15);
+    }
+
+    /* Table styling */
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 0;
+    }
+    
+    .table thead th {
+        background-color: #4361ee;
+        color: white;
+        font-weight: 500;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 1rem;
+        border: none;
+        position: relative;
+        cursor: pointer;
+    }
+    
+    .table th .sort-icon {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+    
+    .table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(67, 97, 238, 0.05);
+        transform: scale(1.005);
+    }
+    
+    .table td {
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    /* Custom badges */
+    .badge {
+        padding: 0.5rem 0.8rem;
+        font-weight: 500;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge.bg-success {
+        background-color: #4cc9f0 !important;
+    }
+    
+    .badge.bg-danger {
+        background-color: #f72585 !important;
+    }
+    
+    .badge.bg-warning {
+        background-color: #f8961e !important;
+    }
+    
+    .badge.bg-info {
+        background-color: #4895ef !important;
+    }
+    
+    .badge.bg-primary {
+        background-color: #4361ee !important;
+    }
+    
+    /* Count boxes */
+    .count-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 80px;
+        padding: 0.4rem 0.8rem;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 1rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Animated counters */
+    .requirement-count {
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .requirement-count.total {
+        background: linear-gradient(45deg, #4361ee, #3a0ca3);
+        color: white;
+    }
+    
+    .requirement-count.scheduled {
+        background: linear-gradient(45deg, #4cc9f0, #4895ef);
+        color: white;
+    }
+    
+    .requirement-count::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: rgba(255, 255, 255, 0.1);
+        transform: rotate(45deg);
+        animation: shine 3s infinite;
+    }
+    
+    @keyframes shine {
+        0% {
+            transform: translateX(-100%) rotate(45deg);
+        }
+        100% {
+            transform: translateX(100%) rotate(45deg);
+        }
+    }
+
+    /* Buttons */
+    .btn {
+        border-radius: 8px;
+        padding: 0.6rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-info {
+        background-color: #4895ef;
+        border-color: #4895ef;
+        color: white;
+    }
+    
+    .btn-info:hover {
+        background-color: #3a86ff;
+        border-color: #3a86ff;
+        color: white;
+    }
+
+    /* Search bar */
+    .search-container {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .search-container input {
+        border-radius: 12px;
+        padding: 0.8rem 1rem 0.8rem 3rem;
+        border: 1px solid #e0e0e0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .search-container input:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+    }
+    
+    .search-container .search-icon {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .search-container .btn {
+        border-radius: 10px;
+        padding: 0.8rem 1.5rem;
+    }
+
+    /* Filter Toggle Button and Panel */
+    .filter-toggle-btn {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(45deg, #4361ee, #3a0ca3);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 6px 20px rgba(67, 97, 238, 0.3);
+        z-index: 1000;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-toggle-btn:hover {
+        transform: rotate(15deg) scale(1.1);
+    }
+    
+    .filter-tooltip {
+        position: absolute;
+        bottom: 70px;
+        right: 0;
+        background: rgba(0,0,0,0.7);
+        color: white;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s, transform 0.3s;
+        pointer-events: none;
+        transform: translateY(10px);
+    }
+    
+    .filter-toggle-btn:hover .filter-tooltip {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    
+    .filter-badge {
+        position: absolute;
+        top: -5px;
+        right: -5px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #f72585;
+        color: white;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+    }
+    
+    .filter-panel {
+        position: fixed;
+        top: 0;
+        right: -450px;
+        width: 450px;
+        height: 100vh;
+        background: linear-gradient(170deg, #ffffff, #f8f9fe);
+        box-shadow: -5px 0 25px rgba(0, 0, 0, 0.1);
+        z-index: 1001;
+        overflow-y: auto;
+        transition: right 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        padding: 2rem;
+        border-left: 1px solid rgba(67, 97, 238, 0.1);
+    }
+    
+    .filter-panel.open {
+        right: 0;
+    }
+    
+    .filter-panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e9ecef;
+    }
+    
+    .filter-panel-close {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+        color: #6c757d;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+    }
+    
+    .filter-panel-close:hover {
+        background-color: #f8f9fa;
+        color: #dc3545;
+    }
+    
+    /* Active filters display */
+    .active-filters {
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 12px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        backdrop-filter: blur(8px);
+    }
+    
+    .filter-chip {
+        display: inline-flex;
+        align-items: center;
+        background-color: #e9ecef;
+        color: #212529;
+        border-radius: 16px;
+        padding: 0.4rem 1rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+    
+    .filter-chip:hover {
+        background-color: #dee2e6;
+    }
+    
+    .filter-chip .close {
+        margin-left: 8px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: rgba(0, 0, 0, 0.1);
+        transition: all 0.2s ease;
+    }
+    
+    .filter-chip .close:hover {
+        background-color: #dc3545;
+        color: white;
+        transform: scale(1.1);
+    }
+    
+    /* Form controls in filter panel */
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: #495057;
+    }
+    
+    .form-select, .form-control {
+        border-radius: 10px;
+        padding: 0.6rem 1rem;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    
+    .form-select:focus, .form-control:focus {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+    }
+    
+    /* Select2 styles */
+    .select2-container--default .select2-selection--multiple {
+        border-radius: 10px;
+        border: 1px solid #e0e0e0;
+        padding: 0.3rem 0.5rem;
+    }
+    
+    .select2-container--default.select2-container--focus .select2-selection--multiple {
+        border-color: #4361ee;
+        box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.25);
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #4361ee;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 2px 8px;
+        margin-right: 5px;
+        margin-top: 5px;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: white;
+        margin-right: 5px;
+    }
+    
+    /* Pagination */
+    .pagination {
+        margin-top: 2rem;
+    }
+    
+    .pagination .page-item .page-link {
+        border-radius: 8px;
+        margin: 0 3px;
+        color: #4361ee;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s ease;
+    }
+    
+    .pagination .page-item.active .page-link {
+        background-color: #4361ee;
+        border-color: #4361ee;
+    }
+    
+    .pagination .page-item .page-link:hover:not(.active) {
+        background-color: #e9ecef;
+        transform: translateY(-2px);
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .filter-panel {
+            width: 100%;
+            right: -100%;
+        }
+        
+        .filter-toggle-btn {
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+        }
+        
+        .content-card {
+            padding: 1rem;
+        }
+        
+        .table thead th {
+            padding: 0.75rem;
+        }
+        
+        .table td {
+            padding: 0.75rem;
+        }
+    }
+
+    /* Overlay for filter panel */
+    .filter-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease;
+    }
+    
+    .filter-overlay.open {
+        opacity: 1;
+        visibility: visible;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Three.js Canvas Background -->
+<canvas id="three-canvas"></canvas>
+
+<div class="container mt-4">
+    <div class="content-card">
+        <h1 class="mb-4">
+            {% if type_filter %}
+                {{ type_filter|title }} Students
+            {% else %}
+                All Students
+            {% endif %}
+        </h1>
+        
+        <!-- Search and Stats Row -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <form method="get" class="form-inline">
+                    <div class="input-group search-container">
+                        <span class="search-icon">
+                            <i class="fas fa-search"></i>
+                        </span>
+                        <input type="text" name="search" class="form-control" placeholder="Search students..." value="{{ search_query }}">
+                        
+                        <!-- Preserve existing filters -->
+                        {% if type_filter %}<input type="hidden" name="type_filter" value="{{ type_filter }}">{% endif %}
+                        {% if sort_by %}<input type="hidden" name="sort" value="{{ sort_by }}">{% endif %}
+                        {% for stream in stream_filters %}
+                            <input type="hidden" name="stream" value="{{ stream }}">
+                        {% endfor %}
+                        {% if degree_filter %}<input type="hidden" name="degree" value="{{ degree_filter }}">{% endif %}
+                        {% if min_tenth %}<input type="hidden" name="min_tenth" value="{{ min_tenth }}">{% endif %}
+                        {% if min_twelfth %}<input type="hidden" name="min_twelfth" value="{{ min_twelfth }}">{% endif %}
+                        {% if min_degree %}<input type="hidden" name="min_degree" value="{{ min_degree }}">{% endif %}
+                        {% if gender_filter %}<input type="hidden" name="gender" value="{{ gender_filter }}">{% endif %}
+                        {% if min_yop %}<input type="hidden" name="min_yop" value="{{ min_yop }}">{% endif %}
+                        {% if max_yop %}<input type="hidden" name="max_yop" value="{{ max_yop }}">{% endif %}
+                        
+                        <div class="input-group-append">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search me-1"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="col-md-6">
+                <div class="d-flex flex-wrap justify-content-md-end mt-3 mt-md-0">
+                    <div class="me-3 mb-2">
+                        <p class="mb-1">Showing: <strong>{{ total_count }}</strong> students</p>
+                    </div>
+                    <div class="d-flex flex-wrap">
+                        <div class="badge bg-primary me-2 mb-2">All: {{ type_counts.all }}</div>
+                        <div class="badge bg-success me-2 mb-2">FSDI: {{ type_counts.fsdi }}</div>
+                        <div class="badge bg-danger me-2 mb-2">Super100: {{ type_counts.super100 }}</div>
+                        <div class="badge bg-warning text-dark me-2 mb-2">Fastrack: {{ type_counts.fastrack }}</div>
+                        <div class="badge bg-info me-2 mb-2">Legend: {{ type_counts.legend }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Filters Display -->
+        {% if degree_filter or stream_filters or min_tenth or min_twelfth or min_degree or gender_filter or min_yop or max_yop %}
+        <div class="active-filters">
+            <h5 class="mb-2"><i class="fas fa-filter me-2"></i> Active Filters:</h5>
+            <div class="d-flex flex-wrap">
+                {% if degree_filter %}
+                <div class="filter-chip">
+                    Degree: {{ degree_filter }}
+                    <span class="close" data-filter="degree">&times;</span>
+                </div>
+                {% endif %}
+                
+                {% for stream in stream_filters %}
+                <div class="filter-chip">
+                    Stream: {{ stream }}
+                    <span class="close" data-filter="stream" data-value="{{ stream }}">&times;</span>
+                </div>
+                {% endfor %}
+                
+                {% if gender_filter %}
+                <div class="filter-chip">
+                    Gender: {{ gender_filter }}
+                    <span class="close" data-filter="gender">&times;</span>
+                </div>
+                {% endif %}
+                
+                {% if min_tenth %}
+                <div class="filter-chip">
+                    10th % ≥ {{ min_tenth }}%
+                    <span class="close" data-filter="min_tenth">&times;</span>
+                </div>
+                {% endif %}
+                
+                {% if min_twelfth %}
+                <div class="filter-chip">
+                    12th % ≥ {{ min_twelfth }}%
+                    <span class="close" data-filter="min_twelfth">&times;</span>
+                </div>
+                {% endif %}
+                
+                {% if min_degree %}
+                <div class="filter-chip">
+                    Degree % ≥ {{ min_degree }}%
+                    <span class="close" data-filter="min_degree">&times;</span>
+                </div>
+                {% endif %}
+                
+                {% if min_yop %}
+                <div class="filter-chip">
+                    Year ≥ {{ min_yop }}
+                    <span class="close" data-filter="min_yop">&times;</span>
+                </div>
+                {% endif %}
+                
+                {% if max_yop %}
+                <div class="filter-chip">
+                    Year ≤ {{ max_yop }}
+                    <span class="close" data-filter="max_yop">&times;</span>
+                </div>
+                {% endif %}
+                
+                <a href="{% url 'student_list' %}{% if type_filter %}?type_filter={{ type_filter }}{% endif %}" class="btn btn-sm btn-outline-secondary ms-2">
+                    <i class="fas fa-times me-1"></i> Clear All Filters
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Students Table -->
+    <div class="content-card">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <a href="?sort={% if sort_by == 'name' %}-{% endif %}name{% include 'includes/filter_params.html' %}">
+                                Name 
+                                <span class="sort-icon">
+                                    {% if sort_by == 'name' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-name' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'contact_number' %}-{% endif %}contact_number{% include 'includes/filter_params.html' %}">
+                                Contact Number
+                                <span class="sort-icon">
+                                    {% if sort_by == 'contact_number' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-contact_number' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'degree' %}-{% endif %}degree{% include 'includes/filter_params.html' %}">
+                                Degree
+                                <span class="sort-icon">
+                                    {% if sort_by == 'degree' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-degree' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'stream' %}-{% endif %}stream{% include 'includes/filter_params.html' %}">
+                                Stream
+                                <span class="sort-icon">
+                                    {% if sort_by == 'stream' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-stream' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'degree_percent' %}-{% endif %}degree_percent{% include 'includes/filter_params.html' %}">
+                                Degree %
+                                <span class="sort-icon">
+                                    {% if sort_by == 'degree_percent' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-degree_percent' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'yop' %}-{% endif %}yop{% include 'includes/filter_params.html' %}">
+                                YOP
+                                <span class="sort-icon">
+                                    {% if sort_by == 'yop' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-yop' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>Type</th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'total_requirements' %}-{% endif %}total_requirements{% include 'includes/filter_params.html' %}">
+                                Total
+                                <span class="sort-icon">
+                                    {% if sort_by == 'total_requirements' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-total_requirements' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>
+                            <a href="?sort={% if sort_by == 'scheduled_requirements' %}-{% endif %}scheduled_requirements{% include 'includes/filter_params.html' %}">
+                                Scheduled
+                                <span class="sort-icon">
+                                    {% if sort_by == 'scheduled_requirements' %}<i class="fas fa-sort-up"></i>
+                                    {% elif sort_by == '-scheduled_requirements' %}<i class="fas fa-sort-down"></i>
+                                    {% else %}<i class="fas fa-sort"></i>{% endif %}
+                                </span>
+                            </a>
+                        </th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in page_obj %}
+                    <tr class="student-row" data-id="{{ student.id }}">
+                        <td>{{ student.name }}</td>
+                        <td>{{ student.contact_number }}</td>
+                        <td>{{ student.degree }}</td>
+                        <td>{{ student.stream }}</td>
+                        <td>{{ student.degree_percent }}%</td>
+                        <td>{{ student.yop }}</td>
+                        <td>
+                            {% if student.type_of_data == 'fsdi' %}
+                                <span class="badge bg-success">FSDI</span>
+                            {% elif student.type_of_data == 'super100' %}
+                                <span class="badge bg-danger">Super100</span>
+                            {% elif student.type_of_data == 'fastrack' %}
+                                <span class="badge bg-warning text-dark">Fastrack</span>
+                            {% elif student.type_of_data == 'legend' %}
+                                <span class="badge bg-info">Legend</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ student.type_of_data|default:"N/A" }}</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="requirement-count total">{{ student.total_requirements|default:"0" }}</span>
+                        </td>
+                        <td>
+                            <span class="requirement-count scheduled">{{ student.scheduled_requirements|default:"0" }}</span>
+                        </td>
+                        <td>
+                            <a href="{% url 'student_detail' student.id %}" class="btn btn-sm btn-info">
+                                <i class="fas fa-eye me-1"></i> View
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-4">
+                            <div class="empty-state">
+                                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                                <h5>No students found</h5>
+                                <p class="text-muted">Try changing your search or filter criteria</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+         <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% include 'includes/filter_params.html' %}">&laquo; First</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% include 'includes/filter_params.html' %}">Previous</a>
+                </li>
+            {% endif %}
+            
+
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% include 'includes/filter_params.html' %}">Next</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% include 'includes/filter_params.html' %}">Last &raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
+</div>
+
+<!-- Filter Toggle Button -->
+<div class="filter-toggle-btn" id="filterToggle">
+<i class="fas fa-filter"></i>
+<span class="filter-tooltip">Toggle Filters</span>
+{% if active_filters_count > 0 %}
+    <span class="filter-badge">{{ active_filters_count }}</span>
+{% endif %}
+</div>
+
+<!-- Filter Panel -->
+<div class="filter-panel" id="filterPanel">
+<div class="filter-panel-header">
+    <h4>Filter Options</h4>
+    <button class="filter-panel-close" id="filterClose">
+        <i class="fas fa-times"></i>
+    </button>
+</div>
+
+<form method="get" id="filterForm">
+    <!-- Preserve search query if exists -->
+    {% if search_query %}
+        <input type="hidden" name="search" value="{{ search_query }}">
+    {% endif %}
+    
+    <!-- Degree Filter -->
+    <div class="mb-3">
+        <label class="form-label">Degree</label>
+        <select class="form-select" name="degree">
+            <option value="">All Degrees</option>
+            {% for degree in all_degrees %}
+                <option value="{{ degree }}" {% if degree == degree_filter %}selected{% endif %}>
+                    {{ degree }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Stream Filter -->
+    <div class="mb-3">
+        <label class="form-label">Stream</label>
+        <select class="form-select select2-multiple" name="stream" multiple>
+            {% for stream in all_streams %}
+                <option value="{{ stream }}" {% if stream in stream_filters %}selected{% endif %}>
+                    {{ stream }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <!-- Gender Filter -->
+    <div class="mb-3">
+        <label class="form-label">Gender</label>
+        <select class="form-select" name="gender">
+            <option value="">All Genders</option>
+            <option value="M" {% if gender_filter == 'M' %}selected{% endif %}>Male</option>
+            <option value="F" {% if gender_filter == 'F' %}selected{% endif %}>Female</option>
+        </select>
+    </div>
+
+    <!-- Percentage Filters -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Min 10th %</label>
+                <input type="number" class="form-control" name="min_tenth" value="{{ min_tenth }}" min="0" max="100" step="0.01">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Min 12th %</label>
+                <input type="number" class="form-control" name="min_twelfth" value="{{ min_twelfth }}" min="0" max="100" step="0.01">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="mb-3">
+                <label class="form-label">Min Degree %</label>
+                <input type="number" class="form-control" name="min_degree" value="{{ min_degree }}" min="0" max="100" step="0.01">
+            </div>
+        </div>
+    </div>
+
+    <!-- Year of Passing Range -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">From Year</label>
+                <input type="number" class="form-control" name="min_yop" value="{{ min_yop }}" min="2000" max="2030">
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label class="form-label">To Year</label>
+                <input type="number" class="form-control" name="max_yop" value="{{ max_yop }}" min="2000" max="2030">
+            </div>
+        </div>
+    </div>
+
+    <div class="d-grid gap-2">
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-filter me-2"></i>Apply Filters
+        </button>
+        <a href="{% url 'student_list' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-times me-2"></i>Clear All
+        </a>
+    </div>
+</form>
+</div>
+
+<!-- Filter Overlay -->
+<div class="filter-overlay" id="filterOverlay"></div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+// Initialize Select2
+$(document).ready(function() {
+$('.select2-multiple').select2({
+    theme: 'bootstrap-5',
+    width: '100%',
+    placeholder: 'Select streams'
+});
+
+// Filter panel toggle
+const filterToggle = document.getElementById('filterToggle');
+const filterPanel = document.getElementById('filterPanel');
+const filterClose = document.getElementById('filterClose');
+const filterOverlay = document.getElementById('filterOverlay');
+
+filterToggle.addEventListener('click', toggleFilterPanel);
+filterClose.addEventListener('click', toggleFilterPanel);
+filterOverlay.addEventListener('click', toggleFilterPanel);
+
+function toggleFilterPanel() {
+    filterPanel.classList.toggle('open');
+    filterOverlay.classList.toggle('open');
+}
+
+// Handle filter chip removal
+$('.filter-chip .close').click(function(e) {
+    e.preventDefault();
+    const filter = $(this).data('filter');
+    const value = $(this).data('value');
+    
+    // Remove the specific filter from the form and submit
+    if (filter === 'stream') {
+        const streamSelect = $('select[name="stream"]');
+        const values = streamSelect.val().filter(v => v !== value);
+        streamSelect.val(values).trigger('change');
+    } else {
+        $(`[name="${filter}"]`).val('');
+    }
+    $('#filterForm').submit();
+});
+});
+
+// Three.js background animation
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({
+canvas: document.getElementById('three-canvas'),
+alpha: true
+});
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+camera.position.z = 5;
+
+const geometry = new THREE.TorusKnotGeometry(1, 0.3, 100, 16);
+const material = new THREE.MeshBasicMaterial({
+color: 0x4361ee,
+wireframe: true,
+transparent: true,
+opacity: 0.1
+});
+const torusKnot = new THREE.Mesh(geometry, material);
+scene.add(torusKnot);
+
+function animate() {
+requestAnimationFrame(animate);
+torusKnot.rotation.x += 0.01;
+torusKnot.rotation.y += 0.01;
+renderer.render(scene, camera);
+}
+
+animate();
+
+// Handle window resize
+window.addEventListener('resize', onWindowResize, false);
+
+function onWindowResize() {
+camera.aspect = window.innerWidth / window.innerHeight;
+camera.updateProjectionMatrix();
+renderer.setSize(window.innerWidth, window.innerHeight);
+}
+</script>
+{% endblock %}

@@ -1,0 +1,55 @@
+<!-- templates/success.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Successful</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 50px auto; 
+            padding: 20px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            text-align: center; 
+        }
+        .success-icon { 
+            font-size: 64px; 
+            color: #4CAF50; 
+            margin-bottom: 20px; 
+        }
+        .btn { 
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .message {
+            margin: 20px 0;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✓</div>
+        <h2>Excel File Processed Successfully!</h2>
+        <p class="message">Your student data has been uploaded and processed.</p>
+        
+        <div>
+            <a href="/admin/yourapp/student/" class="btn">View Students in Admin</a>
+            <a href="/upload/" class="btn">Upload Another File</a>
+        </div>
+    </div>
+</body>
+</html>

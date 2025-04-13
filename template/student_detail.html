@@ -1,0 +1,585 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.name }} - Student Profile{% endblock %}
+
+{% block extra_head %}
+<!-- Font imports -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;900&family=Montserrat:wght@700;800;900&family=DM+Sans:wght@400;500;700&display=swap">
+
+<!-- Include GSAP, ScrollTrigger, and Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.156.1/three.min.js"></script>
+
+<style>
+    :root {
+        --primary: #4f46e5;
+        --primary-light: #6366f1;
+        --secondary: #8b5cf6;
+        --accent: #f97316;
+        --dark-bg: #0f172a;
+        --card-bg: #1e293b;
+        --card-hover: #2c3e50;
+        --text-light: #f8fafc;
+        --text-dim: #94a3b8;
+        --success: #22c55e;
+        --warning: #eab308;
+        --danger: #ef4444;
+        --gradient-1: linear-gradient(135deg, #4f46e5, #8b5cf6);
+        --gradient-2: linear-gradient(135deg, #3b82f6, #2dd4bf);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: var(--dark-bg);
+        font-family: 'DM Sans', system-ui, sans-serif;
+        color: var(--text-light);
+        overflow-x: hidden;
+    }
+
+    .student-dashboard {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    #canvas-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+
+    .profile-header {
+        position: relative;
+        background: var(--gradient-1);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 3rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 50%;
+        transform: translate(100px, -100px);
+    }
+
+    .student-name {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 3rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 0.5rem;
+        background: linear-gradient(to right, #ffffff, #c7d2fe);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .student-info {
+        display: flex;
+        gap: 1.5rem;
+        font-size: 1.2rem;
+        opacity: 0.9;
+        font-weight: 500;
+    }
+
+    .student-info-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .student-info-item i {
+        color: var(--accent);
+    }
+
+    .stats-container {
+        margin-bottom: 3rem;
+    }
+
+    .stats-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-left: 1rem;
+        border-left: 4px solid var(--accent);
+    }
+
+    .stats-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        flex: 1 1 250px;
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        background: var(--card-hover);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 5px;
+        bottom: 0;
+        left: 0;
+        background: var(--primary-light);
+    }
+
+    .stat-value {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 800;
+        background: var(--gradient-2);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--text-dim);
+        font-size: 1.1rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .requirements-section {
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .requirements-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .requirements-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .requirements-counter {
+        background: rgba(79, 70, 229, 0.2);
+        color: var(--primary-light);
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    .requirement-card {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.3s ease;
+    }
+
+    .requirement-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(255, 255, 255, 0.1);
+        transform: translateX(5px);
+    }
+
+    .company-info {
+        display: flex;
+        align-items: center;
+        gap: 1.25rem;
+    }
+
+    .company-logo {
+        width: 55px;
+        height: 55px;
+        background: var(--gradient-1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .company-name {
+        font-weight: 700;
+        font-size: 1.2rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .company-date {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .company-date i {
+        font-size: 0.8rem;
+    }
+
+    .status-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-scheduled {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+    }
+
+    .status-pending {
+        background: rgba(234, 179, 8, 0.15);
+        color: var(--warning);
+    }
+
+    .status-badge i {
+        font-size: 0.75rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-dim);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+    }
+
+    @media (max-width: 768px) {
+        .student-dashboard {
+            padding: 1rem;
+        }
+
+        .profile-header {
+            padding: 1.5rem;
+        }
+
+        .student-name {
+            font-size: 2.2rem;
+        }
+
+        .student-info {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .stats-grid {
+            flex-direction: column;
+        }
+
+        .requirement-card {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+            padding: 1.2rem;
+        }
+
+        .company-info {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .company-logo {
+            margin: 0 auto;
+        }
+
+        .status-wrapper {
+            align-items: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="canvas-background"></div>
+
+<div class="student-dashboard">
+    <div class="profile-header">
+        <div class="student-name" id="student-name">{{ student.name }}</div>
+        <div class="student-info">
+            <div class="student-info-item">
+                <i class="fas fa-graduation-cap"></i>
+                <span>{{ student.degree }}</span>
+            </div>
+            <div class="student-info-item">
+                <i class="fas fa-stream"></i>
+                <span>{{ student.stream }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-container">
+        <h2 class="stats-title">Academic Performance</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="degree-percent">{{ student.degree_percent|floatformat:1 }}%</div>
+                <div class="stat-label">Degree Performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="twelfth-percent">{{ student.twelfth_percent|floatformat:1 }}%</div>
+                <div class="stat-label">12th Performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tenth-percent">{{ student.tenth_percent|floatformat:1 }}%</div>
+                <div class="stat-label">10th Performance</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="requirements-section">
+        <div class="requirements-header">
+            <h2 class="requirements-title">
+                <i class="fas fa-clipboard-list"></i>
+                Requirements
+                <span class="requirements-counter">{{ total_requirements }}</span>
+            </h2>
+        </div>
+
+        {% if student_requirements %}
+            <div class="requirements-grid">
+                {% for req in student_requirements %}
+                    <div class="requirement-card">
+                        <div class="company-info">
+                            <div class="company-logo">{{ req.requirement.company_name|slice:":2"|upper }}</div>
+                            <div>
+                                <h3 class="company-name">{{ req.requirement.company_name }}</h3>
+                                <div class="company-date">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    <span>Added: {{ req.requirement.created_at|date:"d M Y" }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="status-wrapper">
+                            <span class="status-badge {% if req.requirement.is_scheduled %}status-scheduled{% else %}status-pending{% endif %}">
+                                <i class="fas {% if req.requirement.is_scheduled %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                                {% if req.requirement.is_scheduled %}Scheduled{% else %}Pending{% endif %}
+                            </span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>No requirements added yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // GSAP Setup
+    gsap.registerPlugin(ScrollTrigger);
+    
+    // Animate the student name with a text reveal effect
+    const studentName = document.getElementById('student-name');
+    gsap.from(studentName, {
+        opacity: 0,
+        y: 30,
+        duration: 1.2,
+        ease: "power3.out"
+    });
+    
+    // Animate the profile header content
+    gsap.from(".student-info-item", {
+        opacity: 0,
+        y: 20,
+        duration: 0.8,
+        stagger: 0.2,
+        delay: 0.3,
+        ease: "power2.out"
+    });
+    
+    // Animate stat cards with scroll trigger
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        gsap.from(card, {
+            y: 60,
+            opacity: 0,
+            duration: 0.8,
+            delay: index * 0.15,
+            ease: "power3.out",
+            scrollTrigger: {
+                trigger: card,
+                start: "top 85%"
+            }
+        });
+    });
+    
+    // Animate stat values with counter effect
+    const statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(statValue => {
+        const finalValue = parseFloat(statValue.textContent);
+        gsap.fromTo(statValue, 
+            { textContent: "0%" },
+            {
+                textContent: statValue.textContent,
+                duration: 2,
+                ease: "power2.out",
+                scrollTrigger: {
+                    trigger: statValue,
+                    start: "top 85%"
+                },
+                onUpdate: function() {
+                    statValue.textContent = parseFloat(this.targets()[0].textContent).toFixed(1) + "%";
+                }
+            }
+        );
+    });
+    
+    // Animate requirement cards with staggered effect
+    gsap.from(".requirement-card", {
+        x: -30,
+        opacity: 0,
+        duration: 0.7,
+        stagger: 0.15,
+        ease: "power2.out",
+        scrollTrigger: {
+            trigger: ".requirements-section",
+            start: "top 80%"
+        }
+    });
+    
+    // Three.js background
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    document.getElementById('canvas-background').appendChild(renderer.domElement);
+    
+    // Create particles
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleCount = 150;
+    
+    const positions = new Float32Array(particleCount * 3);
+    const scales = new Float32Array(particleCount);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        positions[i3] = (Math.random() - 0.5) * 10;
+        positions[i3 + 1] = (Math.random() - 0.5) * 10;
+        positions[i3 + 2] = (Math.random() - 0.5) * 10;
+        scales[i] = Math.random() * 0.5 + 0.5;
+    }
+    
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+    
+    const particleMaterial = new THREE.PointsMaterial({
+        color: 0x4f46e5,
+        size: 0.1,
+        transparent: true,
+        opacity: 0.8,
+        sizeAttenuation: true
+    });
+    
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+    
+    camera.position.z = 5;
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        particles.rotation.x += 0.0005;
+        particles.rotation.y += 0.001;
+        
+        // Respond to mouse movement
+        const positions = particles.geometry.attributes.position.array;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            positions[i3 + 1] += Math.sin(Date.now() * 0.0005 + i) * 0.003;
+        }
+        
+        particles.geometry.attributes.position.needsUpdate = true;
+        
+        renderer.render(scene, camera);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    animate();
+    
+    // Load student data from context if available
+    const studentData = {{ js_data|safe }};
+    console.log("Student Data:", studentData);
+});
+</script>
+{% endblock %}

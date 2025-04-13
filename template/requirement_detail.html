@@ -1,0 +1,508 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ requirement.company_name }} - Requirement Details{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    /* Main Layout */
+    .requirement-container {
+        padding: 20px;
+    }
+
+    /* Card Styles */
+    .detail-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        margin-bottom: 25px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .detail-card:hover {
+        box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+    }
+
+    .card-header {
+        padding: 20px;
+        border-bottom: 1px solid rgba(0,0,0,0.1);
+    }
+
+    /* Company Section */
+    .company-header {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        padding: 30px;
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 12px;
+        margin-bottom: 25px;
+    }
+
+    .company-logo {
+        width: 100px;
+        height: 100px;
+        background: #fff;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+        color: #6c757d;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+
+    .company-info h1 {
+        margin: 0;
+        font-size: 2rem;
+        color: #212529;
+    }
+
+    .company-meta {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    /* Status Badges */
+    .status-badge {
+        padding: 8px 15px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .status-scheduled {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-pending {
+        background-color: #fff3cd;
+        color: #664d03;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .stat-card {
+        background: #fff;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 600;
+        color: #0d6efd;
+        margin: 10px 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    /* Student List */
+    .student-list {
+        max-height: 600px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #6c757d #f8f9fa;
+    }
+
+    .student-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 15px 20px;
+        border-bottom: 1px solid #e9ecef;
+        transition: background-color 0.2s ease;
+    }
+
+    .student-item:hover {
+        background-color: #f8f9fa;
+    }
+
+    .student-info {
+        flex: 1;
+    }
+
+    .student-name {
+        font-weight: 500;
+        color: #212529;
+        margin-bottom: 5px;
+    }
+
+    .student-details {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    /* Status Pills */
+    .status-pill {
+        padding: 5px 12px;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        margin-right: 10px;
+    }
+
+    .status-selected {
+        background-color: #d1e7dd;
+        color: #0f5132;
+    }
+
+    .status-rejected {
+        background-color: #f8d7da;
+        color: #842029;
+    }
+
+    .status-pending {
+        background-color: #e2e3e5;
+        color: #41464b;
+    }
+
+    .status-on-hold {
+        background-color: #cff4fc;
+        color: #055160;
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-action {
+        padding: 8px 15px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+
+    /* Filters */
+    .filters-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+
+    .filter-group {
+        margin-bottom: 15px;
+    }
+
+    /* Custom Scrollbar */
+    .student-list::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .student-list::-webkit-scrollbar-track {
+        background: #f8f9fa;
+    }
+
+    .student-list::-webkit-scrollbar-thumb {
+        background: #6c757d;
+        border-radius: 3px;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .company-header {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .student-item {
+            flex-direction: column;
+            text-align: center;
+            gap: 10px;
+        }
+
+        .action-buttons {
+            justify-content: center;
+        }
+    }
+
+    /* Modal Styles */
+    .custom-modal .modal-header {
+        background: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .custom-modal .modal-footer {
+        background: #f8f9fa;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Loading States */
+    .loading-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255,255,255,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .spinner-border {
+        width: 3rem;
+        height: 3rem;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<div class="requirement-container">
+    <!-- Company Header -->
+    <div class="company-header">
+        <div class="company-logo">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="company-info">
+            <h1>{{ requirement.company_name }}</h1>
+            <div class="company-meta">
+                <span class="badge bg-light text-dark">{{ requirement.company_code }}</span>
+                {% if requirement.is_scheduled %}
+                    <span class="status-badge status-scheduled">
+                        <i class="fas fa-calendar-check"></i> Scheduled
+                    </span>
+                {% else %}
+                    <span class="status-badge status-pending">
+                        <i class="fas fa-clock"></i> Pending
+                    </span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="ms-auto">
+            <div class="action-buttons">
+                <a href="{% url 'requirement_list' %}" class="btn btn-outline-secondary btn-action">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+                <a href="{% url 'requirement_edit' requirement.id %}" class="btn btn-warning btn-action">
+                    <i class="fas fa-edit"></i> Edit
+                </a>
+                <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#exportModal">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <i class="fas fa-users fa-2x text-primary"></i>
+            <div class="stat-value">{{ total_students }}</div>
+            <div class="stat-label">Total Students</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-check-circle fa-2x text-success"></i>
+            <div class="stat-value">{{ selected_students }}</div>
+            <div class="stat-label">Selected</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-times-circle fa-2x text-danger"></i>
+            <div class="stat-value">{{ rejected_students }}</div>
+            <div class="stat-label">Rejected</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-clock fa-2x text-warning"></i>
+            <div class="stat-value">{{ pending_students }}</div>
+            <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card">
+            <i class="fas fa-pause-circle fa-2x text-info"></i>
+            <div class="stat-value">{{ on_hold_students }}</div>
+            <div class="stat-label">On Hold</div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Requirement Details -->
+        <div class="col-md-4">
+            <div class="detail-card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Requirement Details</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th>Created Date:</th>
+                            <td>{{ requirement.created_at|date:"F d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Requirement Date:</th>
+                            <td>{{ requirement.requirement_date|date:"F d, Y" }}</td>
+                        </tr>
+                        {% if requirement.is_scheduled %}
+                        <tr>
+                            <th>Schedule Date:</th>
+                            <td>{{ requirement.schedule_date|date:"F d, Y" }}</td>
+                        </tr>
+                        {% endif %}
+                        <tr>
+                            <th>Status:</th>
+                            <td>
+                                <select class="form-select form-select-sm" id="scheduleStatus">
+                                    <option value="pending" {% if not requirement.is_scheduled %}selected{% endif %}>Pending</option>
+                                    <option value="scheduled" {% if requirement.is_scheduled %}selected{% endif %}>Scheduled</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            {% if requirement.description %}
+            <div class="detail-card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
+                </div>
+                <div class="card-body">
+                    {{ requirement.description|linebreaks }}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Students Section -->
+        <div class="col-md-8">
+            <div class="detail-card">
+                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Assigned Students</h5>
+                    <a href="{% url 'requirement_students' requirement.id %}" class="btn btn-light btn-sm">
+                        <i class="fas fa-plus"></i> Add Students
+                    </a>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters-section">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="filter-group">
+                                <label class="form-label">Status Filter</label>
+                                <select class="form-select" id="statusFilter">
+                                    <option value="">All Status</option>
+                                    <option value="selected">Selected</option>
+                                    <option value="rejected">Rejected</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="on_hold">On Hold</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-8">
+                            <div class="filter-group">
+                                <label class="form-label">Search Students</label>
+                                <input type="text" class="form-control" id="studentSearch" 
+                                       placeholder="Search by name, degree, or contact...">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student List -->
+                <div class="student-list" id="studentList">
+                    {% for rs in requirement_students %}
+                    <div class="student-item" data-status="{{ rs.status }}">
+                        <div class="student-info">
+                            <div class="student-name">{{ rs.student.name }}</div>
+                            <div class="student-details">
+                                {{ rs.student.degree }} ({{ rs.student.stream }}) | 
+                                {{ rs.student.contact_number }}
+                            </div>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <div class="status-pill status-{{ rs.status }}">
+                                {{ rs.get_status_display }}
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        type="button" data-bs-toggle="dropdown">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{% url 'student_detail' rs.student.id %}">
+                                            <i class="fas fa-user me-2"></i> View Profile
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% for status in status_choices %}
+                                    <li>
+                                        <form method="post" 
+                                              action="{% url 'update_student_status' requirement.id rs.student.id %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="status" value="{{ status.0 }}">
+                                            <button type="submit" 
+                                                    class="dropdown-item {% if rs.status == status.0 %}active{% endif %}">
+                                                <i class="fas fa-{{ status.2 }} me-2 text-{{ status.3 }}"></i>
+                                                Mark as {{ status.1 }}
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endfor %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger remove-student-btn"
+                                                data-student-id="{{ rs.student.id }}"
+                                                data-student-name="{{ rs.student.name }}">
+                                            <i class="fas fa-trash-alt me-2"></i> Remove
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-5">
+                        <div class="text-muted">
+                            <i class="fas fa-users fa-3x mb-3"></i>
+                            <p>No students assigned to this requirement yet.</p>
+                        </div>
+                        <a href="{% url 'add_students_to_requirement' requirement.id %}" 
+   class="btn btn-primary">
+    <i class="fas fa-plus"></i> Add Students
+</a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

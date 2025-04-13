@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="jumbotron p-5 bg-light rounded-3">
+        <h1 class="display-4">Welcome to our site!</h1>
+        <p class="lead">This is a simple authentication system with Django.</p>
+        {% if user.is_authenticated %}
+            <p>You are logged in as {{ user.username }}.</p>
+            <a class="btn btn-primary" href="{% url 'profile' %}">View Profile</a>
+        {% else %}
+            <p>Please log in to access your profile.</p>
+            <a class="btn btn-primary" href="{% url 'login' %}">Log In</a>
+            <a class="btn btn-secondary" href="{% url 'register' %}">Register</a>
+        {% endif %}
+    </div>
+{% endblock %}

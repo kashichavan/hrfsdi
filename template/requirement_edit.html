@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Requirement - {{ requirement.company_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .edit-requirement-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .requirement-edit-card {
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+
+    .form-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .form-section-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #e9ecef;
+        padding-bottom: 10px;
+    }
+
+    .form-section-header i {
+        margin-right: 10px;
+        color: #0d6efd;
+    }
+
+    .required-field::after {
+        content: '*';
+        color: #dc3545;
+        margin-left: 5px;
+    }
+
+    .schedule-date-container {
+        transition: all 0.3s ease;
+    }
+
+    .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: #ccc;
+        transition: .4s;
+        border-radius: 34px;
+    }
+
+    .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 16px;
+        width: 16px;
+        left: 4px;
+        bottom: 4px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+    }
+
+    input:checked + .toggle-slider {
+        background-color: #2196F3;
+    }
+
+    input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+
+    .validation-error {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 5px;
+    }
+
+    .description-counter {
+        font-size: 0.8rem;
+        color: #6c757d;
+        text-align: right;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container edit-requirement-container">
+    <div class="card requirement-edit-card">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">
+                <i class="fas fa-edit me-2"></i>Edit Requirement
+            </h2>
+        </div>
+        <div class="card-body">
+            <form method="post" id="editRequirementForm">
+                {% csrf_token %}
+                
+                <!-- Company Information Section -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-building"></i>
+                        <h4 class="mb-0">Company Details</h4>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_company_name" class="form-label required-field">Company Name</label>
+                            <input type="text" 
+                                   name="company_name" 
+                                   id="id_company_name" 
+                                   class="form-control" 
+                                   value="{{ form.company_name.value }}" 
+                                   required
+                                   maxlength="255">
+                            {% if form.company_name.errors %}
+                                <div class="validation-error">
+                                    {{ form.company_name.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="id_company_code" class="form-label required-field">Company Code</label>
+                            <input type="text" 
+                                   name="company_code" 
+                                   id="id_company_code" 
+                                   class="form-control" 
+                                   value="{{ form.company_code.value }}" 
+                                   required
+                                   maxlength="50">
+                            {% if form.company_code.errors %}
+                                <div class="validation-error">
+                                    {{ form.company_code.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Requirement Details Section -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-calendar-alt"></i>
+                        <h4 class="mb-0">Requirement Details</h4>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_requirement_date" class="form-label required-field">Requirement Date</label>
+                            <input type="date" 
+                                   name="requirement_date" 
+                                   id="id_requirement_date" 
+                                   class="form-control" 
+                                   value="{{ form.requirement_date.value|date:'Y-m-d' }}" 
+                                   required>
+                            {% if form.requirement_date.errors %}
+                                <div class="validation-error">
+                                    {{ form.requirement_date.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Scheduled Requirement</label>
+                            <div class="d-flex align-items-center">
+                                <label class="toggle-switch me-3">
+                                    <input type="checkbox" 
+                                           name="is_scheduled" 
+                                           id="id_is_scheduled"
+                                           {% if form.is_scheduled.value %}checked{% endif %}>
+                                    <span class="toggle-slider"></span>
+                                </label>
+                                <span>Mark as Scheduled</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row schedule-date-container" id="scheduleDateContainer" 
+                         style="display: {{ form.is_scheduled.value|yesno:'block,none' }};">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_schedule_date" class="form-label required-field">Schedule Date</label>
+                            <input type="date" 
+                                   name="schedule_date" 
+                                   id="id_schedule_date" 
+                                   class="form-control" 
+                                   value="{{ form.schedule_date.value|date:'Y-m-d'|default:'' }}">
+                            {% if form.schedule_date.errors %}
+                                <div class="validation-error">
+                                    {{ form.schedule_date.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description Section -->
+                <div class="form-section">
+                    <div class="form-section-header">
+                        <i class="fas fa-align-left"></i>
+                        <h4 class="mb-0">Additional Description</h4>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_description" class="form-label">Description</label>
+                        <textarea 
+                            name="description" 
+                            id="id_description" 
+                            class="form-control" 
+                            rows="4" 
+                            maxlength="500"
+                        >{{ form.description.value|default:'' }}</textarea>
+                        <div class="description-counter" id="descriptionCounter">
+                            0 / 500 characters
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-end">
+                    <a href="{% url 'requirement_detail' requirement.id %}" class="btn btn-secondary me-2">
+                        <i class="fas fa-times"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Update Requirement
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle schedule date visibility
+        const isScheduledCheckbox = document.getElementById('id_is_scheduled');
+        const scheduleDateContainer = document.getElementById('scheduleDateContainer');
+        const scheduleDateInput = document.getElementById('id_schedule_date');
+
+        isScheduledCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                scheduleDateContainer.style.display = 'block';
+                scheduleDateInput.required = true;
+            } else {
+                scheduleDateContainer.style.display = 'none';
+                scheduleDateInput.required = false;
+                scheduleDateInput.value = '';
+            }
+        });
+
+        // Description character counter
+        const descriptionTextarea = document.getElementById('id_description');
+        const descriptionCounter = document.getElementById('descriptionCounter');
+
+        descriptionTextarea.addEventListener('input', function() {
+            const currentLength = this.value.length;
+            descriptionCounter.textContent = `${currentLength} / 500 characters`;
+            
+            if (currentLength > 500) {
+                this.value = this.value.substring(0, 500);
+                descriptionCounter.textContent = '500 / 500 characters';
+            }
+        });
+
+        // Form validation
+        const form = document.getElementById('editRequirementForm');
+        form.addEventListener('submit', function(event) {
+            let isValid = true;
+
+            // Company name validation
+            const companyName = document.getElementById('id_company_name');
+            if (!companyName.value.trim()) {
+                companyName.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                companyName.classList.remove('is-invalid');
+            }
+
+            // Company code validation
+            const companyCode = document.getElementById('id_company_code');
+            if (!companyCode.value.trim()) {
+                companyCode.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                companyCode.classList.remove('is-invalid');
+            }
+
+            // Requirement date validation
+            const requirementDate = document.getElementById('id_requirement_date');
+            if (!requirementDate.value) {
+                requirementDate.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                requirementDate.classList.remove('is-invalid');
+            }
+
+            // Schedule date validation (if scheduled)
+            if (isScheduledCheckbox.checked) {
+                if (!scheduleDateInput.value) {
+                    scheduleDateInput.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    scheduleDateInput.classList.remove('is-invalid');
+                }
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

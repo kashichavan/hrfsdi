@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Student Management System{% endblock %}</title>
+
+    <!-- Fonts -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@700;800;900&display=swap">
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ttskch/select2-bootstrap5-theme@1.3.0/dist/select2-bootstrap5.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- GSAP and ScrollTrigger -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #6366f1;
+            --primary-dark: #4338ca;
+            --secondary: #8b5cf6;
+            --accent: #f97316;
+            --light: #f8fafc;
+            --dark: #0f172a;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--gray-800);
+            background-color: #f9fafb;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding-top: 0;
+            position: relative;
+        }
+
+        /* Header styles */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.25rem 0;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            z-index: 20;
+        }
+        
+        .app-header .container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .app-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            letter-spacing: -0.5px;
+            margin: 0;
+        }
+        
+        .app-subtitle {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin: 0;
+            font-weight: 400;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .user-profile:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+        
+        .avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: white;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        
+        .user-info {
+            display: flex;
+            flex-direction: column;
+            line-height: 1.2;
+        }
+        
+        .user-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .user-role {
+            font-size: 0.75rem;
+            opacity: 0.8;
+        }
+
+        /* Navbar styles */
+        .app-navbar {
+            background-color: white;
+            padding: 0;
+            position: sticky;
+            top: 0;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            z-index: 19;
+        }
+        
+        .navbar-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .nav-item {
+            position: relative;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1.25rem 1.5rem;
+            color: var(--gray-700);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        
+        .nav-link:hover {
+            color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+        
+        .nav-link.active {
+            color: var(--primary);
+            box-shadow: inset 0 -3px 0 var(--primary);
+            font-weight: 600;
+        }
+        
+        .nav-link i {
+            font-size: 1.1rem;
+        }
+        
+        .nav-stats {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--gray-100);
+            border-radius: 50px;
+            font-weight: 500;
+            font-size: 0.875rem;
+            color: var(--gray-800);
+        }
+        
+        .nav-stats i {
+            color: var(--primary);
+        }
+        
+        .nav-count {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .navbar-toggler {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-700);
+            cursor: pointer;
+        }
+
+        /* Content styles */
+        .content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        
+        .page-title {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            color: var(--gray-900);
+            font-size: 1.75rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            border: none;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid var(--gray-200);
+            padding: 1.25rem 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-title {
+            font-weight: 600;
+            margin: 0;
+            color: var(--gray-900);
+            font-size: 1.25rem;
+        }
+
+        /* Footer styles */
+        .app-footer {
+            background-color: white;
+            border-top: 1px solid var(--gray-200);
+            padding: 1.5rem 0;
+            margin-top: auto;
+        }
+        
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .logo-icon {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+        
+        .logo-text {
+            font-weight: 600;
+            color: var(--gray-800);
+            font-size: 1.1rem;
+        }
+        
+        .copyright {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+        }
+        
+        .footer-links {
+            display: flex;
+            gap: 1.5rem;
+        }
+        
+        .footer-link {
+            color: var(--gray-700);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: color 0.2s ease;
+        }
+        
+        .footer-link:hover {
+            color: var(--primary);
+        }
+        
+        .footer-version {
+            font-size: 0.875rem;
+            color: var(--gray-700);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .version-badge {
+            background-color: var(--gray-100);
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-weight: 500;
+            color: var(--primary);
+        }
+
+        /* Alert styles */
+        .alert-container {
+            position: fixed;
+            top: 7rem;
+            right: 1.5rem;
+            z-index: 1050;
+            max-width: 350px;
+        }
+        
+        .alert {
+            border: none;
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .alert-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+        
+        .alert-danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+        
+        .alert-warning {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+        
+        .alert-info {
+            background-color: rgba(59, 130, 246, 0.1);
+            color: var(--info);
+        }
+
+        /* Utility styles */
+        .loader {
+            border: 3px solid rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            border-top: 3px solid var(--primary);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .progress {
+            height: 10px;
+            border-radius: 1rem;
+            overflow: hidden;
+            background-color: var(--gray-200);
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .btn {
+            padding: 0.625rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .dropdown-menu {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 0.5rem;
+        }
+        
+        .dropdown-item {
+            padding: 0.625rem 1rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .dropdown-item:hover, .dropdown-item:focus {
+            background-color: rgba(99, 102, 241, 0.1);
+            color: var(--primary);
+        }
+        
+        .dropdown-item i {
+            font-size: 1rem;
+            width: 1.5rem;
+            text-align: center;
+            color: var(--gray-700);
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            border-color: var(--gray-200);
+        }
+
+        /* Responsive styles */
+        @media (max-width: 992px) {
+            .navbar-toggler {
+                display: block;
+            }
+            
+            .navbar-container {
+                padding: 0.75rem 0;
+            }
+            
+            .nav-menu {
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: white;
+                flex-direction: column;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                height: 0;
+                overflow: hidden;
+                transition: height 0.3s ease;
+            }
+            
+            .nav-menu.show {
+                height: auto;
+            }
+            
+            .nav-link {
+                padding: 1rem 1.5rem;
+            }
+            
+            .nav-link.active {
+                box-shadow: inset 3px 0 0 var(--primary);
+            }
+            
+            .user-profile .user-info {
+                display: none;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+            
+            .footer-links {
+                flex-direction: column;
+                gap: 0.75rem;
+                align-items: center;
+            }
+        }
+
+        /* Animation classes for GSAP */
+        .fade-in {
+            opacity: 0;
+        }
+        
+        .slide-up {
+            transform: translateY(20px);
+            opacity: 0;
+        }
+        
+        .slide-in-right {
+            transform: translateX(20px);
+            opacity: 0;
+        }
+        
+        .scale-in {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+    </style>
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<!-- Header -->
+<header class="app-header fade-in">
+    <div class="container">
+        <div class="header-branding">
+            <h1 class="app-title">Student Management System</h1>
+            <p class="app-subtitle">Manage students with ease</p>
+        </div>
+        <div class="header-actions">
+            <div class="dropdown">
+                <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
+                    <div class="avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name">Admin User</div>
+                        <div class="user-role">Administrator</div>
+                    </div>
+                    <i class="fas fa-chevron-down ms-2"></i>
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> My Profile</a></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navbar -->
+<nav class="app-navbar slide-up">
+    <div class="container navbar-container">
+        <button class="navbar-toggler" type="button">
+            <i class="fas fa-bars"></i>
+        </button>
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/' %}active{% endif %}" href="{% url 'student_list' %}">
+                    <i class="fas fa-users"></i>
+                    <span>All Students</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/upload/' %}active{% endif %}" href="{% url 'upload_excel' %}">
+                    <i class="fas fa-file-excel"></i>
+                    <span>Upload Excel</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/students/' %}active{% endif %}" href="{% url 'student_list' %}">
+                    <i class="fas fa-user-graduate"></i>
+                    <span>Students</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link {% if request.path == '/requirements/' %}active{% endif %}" href="{% url 'requirement_list' %}">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Requirements</span>
+                </a>
+            </li>
+        </ul>
+        <div class="nav-stats">
+            <i class="fas fa-database"></i>
+            <span>Records:</span>
+            <span class="nav-count" id="record-count">{{ total_count|default:"0" }}</span>
+        </div>
+    </div>
+</nav>
+
+<!-- Alerts -->
+<div class="alert-container">
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'warning' %}exclamation-triangle{% elif message.tags == 'danger' %}times-circle{% else %}info-circle{% endif %} me-2"></i>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<!-- Content Block -->
+<div class="content container">
+    {% block content %}{% endblock %}
+</div>
+
+<!-- Footer -->
+<footer class="app-footer slide-up">
+    <div class="container">
+        <div class="footer-content">
+            <div class="footer-logo">
+                <div class="logo-icon">
+                    <i class="fas fa-graduation-cap"></i>
+                </div>
+                <div class="logo-text">Student Management System</div>
+            </div>
+            <div class="copyright">
+                &copy; {% now "Y" %} All Rights Reserved
+            </div>
+            <div class="footer-links">
+                <a href="#" class="footer-link">Privacy Policy</a>
+                <a href="#" class="footer-link">Terms of Service</a>
+                <a href="#" class="footer-link">Help & Support</a>
+            </div>
+            <div class="footer-version">
+                <span>System Version:</span>
+                <span class="version-badge">1.0.0</span>
+            </div>
+        </div>
+    </div>
+</footer>
+
+<!-- Scripts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // GSAP animations
+        gsap.registerPlugin(ScrollTrigger);
+        
+        // Header animation
+        gsap.to('.fade-in', {
+            opacity: 1,
+            duration: 1,
+            ease: 'power2.out'
+        });
+        
+        // Navbar animation
+        gsap.to('.slide-up', {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            delay: 0.3,
+            ease: 'power2.out'
+        });
+        
+        // Content animations
+        gsap.utils.toArray('.scale-in').forEach(element => {
+            gsap.to(element, {
+                scale: 1,
+                opacity: 1,
+                duration: 0.6,
+                ease: 'back.out(1.7)',
+                scrollTrigger: {
+                    trigger: element,
+                    start: 'top 85%'
+                }
+            });
+        });
+        
+        // Navbar toggle for mobile
+        const navbarToggler = document.querySelector('.navbar-toggler');
+        const navMenu = document.querySelector('.nav-menu');
+        
+        navbarToggler.addEventListener('click', function() {
+            navMenu.classList.toggle('show');
+        });
+        
+        // Alert auto-dismiss
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
+        
+        // Delete confirmation
+        $('.delete-confirm').on('click', function(e) {
+            if (!confirm('Are you sure you want to delete this item?')) {
+                e.preventDefault();
+            }
+        });
+        
+        // Initialize Select2
+        $('select.form-select').select2({
+            theme: 'bootstrap-5',
+            width: '100%'
+        });
+    });
+</script>
+
+{% block extra_js %}{% endblock %}
+</body>
+</html>
