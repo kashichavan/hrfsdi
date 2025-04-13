@@ -1,8 +1,8 @@
 # urls.py
 from django.urls import path
 from . import views
-
-qpp_name='student_data'
+from .apps import StudentDataConfig
+app_name = StudentDataConfig.name
 
 urlpatterns = [
     # Dashboard URLs

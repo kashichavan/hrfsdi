@@ -548,7 +548,7 @@
             <div class="dropdown">
                 <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="avatar">
-                        <i class="fas fa-user"></i>
+                        {{ request.user.get_initials }}
                     </div>
                     <div class="user-info">
                         <div class="user-name">Admin User</div>
@@ -557,10 +557,10 @@
                     <i class="fas fa-chevron-down ms-2"></i>
                 </div>
                 <ul class="dropdown-menu dropdown-menu-end">
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-user-circle"></i> My Profile</a></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Settings</a></li>
+                    <li><a class="dropdown-item" href="{% url 'profile' %}"><i class="fas fa-user-circle"></i> My Profile</a></li>
+                    
                     <li><hr class="dropdown-divider"></li>
-                    <li><a class="dropdown-item" href="#"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    <li><a class="dropdown-item" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
                 </ul>
             </div>
         </div>
