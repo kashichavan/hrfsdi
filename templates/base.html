@@ -787,7 +787,7 @@
             <div class="dropdown">
                 <div class="user-profile" data-bs-toggle="dropdown" aria-expanded="false">
                     <div class="avatar">
-                        <i class="fas fa-user"></i>
+                        {{ request.user.get_initials }}
                     </div>
                     <div class="user-info">
                         <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
@@ -805,7 +805,10 @@
                 </div>
                 <ul class="dropdown-menu dropdown-menu-end">
                     <li><a class="dropdown-item" href="{% url 'accounts:profile' %}"><i class="fas fa-user-circle"></i> My Profile</a></li>
+                    
+                    <li><hr class="dropdown-divider"></li>
                     <li><a class="dropdown-item" href="{% url 'accounts:logout' %}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+
                 </ul>
             </div>
         </div>

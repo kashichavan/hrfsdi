@@ -208,6 +208,7 @@
         const fileUploadWrapper = document.getElementById('fileUploadWrapper');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
         
+
        // Replace the checkbox event listener with this
 const scheduleRadios = document.querySelectorAll('input[name="is_scheduled"]');
 const scheduleDateContainer = document.getElementById('scheduleDateContainer');
@@ -219,6 +220,13 @@ scheduleDateContainer.style.display = document.querySelector('input[name="is_sch
 scheduleRadios.forEach(radio => {
     radio.addEventListener('change', function() {
         if (this.value === '1') {
+        // Handle scheduled checkbox
+        const isScheduledCheckbox = document.getElementById('id_is_scheduled');
+        const scheduleDateContainer = document.getElementById('scheduleDateContainer');
+        
+        // Initialize the schedule date container visibility
+        if (isScheduledCheckbox.checked && scheduleDateContainer) {
+
             scheduleDateContainer.style.display = 'block';
         } else {
             scheduleDateContainer.style.display = 'none';

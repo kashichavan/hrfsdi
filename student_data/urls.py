@@ -2,9 +2,11 @@
 from django.urls import path
 from . import views
 
+
 app_name='student_data'
 
-
+from .apps import StudentDataConfig
+app_name = StudentDataConfig.name
 
 urlpatterns = [
     # Dashboard URLs
