@@ -23,5 +23,6 @@
         "dest": "hrfsdi/wsgi.py"  
       }
     ],
-    "outputDirectory": "static"
+    "outputDirectory": "static",
+    "ignore": ["tests/", "docs/", "*.md"]
 }
