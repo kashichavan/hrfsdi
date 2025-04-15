@@ -11,6 +11,7 @@ class UserRegisterForm(UserCreationForm):
         model = User
         fields = ['username', 'email', 'password1', 'password2']
 
+from .models import Profile  # or wherever your Profile model is
 class UserUpdateForm(forms.ModelForm):
     email = forms.EmailField()
     

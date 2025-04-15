@@ -197,7 +197,7 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 
 from .models import Student  # Make sure this import exists and matches your actual model location
-
+@login_required
 def student_list(request):
     # Get filter params
     search_query = request.GET.get('search', '')
