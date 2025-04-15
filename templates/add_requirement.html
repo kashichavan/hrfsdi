@@ -14,7 +14,7 @@
     
     .form-section h3 {
         margin-bottom: 20px;
-        color: #0d6efd;
+        color: #f9a909;
         border-bottom: 1px solid #dee2e6;
         padding-bottom: 10px;
     }
@@ -30,7 +30,7 @@
     }
     
     .file-upload-wrapper:hover {
-        border-color: #0d6efd;
+        border-color: #fd750d;
     }
     
     .file-upload-wrapper.has-file {
@@ -58,6 +58,32 @@
     .schedule-date-container {
         display: none;
     }
+
+    /* Style for the toggle buttons */
+.btn-group-toggle .btn {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-group-toggle .btn-outline-danger.active {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn-group-toggle .btn-outline-success.active {
+    background-color: #198754;
+    color: white;
+}
+
+.btn-group-toggle .btn-outline-danger:not(.active):hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.btn-group-toggle .btn-outline-success:not(.active):hover {
+    background-color: rgba(25, 135, 84, 0.1);
+}
+    
 </style>
 {% endblock %}
 
@@ -99,10 +125,14 @@
                                 </div>
                                 
                                 <div class="col-md-6 mb-3">
-                                    <div class="form-check mt-4">
-                                        {{ form.is_scheduled.errors }}
-                                        <input type="checkbox" name="is_scheduled" id="id_is_scheduled" class="form-check-input" {% if form.is_scheduled.value %}checked{% endif %}>
-                                        <label for="id_is_scheduled" class="form-check-label">Is this requirement scheduled?</label>
+                                    <label class="form-label">Is this requirement scheduled?*</label>
+                                    {{ form.is_scheduled.errors }}
+                                    <div class="btn-group w-100" role="group">
+                                        <input type="radio" class="btn-check" name="is_scheduled" id="id_is_scheduled_no" value="0" autocomplete="off" {% if not form.is_scheduled.value %}checked{% endif %}>
+                                        <label class="btn btn-outline-danger" for="id_is_scheduled_no">No</label>
+                                        
+                                        <input type="radio" class="btn-check" name="is_scheduled" id="id_is_scheduled_yes" value="1" autocomplete="off" {% if form.is_scheduled.value %}checked{% endif %}>
+                                        <label class="btn btn-outline-success" for="id_is_scheduled_yes">Yes</label>
                                     </div>
                                 </div>
                             </div>
@@ -154,7 +184,7 @@
                         </div>
                         
                         <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
-                            <a href="{% url 'requirement_list' %}" class="btn btn-secondary me-md-2">
+                            <a href="{% url 'student_data:requirement_list' %}" class="btn btn-secondary me-md-2">
                                 <i class="fas fa-times"></i> Cancel
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -178,23 +208,24 @@
         const fileUploadWrapper = document.getElementById('fileUploadWrapper');
         const fileNameDisplay = document.getElementById('fileNameDisplay');
         
-        // Handle scheduled checkbox
-        const isScheduledCheckbox = document.getElementById('id_is_scheduled');
-        const scheduleDateContainer = document.getElementById('scheduleDateContainer');
-        
-        // Initialize the schedule date container visibility
-        if (isScheduledCheckbox.checked) {
+       // Replace the checkbox event listener with this
+const scheduleRadios = document.querySelectorAll('input[name="is_scheduled"]');
+const scheduleDateContainer = document.getElementById('scheduleDateContainer');
+
+// Initialize based on default selection
+scheduleDateContainer.style.display = document.querySelector('input[name="is_scheduled"]:checked').value === '1' ? 'block' : 'none';
+
+// Handle radio button changes
+scheduleRadios.forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === '1') {
             scheduleDateContainer.style.display = 'block';
+        } else {
+            scheduleDateContainer.style.display = 'none';
         }
+    });
+});
         
-        // Toggle schedule date field visibility
-        isScheduledCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                scheduleDateContainer.style.display = 'block';
-            } else {
-                scheduleDateContainer.style.display = 'none';
-            }
-        });
         
         // Open file dialog when browse button is clicked
         browseButton.addEventListener('click', function() {

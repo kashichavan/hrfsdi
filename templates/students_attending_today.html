@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Attending Interview Today{% endblock %}
+
+{% block content %}
+
+    <div class="container my-4">
+        <div class="card shadow">
+            <div class="card-header text-white" style="background: linear-gradient(to right, #ff7800, #ff9d45, #ff7800); border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(255, 120, 0, 0.3);">
+                <h2 class="text-center mb-0" style="font-family: 'Poppins', sans-serif; font-weight: 600; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); color: #ffffff;">Students Attending Interview on {{ today }}</h2>
+            </div>
+            <div class="card-body">
+                {% if students_today %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Student Name</th>
+                                    <th>Contact Number</th>
+                                    <th>Degree</th>
+                                    <th>Stream</th>
+                                    <th>YOP</th>
+                                    <th>Company</th>
+                                    <th>Status</th>
+                                    <th>Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for rs in students_today %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'student_data:student_detail' rs.student.id %}" class="text-primary font-weight-bold">
+                                                {{ rs.student.name }}
+                                            </a>
+                                        </td>
+                                        <td>{{ rs.student.contact_number }}</td>
+                                        <td>{{ rs.student.degree }}</td>
+                                        <td>{{ rs.student.stream }}</td>
+                                        <td>{{ rs.student.yop }}</td>
+                                        <td>{{ rs.requirement.company_name }}</td>
+                                        <td>
+                                            <span class="badge {% if rs.status == 'Selected' %}badge-success{% elif rs.status == 'Pending' %}badge-warning{% elif rs.status == 'Rejected' %}badge-danger{% else %}badge-secondary{% endif %}">
+                                                {{ rs.status }}
+                                            </span>
+                                        </td>
+                                        <td>{{ rs.requirement.schedule_time|default:"-" }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info text-center">
+                        <p class="mb-0">No students are attending interviews today.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <style>
+        /* Additional styles for the card header */
+        .card-header {
+            position: relative;
+            overflow: hidden;
+            border: none;
+        }
+        
+        .card-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 10%;
+            right: 10%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 100%;
+        }
+        
+        /* For a more premium look, uncomment this section:
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+        */
+        
+        /* Import font if needed */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        </style>
+{% endblock %}

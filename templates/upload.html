@@ -1,0 +1,602 @@
+{% extends 'base.html' %}
+
+{% block title %}Upload Student Excel{% endblock %}
+
+{% block head %}
+<!-- Include unique fonts -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&family=Nunito:wght@700;800;900&display=swap">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<style>
+    :root {
+        --primary: #f97316; /* Main orange */
+        --primary-light: #fb923c; /* Lighter orange */
+        --primary-dark: #ea580c; /* Darker orange */
+        --secondary: #fdba74; /* Light orange */
+        --accent: #ffffff; /* White accent */
+        --dark-bg: #fef9f5; /* Very light orange background */
+        --card-bg: #ffffff; /* Card background */
+        --text-dark: #1e293b; /* Dark text */
+        --text-muted: #64748b; /* Muted text */
+        --gradient-1: linear-gradient(135deg, #f97316, #fdba74);
+    }
+
+    body {
+        background-color: var(--dark-bg);
+        font-family: 'Quicksand', sans-serif;
+        color: var(--text-dark);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    /* Create animated background with orange particles */
+    .particles-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        overflow: hidden;
+    }
+
+    .particle {
+        position: absolute;
+        background-color: var(--primary-light);
+        border-radius: 50%;
+        opacity: 0.15;
+        pointer-events: none;
+    }
+
+    .upload-wrapper {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .upload-card {
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 3rem 2.5rem;
+        box-shadow: 0 20px 60px rgba(249, 115, 22, 0.15), 0 10px 20px rgba(249, 115, 22, 0.1);
+        width: 100%;
+        max-width: 500px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    .upload-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 8px;
+        background: var(--gradient-1);
+    }
+
+    .upload-card::after {
+        content: '';
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 40%;
+        height: 30px;
+        background-color: rgba(249, 115, 22, 0.05);
+        border-bottom-left-radius: 100px;
+    }
+
+    .card-heading {
+        margin-bottom: 3rem;
+        position: relative;
+    }
+
+    h2 {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: 2.2rem;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .upload-subtitle {
+        color: var(--text-muted);
+        font-size: 1rem;
+        margin-top: 0.5rem;
+    }
+
+    .file-drop-area {
+        border: 2px dashed var(--primary-light);
+        border-radius: 16px;
+        padding: 2.5rem 1.5rem;
+        background: rgba(253, 186, 116, 0.05);
+        transition: all 0.3s ease;
+        margin-bottom: 2rem;
+        cursor: pointer;
+        position: relative;
+    }
+
+    .file-drop-area:hover {
+        background: rgba(253, 186, 116, 0.1);
+        border-color: var(--primary);
+    }
+
+    .file-drop-area.dragging {
+        background: rgba(253, 186, 116, 0.15);
+        border-color: var(--primary);
+        transform: scale(1.02);
+    }
+
+    .file-icon {
+        font-size: 3rem;
+        color: var(--primary);
+        margin-bottom: 1rem;
+        opacity: 0.8;
+    }
+
+    .drop-text {
+        font-weight: 600;
+        color: var(--primary-dark);
+        margin-bottom: 0.5rem;
+    }
+
+    .file-info {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+    }
+
+    .file-selected {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 0.75rem;
+        background: rgba(253, 186, 116, 0.1);
+        border-radius: 12px;
+        padding: 0.75rem 1rem;
+        margin-top: 1rem;
+    }
+
+    .file-selected i {
+        color: var(--primary);
+    }
+
+    .file-name {
+        font-weight: 600;
+        color: var(--text-dark);
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .progress-container {
+        height: 10px;
+        background: #fff0e5;
+        border-radius: 20px;
+        overflow: hidden;
+        margin: 1.5rem 0;
+        position: relative;
+        transform: scaleX(0);
+        transform-origin: left;
+    }
+
+    .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: var(--gradient-1);
+        border-radius: 20px;
+        transition: width 0.3s ease;
+    }
+
+    .submit-btn {
+        background: var(--gradient-1);
+        border: none;
+        color: #fff;
+        padding: 1rem 2rem;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(249, 115, 22, 0.2);
+        position: relative;
+        overflow: hidden;
+        width: 100%;
+        display: block;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(249, 115, 22, 0.3);
+    }
+
+    .submit-btn:active {
+        transform: translateY(1px);
+    }
+
+    .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: all 0.5s ease;
+    }
+
+    .submit-btn:hover::before {
+        left: 100%;
+    }
+
+    .upload-success {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 2rem 0;
+    }
+
+    .success-icon {
+        font-size: 4rem;
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+    }
+
+    .success-message {
+        font-family: 'Nunito', sans-serif;
+        font-weight: 800;
+        font-size: 1.8rem;
+        color: var(--primary-dark);
+        margin-bottom: 1rem;
+    }
+
+    .success-details {
+        color: var(--text-muted);
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 576px) {
+        .upload-card {
+            padding: 2rem 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+        }
+
+        .file-drop-area {
+            padding: 1.5rem 1rem;
+        }
+
+        .file-icon {
+            font-size: 2.5rem;
+        }
+
+        .submit-btn {
+            padding: 0.8rem 1.5rem;
+        }
+    }
+</style>
+
+<div class="particles-container" id="particles"></div>
+
+<div class="upload-wrapper">
+    <div class="upload-card" id="uploadCard">
+        <div class="card-heading">
+            <h2><i class="fas fa-file-excel"></i> Upload Excel</h2>
+            <p class="upload-subtitle">Upload your student data in Excel format (.xlsx, .xls)</p>
+        </div>
+
+        <form id="uploadForm" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="file-drop-area" id="dropArea">
+                <i class="fas fa-cloud-upload-alt file-icon"></i>
+                <div class="drop-text">Drag & Drop your file here</div>
+                <div class="file-info">or click to browse</div>
+                <input type="file" name="excel_file" id="fileInput" accept=".xlsx, .xls" required>
+                
+                <div class="file-selected" id="fileSelected">
+                    <i class="fas fa-file-excel"></i>
+                    <span class="file-name" id="fileName">No file selected</span>
+                </div>
+            </div>
+            
+            <div class="progress-container" id="progressContainer">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            
+            <button type="submit" class="submit-btn" id="submitBtn">
+                <span id="submitText">Upload & Process</span>
+            </button>
+        </form>
+        
+        <div class="upload-success" id="uploadSuccess">
+            <i class="fas fa-check-circle success-icon"></i>
+            <div class="success-message">Upload Successful!</div>
+            <p class="success-details">Your student data has been processed successfully.</p>
+            <a href="/students/" class="submit-btn">View Students</a>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Create animated background particles
+        const particlesContainer = document.getElementById('particles');
+        const numParticles = 50;
+        
+        for (let i = 0; i < numParticles; i++) {
+            createParticle();
+        }
+        
+        function createParticle() {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            
+            // Random size between 20px and 120px
+            const size = Math.random() * 100 + 20;
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            // Random position
+            const posX = Math.random() * 100;
+            const posY = Math.random() * 100;
+            particle.style.left = `${posX}%`;
+            particle.style.top = `${posY}%`;
+            
+            // Random animation duration
+            const duration = Math.random() * 20 + 10;
+            particle.style.animation = `float ${duration}s infinite ease-in-out`;
+            
+            particlesContainer.appendChild(particle);
+            
+            // Create a random floating animation
+            gsap.to(particle, {
+                x: `${Math.random() * 200 - 100}px`,
+                y: `${Math.random() * 200 - 100}px`,
+                duration: duration,
+                repeat: -1,
+                yoyo: true,
+                ease: "sine.inOut"
+            });
+        }
+        
+        // Animate card entrance
+        gsap.to("#uploadCard", {
+            opacity: 1,
+            y: 0,
+            duration: 0.8,
+            ease: "back.out(1.5)",
+            delay: 0.3
+        });
+        
+        // File drop functionality
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileSelected = document.getElementById('fileSelected');
+        const fileName = document.getElementById('fileName');
+        const form = document.getElementById('uploadForm');
+        const progressBar = document.getElementById('progressBar');
+        const progressContainer = document.getElementById('progressContainer');
+        const submitBtn = document.getElementById('submitBtn');
+        const submitText = document.getElementById('submitText');
+        const uploadSuccess = document.getElementById('uploadSuccess');
+        
+        // Prevent default drag behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+            document.body.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        // Highlight drop area when dragging over it
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        // Handle file drop
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        // Handle file selection via input
+        fileInput.addEventListener('change', handleFiles, false);
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        function highlight() {
+            dropArea.classList.add('dragging');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('dragging');
+        }
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            fileInput.files = files;
+            handleFiles();
+        }
+        
+        function handleFiles() {
+            if (fileInput.files.length > 0) {
+                const file = fileInput.files[0];
+                displayFileInfo(file);
+                
+                // Reveal progress bar with animation
+                gsap.fromTo(progressContainer, 
+                    { scaleX: 0 },
+                    { scaleX: 1, duration: 0.5, ease: "back.out(1.5)" }
+                );
+            }
+        }
+        
+        function displayFileInfo(file) {
+            fileName.textContent = file.name;
+            fileSelected.style.display = 'flex';
+            
+            // Animate the file selection notification
+            gsap.from(fileSelected, {
+                y: -20,
+                opacity: 0,
+                duration: 0.5,
+                ease: "back.out(1.7)"
+            });
+        }
+        
+        // Handle form submission
+        form.addEventListener("submit", function(e) {
+            e.preventDefault();
+            
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const formData = new FormData();
+            formData.append("excel_file", file);
+            
+            // Disable button and update text
+            submitBtn.disabled = true;
+            
+            // Animate button text change
+            gsap.to(submitText, {
+                opacity: 0,
+                duration: 0.3,
+                onComplete: function() {
+                    submitText.textContent = "Uploading...";
+                    gsap.to(submitText, { opacity: 1, duration: 0.3 });
+                }
+            });
+            
+            // Add loading animation to button
+            gsap.to(submitBtn, {
+                background: 'linear-gradient(135deg, #ea580c, #f97316)',
+                repeat: -1,
+                yoyo: true,
+                duration: 1
+            });
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", "", true);
+            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
+            
+            xhr.upload.addEventListener("progress", function(e) {
+                if (e.lengthComputable) {
+                    const percent = (e.loaded / e.total) * 100;
+                    
+                    // Animate progress bar
+                    gsap.to(progressBar, { 
+                        width: percent + "%", 
+                        duration: 0.3,
+                        ease: "power1.out"
+                    });
+                }
+            });
+            
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    // Complete the progress bar
+                    gsap.to(progressBar, { 
+                        width: "100%", 
+                        duration: 0.3,
+                        ease: "power1.out"
+                    });
+                    
+                    // Show success animation
+                    setTimeout(() => {
+                        gsap.to(form, {
+                            opacity: 0,
+                            y: 20,
+                            duration: 0.5,
+                            onComplete: function() {
+                                form.style.display = 'none';
+                                uploadSuccess.style.display = 'flex';
+                                
+                                // Animate success message
+                                gsap.from(uploadSuccess, {
+                                    opacity: 0,
+                                    y: -20,
+                                    duration: 0.6,
+                                    ease: "back.out(1.5)"
+                                });
+                                
+                                // Redirect after showing success message
+                                setTimeout(() => {
+                                    window.location.href = "/";
+                                }, 2000);
+                            }
+                        });
+                    }, 500);
+                } else {
+                    alert("Upload failed. Please try again.");
+                    
+                    // Reset button
+                    submitBtn.disabled = false;
+                    gsap.to(submitText, {
+                        opacity: 0,
+                        duration: 0.3,
+                        onComplete: function() {
+                            submitText.textContent = "Upload & Process";
+                            gsap.to(submitText, { opacity: 1, duration: 0.3 });
+                            gsap.killTweensOf(submitBtn);
+                            gsap.to(submitBtn, {
+                                background: 'linear-gradient(135deg, #f97316, #fdba74)',
+                                duration: 0.3
+                            });
+                        }
+                    });
+                }
+            };
+            
+            xhr.send(formData);
+        });
+    });
+</script>
+
+<style>
+    /* Add floating animation for particles */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
+</style>
+{% endblock %}

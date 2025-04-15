@@ -6,6 +6,13 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from .forms import UserRegisterForm, UserUpdateForm, ProfileUpdateForm
 
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
+def custom_logout(request):
+    logout(request)
+    return redirect('accounts:login')  # Replace 'home' with your desired redirect URL
+
 def home(request):
     return render(request, 'accounts/home.html')
 
@@ -16,7 +23,7 @@ def register(request):
             form.save()
             username = form.cleaned_data.get('username')
             messages.success(request, f'Account created for {username}! You can now log in.')
-            return redirect('login')
+            return redirect('accounts:login')
     else:
         form = UserRegisterForm()
     return render(request, 'accounts/register.html', {'form': form})

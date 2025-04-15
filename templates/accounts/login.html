@@ -1,0 +1,570 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="login-container">
+  <div class="form-container">
+    <div class="header-section">
+      <h2>Log In</h2>
+      <p>Welcome back! Enter your credentials to access your account.</p>
+    </div>
+    
+    <div class="form-section">
+      <form method="post" id="login-form">
+        {% csrf_token %}
+        
+        <div class="form-errors">
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              Your credentials didn't match. Please try again.
+            </div>
+          {% endif %}
+          
+          {% if next %}
+            {% if user.is_authenticated %}
+              <div class="alert alert-warning">
+                Your account doesn't have access to this page. To proceed,
+                please login with an account that has access.
+              </div>
+            {% else %}
+              <div class="alert alert-info">
+                Please login to see this page.
+              </div>
+            {% endif %}
+          {% endif %}
+        </div>
+        
+        <div class="form-group">
+          <label for="{{ form.username.id_for_label }}">Username or Email</label>
+          {{ form.username }}
+        </div>
+        
+        <div class="form-group">
+          <label for="{{ form.password.id_for_label }}">Password</label>
+          {{ form.password }}
+        </div>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Login</button>
+        </div>
+        
+        <div class="form-links">
+          <a href="{% url 'accounts:password_reset' %}">Forgot your password?</a>
+          <span class="divider">|</span>
+          <a href="{% url 'accounts:register' %}">Register a new account</a>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div class="threejs-container">
+    <div id="login-scene"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // GSAP Animation
+    const timeline = gsap.timeline();
+    
+    timeline.from('.form-container', {
+      x: -100,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    });
+    
+    timeline.from('.header-section', {
+      y: -30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'back.out(1.7)'
+    }, "-=0.4");
+    
+    timeline.from('.form-group', {
+      y: 20,
+      opacity: 0,
+      stagger: 0.2,
+      duration: 0.4,
+      ease: 'power2.out'
+    }, "-=0.2");
+    
+    timeline.from('.form-actions', {
+      scale: 0.8,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'back.out(1.7)'
+    }, "-=0.1");
+    
+    timeline.from('.form-links', {
+      y: 10,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power2.out'
+    }, "-=0.2");
+    
+    // Three.js Extraordinary Design
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth / 2, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    renderer.shadowMap.enabled = true;
+    document.getElementById('login-scene').appendChild(renderer.domElement);
+    
+    // Create multiple particle systems
+    const particleCount = 2000;
+    const particles = new THREE.Group();
+    scene.add(particles);
+    
+    // Function to create particle system
+    function createParticleSystem(color, size, speed, distance) {
+      const geometry = new THREE.BufferGeometry();
+      const positions = [];
+      const velocities = [];
+      
+      for (let i = 0; i < particleCount; i++) {
+        // Position particles in a sphere
+        const theta = Math.random() * Math.PI * 2;
+        const phi = Math.acos(2 * Math.random() - 1);
+        const r = distance + (Math.random() * 2 - 1);
+        
+        const x = r * Math.sin(phi) * Math.cos(theta);
+        const y = r * Math.sin(phi) * Math.sin(theta);
+        const z = r * Math.cos(phi);
+        
+        positions.push(x, y, z);
+        
+        // Random velocities for animation
+        velocities.push(
+          (Math.random() - 0.5) * speed,
+          (Math.random() - 0.5) * speed,
+          (Math.random() - 0.5) * speed
+        );
+      }
+      
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.velocities = velocities;
+      
+      const material = new THREE.PointsMaterial({
+        color: color,
+        size: size,
+        transparent: true,
+        opacity: 0.7,
+        blending: THREE.AdditiveBlending
+      });
+      
+      return new THREE.Points(geometry, material);
+    }
+    
+    // Create futuristic torus knot
+    function createTorusKnot() {
+      const geometry = new THREE.TorusKnotGeometry(2, 0.6, 100, 32, 2, 3);
+      const material = new THREE.MeshPhysicalMaterial({
+        color: 0xff7700,
+        metalness: 0.7,
+        roughness: 0.2,
+        emissive: 0xff5500,
+        emissiveIntensity: 0.3,
+        transparent: true,
+        opacity: 0.9
+      });
+      
+      const torusKnot = new THREE.Mesh(geometry, material);
+      return torusKnot;
+    }
+    
+    // Create futuristic rings
+    function createRings(count, radius, tubeRadius) {
+      const group = new THREE.Group();
+      
+      for (let i = 0; i < count; i++) {
+        const geometry = new THREE.TorusGeometry(
+          radius + (i * 0.5),
+          tubeRadius,
+          16,
+          100
+        );
+        
+        const material = new THREE.MeshPhysicalMaterial({
+          color: 0xff7700,
+          metalness: 0.7,
+          roughness: 0.3,
+          emissive: 0xff8800,
+          emissiveIntensity: 0.2,
+          transparent: true,
+          opacity: 0.8 - (i * 0.15)
+        });
+        
+        const ring = new THREE.Mesh(geometry, material);
+        ring.rotation.x = Math.PI / 2;
+        ring.userData = {
+          rotationSpeed: 0.002 - (i * 0.0003),
+          pulseSpeed: 0.001 + (i * 0.0005)
+        };
+        
+        group.add(ring);
+      }
+      
+      return group;
+    }
+    
+    // Create energy core
+    function createEnergyCore() {
+      const geometry = new THREE.IcosahedronGeometry(1.2, 4);
+      const material = new THREE.MeshPhysicalMaterial({
+        color: 0xffffff,
+        emissive: 0xff7700,
+        emissiveIntensity: 1,
+        transparent: true,
+        opacity: 0.9,
+        wireframe: true
+      });
+      
+      const core = new THREE.Mesh(geometry, material);
+      return core;
+    }
+    
+    // Create glowing spheres
+    function createGlowingSpheres() {
+      const group = new THREE.Group();
+      const count = 5;
+      
+      for (let i = 0; i < count; i++) {
+        const size = 0.2 + (Math.random() * 0.3);
+        const geometry = new THREE.SphereGeometry(size, 32, 32);
+        const material = new THREE.MeshPhysicalMaterial({
+          color: 0xff7700,
+          emissive: 0xff9900,
+          emissiveIntensity: 1,
+          transparent: true,
+          opacity: 0.8
+        });
+        
+        const sphere = new THREE.Mesh(geometry, material);
+        
+        // Distribute spheres in orbit positions
+        const angle = (i / count) * Math.PI * 2;
+        const radius = 3.5;
+        sphere.position.x = Math.cos(angle) * radius;
+        sphere.position.z = Math.sin(angle) * radius;
+        
+        sphere.userData = {
+          orbitSpeed: 0.01 + (Math.random() * 0.01),
+          orbitRadius: radius,
+          orbitInitAngle: angle,
+          pulseSpeed: 0.005 + (Math.random() * 0.01)
+        };
+        
+        group.add(sphere);
+      }
+      
+      return group;
+    }
+    
+    // Create lightning effects
+    function createLightningEffects() {
+      const group = new THREE.Group();
+      const count = 8;
+      
+      for (let i = 0; i < count; i++) {
+        const points = [];
+        const segments = 10;
+        const radius = 4;
+        
+        // Create a curved line
+        for (let j = 0; j <= segments; j++) {
+          const angle = (j / segments) * Math.PI * 2;
+          const x = Math.cos(angle) * radius;
+          const z = Math.sin(angle) * radius;
+          const y = (Math.random() - 0.5) * 2;
+          
+          points.push(new THREE.Vector3(x, y, z));
+        }
+        
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        const material = new THREE.LineBasicMaterial({
+          color: 0xffaa00,
+          transparent: true,
+          opacity: 0.6
+        });
+        
+        const line = new THREE.Line(geometry, material);
+        line.userData = {
+          rotationSpeed: 0.01,
+          pulseSpeed: 0.02 + (Math.random() * 0.02)
+        };
+        
+        group.add(line);
+      }
+      
+      return group;
+    }
+    
+    // Create all our objects
+    const particleSystem1 = createParticleSystem(0xff7700, 0.05, 0.01, 10);
+    const particleSystem2 = createParticleSystem(0xffaa00, 0.03, 0.02, 15);
+    const torusKnot = createTorusKnot();
+    const rings = createRings(3, 3, 0.1);
+    const energyCore = createEnergyCore();
+    const glowingSpheres = createGlowingSpheres();
+    const lightningEffects = createLightningEffects();
+    
+    // Add everything to scene
+    particles.add(particleSystem1);
+    particles.add(particleSystem2);
+    scene.add(torusKnot);
+    scene.add(rings);
+    scene.add(energyCore);
+    scene.add(glowingSpheres);
+    scene.add(lightningEffects);
+    
+    // Add multiple lights for dramatic effect
+    const ambientLight = new THREE.AmbientLight(0x333333, 1);
+    scene.add(ambientLight);
+    
+    const pointLight1 = new THREE.PointLight(0xff7700, 2, 20);
+    pointLight1.position.set(0, 0, 0);
+    scene.add(pointLight1);
+    
+    const pointLight2 = new THREE.PointLight(0xffaa00, 1, 15);
+    pointLight2.position.set(5, 3, 0);
+    scene.add(pointLight2);
+    
+    // Position camera
+    camera.position.z = 15;
+    
+    // Animation
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      // Rotate the particle systems
+      particles.rotation.y += 0.0005;
+      particles.rotation.x += 0.0002;
+      
+      // Animate particles
+      animateParticleSystem(particleSystem1, 0.001);
+      animateParticleSystem(particleSystem2, 0.002);
+      
+      // Rotate the torus knot
+      torusKnot.rotation.x += 0.01;
+      torusKnot.rotation.y += 0.005;
+      
+      // Animate the rings
+      rings.children.forEach(ring => {
+        ring.rotation.z += ring.userData.rotationSpeed;
+        ring.scale.x = ring.scale.y = ring.scale.z = 
+          1 + Math.sin(Date.now() * ring.userData.pulseSpeed) * 0.1;
+      });
+      
+      // Rotate the energy core
+      energyCore.rotation.x += 0.01;
+      energyCore.rotation.y += 0.02;
+      energyCore.rotation.z += 0.015;
+      
+      // Pulse the energy core
+      const pulseFactor = 1 + Math.sin(Date.now() * 0.002) * 0.2;
+      energyCore.scale.set(pulseFactor, pulseFactor, pulseFactor);
+      
+      // Animate glowing spheres
+      glowingSpheres.children.forEach(sphere => {
+        const time = Date.now() * sphere.userData.orbitSpeed;
+        sphere.position.x = Math.cos(sphere.userData.orbitInitAngle + time) * sphere.userData.orbitRadius;
+        sphere.position.z = Math.sin(sphere.userData.orbitInitAngle + time) * sphere.userData.orbitRadius;
+        sphere.position.y = Math.sin(time * 2) * 1.5;
+        
+        // Pulse effect
+        const scaleFactor = 1 + Math.sin(Date.now() * sphere.userData.pulseSpeed) * 0.3;
+        sphere.scale.set(scaleFactor, scaleFactor, scaleFactor);
+      });
+      
+      // Animate lightning effects
+      lightningEffects.children.forEach(line => {
+        line.rotation.y += line.userData.rotationSpeed;
+        
+        // Update opacity for flickering effect
+        line.material.opacity = 0.3 + Math.abs(Math.sin(Date.now() * line.userData.pulseSpeed)) * 0.7;
+      });
+      
+      renderer.render(scene, camera);
+    }
+    
+    // Particle system animation
+    function animateParticleSystem(system, speed) {
+      const positions = system.geometry.attributes.position.array;
+      const velocities = system.geometry.velocities;
+      
+      for (let i = 0; i < positions.length; i += 3) {
+        positions[i] += velocities[i] * speed;
+        positions[i + 1] += velocities[i + 1] * speed;
+        positions[i + 2] += velocities[i + 2] * speed;
+        
+        // Keep particles within bounds
+        const distance = Math.sqrt(
+          positions[i] * positions[i] + 
+          positions[i + 1] * positions[i + 1] + 
+          positions[i + 2] * positions[i + 2]
+        );
+        
+        if (distance > 20) {
+          const factor = 20 / distance;
+          positions[i] *= factor;
+          positions[i + 1] *= factor;
+          positions[i + 2] *= factor;
+        }
+      }
+      
+      system.geometry.attributes.position.needsUpdate = true;
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth / 2, window.innerHeight);
+    });
+    
+    animate();
+  });
+</script>
+
+<style>
+  .login-container {
+    display: flex;
+    min-height: 80vh;
+  }
+  
+  .form-container {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .threejs-container {
+    flex: 1;
+    position: relative;
+  }
+  
+  #login-scene {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .header-section {
+    margin-bottom: 30px;
+  }
+  
+  .header-section h2 {
+    color: #ff7700;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+  }
+  
+  .form-group input:focus {
+    border-color: #ff7700;
+    outline: none;
+  }
+  
+  .form-actions {
+    margin-top: 30px;
+  }
+  
+  .btn-primary {
+    background-color: #ff7700;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .btn-primary:hover {
+    background-color: #ff8800;
+  }
+  
+  .form-links {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .form-links a {
+    color: #ff7700;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .form-links a:hover {
+    color: #ff8800;
+    text-decoration: underline;
+  }
+  
+  .divider {
+    margin: 0 10px;
+    color: #ccc;
+  }
+  
+  .alert {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+  }
+  
+  .alert-danger {
+    background-color: #ffe0e0;
+    color: #d32f2f;
+    border: 1px solid #ffd0d0;
+  }
+  
+  .alert-warning {
+    background-color: #fff8e1;
+    color: #ff8f00;
+    border: 1px solid #ffecb3;
+  }
+  
+  .alert-info {
+    background-color: #e1f5fe;
+    color: #0288d1;
+    border: 1px solid #b3e5fc;
+  }
+  
+  @media (max-width: 992px) {
+    .login-container {
+      flex-direction: column;
+    }
+    
+    .threejs-container {
+      height: 300px;
+      order: -1;
+    }
+  }
+</style>
+{% endblock %}

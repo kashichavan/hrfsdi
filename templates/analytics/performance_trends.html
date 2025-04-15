@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="performance-container">
+  <header class="performance-header">
+    <h1>Student Performance Trends</h1>
+    <p class="subtitle">Comprehensive analysis of student performance across education levels</p>
+  </header>
+
+  <div class="dashboard-container">
+    <div id="performanceDashboard" class="dashboard-chart"></div>
+  </div>
+
+  <div class="insights-panel">
+    <div class="insight-card" id="progression-insight">
+      <h3>Education Progression</h3>
+      <p>The charts show how student performance changes from 10th to degree level</p>
+      <div class="insight-icon">
+        <i class="fas fa-chart-line"></i>
+      </div>
+    </div>
+    
+    <div class="insight-card" id="type-insight">
+      <h3>Performance by Type</h3>
+      <p>Compare degree performance across different student types</p>
+      <div class="insight-icon">
+        <i class="fas fa-users"></i>
+      </div>
+    </div>
+    
+    <div class="insight-card" id="stream-insight">
+      <h3>Stream Analysis</h3>
+      <p>See which streams perform best overall</p>
+      <div class="insight-icon">
+        <i class="fas fa-graduation-cap"></i>
+      </div>
+    </div>
+    
+    <div class="insight-card" id="correlation-insight">
+      <h3>Correlation Analysis</h3>
+      <p>Explore the relationship between 12th grade and degree performance</p>
+      <div class="insight-icon">
+        <i class="fas fa-project-diagram"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script>
+  // Parse the JSON dashboard data
+  const performanceDashboard = JSON.parse('{{ performance_dashboard|safe }}');
+
+  document.addEventListener('DOMContentLoaded', function() {
+    // Create the main dashboard chart
+    Plotly.newPlot('performanceDashboard', performanceDashboard.data, performanceDashboard.layout);
+    
+    // Make the dashboard responsive
+    window.addEventListener('resize', function() {
+      Plotly.relayout('performanceDashboard', {
+        'width': document.getElementById('performanceDashboard').offsetWidth,
+        'height': 800
+      });
+    });
+    
+    // GSAP animations
+    const timeline = gsap.timeline();
+    
+    // Animate header
+    timeline.from('.performance-header', {
+      y: -40,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power2.out'
+    });
+    
+    // Animate dashboard container
+    timeline.from('.dashboard-container', {
+      scale: 0.95,
+      opacity: 0,
+      duration: 1,
+      ease: 'power2.out'
+    }, "-=0.3");
+    
+    // Animate insight cards one by one with a stagger effect
+    timeline.from('.insight-card', {
+      x: 50,
+      opacity: 0,
+      duration: 0.6,
+      stagger: 0.15,
+      ease: 'back.out(1.4)'
+    }, "-=0.5");
+    
+    // Add hover effect for insight cards
+    gsap.utils.toArray('.insight-card').forEach(card => {
+      card.addEventListener('mouseenter', () => {
+        gsap.to(card, {
+          scale: 1.05,
+          boxShadow: '0 10px 20px rgba(0,0,0,0.15)',
+          duration: 0.3
+        });
+      });
+      
+      card.addEventListener('mouseleave', () => {
+        gsap.to(card, {
+          scale: 1,
+          boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+          duration: 0.3
+        });
+      });
+    });
+    
+    // Pulse animation for the icons
+    gsap.to('.insight-icon', {
+      scale: 1.1,
+      repeat: -1,
+      yoyo: true,
+      duration: 1.5,
+      ease: 'sine.inOut'
+    });
+  });
+</script>
+
+<style>
+  .performance-container {
+    padding: 20px;
+    background-color: #f5f5f5;
+  }
+  
+  .performance-header {
+    text-align: center;
+    margin-bottom: 25px;
+  }
+  
+  .subtitle {
+    color: #605e5c;
+    font-size: 16px;
+    margin-top: -5px;
+  }
+  
+  .dashboard-container {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    height: 800px;
+  }
+  
+  .dashboard-chart {
+    width: 100%;
+    height: 100%;
+  }
+  
+  .insights-panel {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+    margin-top: 30px;
+  }
+  
+  .insight-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .insight-card h3 {
+    color: #323130;
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .insight-card p {
+    color: #605e5c;
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  .insight-icon {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+    font-size: 24px;
+    color: #0078d4;
+    opacity: 0.8;
+  }
+  
+  h1 {
+    color: #323130;
+    margin-bottom: 10px;
+  }
+  
+  @media (max-width: 1200px) {
+    .insights-panel {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    .insights-panel {
+      grid-template-columns: 1fr;
+    }
+    
+    .dashboard-container {
+      height: 600px;
+    }
+  }
+</style>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="register-container">
+  <div class="form-container">
+    <div class="header-section">
+      <h2>Create Account</h2>
+      <p>Sign up to get access to all features.</p>
+    </div>
+    
+    <div class="form-section">
+      <form method="post" id="register-form">
+        {% csrf_token %}
+        
+        <div class="form-errors">
+          {% if form.errors %}
+            <div class="alert alert-danger">
+              Please correct the errors below.
+            </div>
+          {% endif %}
+        </div>
+        
+        {% for field in form %}
+          <div class="form-group">
+            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+            {{ field }}
+            {% if field.errors %}
+              <div class="field-errors">
+                {% for error in field.errors %}
+                  <p class="error-text">{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if field.help_text %}
+              <small class="help-text">{{ field.help_text }}</small>
+            {% endif %}
+          </div>
+        {% endfor %}
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </div>
+        
+        <div class="form-links">
+          <p>Already have an account? <a href="{% url 'accounts:login' %}">Log in</a></p>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <div class="threejs-container">
+    <div id="register-scene"></div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // GSAP Animation
+    const timeline = gsap.timeline();
+    
+    timeline.from('.form-container', {
+      x: -100,
+      opacity: 0,
+      duration: 0.8,
+      ease: 'power3.out'
+    });
+    
+    timeline.from('.header-section', {
+      y: -30,
+      opacity: 0,
+      duration: 0.5,
+      ease: 'back.out(1.7)'
+    }, "-=0.4");
+    
+    timeline.from('.form-group', {
+      y: 20,
+      opacity: 0,
+      stagger: 0.15,
+      duration: 0.4,
+      ease: 'power2.out'
+    }, "-=0.2");
+    
+    timeline.from('.form-actions', {
+      scale: 0.8,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'back.out(1.7)'
+    }, "-=0.1");
+    
+    timeline.from('.form-links', {
+      y: 10,
+      opacity: 0,
+      duration: 0.4,
+      ease: 'power2.out'
+    }, "-=0.2");
+    
+    // Three.js Animation
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.setSize(window.innerWidth / 2, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    document.getElementById('register-scene').appendChild(renderer.domElement);
+    
+    // Create a torus knot
+    const geometry = new THREE.TorusKnotGeometry(3, 1, 100, 16);
+    const material = new THREE.MeshPhongMaterial({ 
+      color: 0xFF7700,
+      shininess: 100,
+      emissive: 0x331100,
+      emissiveIntensity: 0.3
+    });
+    
+    const torusKnot = new THREE.Mesh(geometry, material);
+    scene.add(torusKnot);
+    
+    // Add floating particles (orange dots)
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particleCount = 300;
+    
+    const posArray = new Float32Array(particleCount * 3);
+    for(let i = 0; i < particleCount * 3; i++) {
+      // Position particles in a sphere around the torus knot
+      posArray[i] = (Math.random() - 0.5) * 25;
+    }
+    
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particlesMaterial = new THREE.PointsMaterial({
+      size: 0.1,
+      color: 0xFF7700,
+      transparent: true,
+      opacity: 0.8
+    });
+    
+    const particleMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particleMesh);
+    
+    // Add lights
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+    
+    const pointLight = new THREE.PointLight(0xffffff, 1);
+    pointLight.position.set(10, 10, 10);
+    scene.add(pointLight);
+    
+    camera.position.z = 15;
+    
+    // Animation
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      torusKnot.rotation.x += 0.01;
+      torusKnot.rotation.y += 0.005;
+      
+      particleMesh.rotation.y += 0.002;
+      
+      // Make particles pulsate
+      const positions = particleMesh.geometry.attributes.position.array;
+      for(let i = 0; i < positions.length; i += 3) {
+        positions[i + 1] += Math.sin(Date.now() * 0.001 + i) * 0.01;
+      }
+      particleMesh.geometry.attributes.position.needsUpdate = true;
+      
+      renderer.render(scene, camera);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth / 2, window.innerHeight);
+    });
+    
+    animate();
+  });
+</script>
+
+<style>
+  .register-container {
+    display: flex;
+    min-height: 80vh;
+  }
+  
+  .form-container {
+    flex: 1;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  
+  .threejs-container {
+    flex: 1;
+    position: relative;
+  }
+  
+  #register-scene {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  
+  .header-section {
+    margin-bottom: 30px;
+  }
+  
+  .header-section h2 {
+    color: #ff7700;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+  }
+  
+  .form-group {
+    margin-bottom: 20px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+  }
+  
+  .form-group input:focus {
+    border-color: #ff7700;
+    outline: none;
+  }
+  
+  .error-text {
+    color: #d32f2f;
+    font-size: 14px;
+    margin-top: 5px;
+  }
+  
+  .help-text {
+    color: #777;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+  }
+  
+  .form-actions {
+    margin-top: 30px;
+  }
+  
+  .btn-primary {
+    background-color: #ff7700;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  .btn-primary:hover {
+    background-color: #ff8800;
+  }
+  
+  .form-links {
+    margin-top: 20px;
+    text-align: center;
+  }
+  
+  .form-links a {
+    color: #ff7700;
+    text-decoration: none;
+    transition: color 0.3s;
+  }
+  
+  .form-links a:hover {
+    color: #ff8800;
+    text-decoration: underline;
+  }
+  
+  .alert {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+  }
+  
+  .alert-danger {
+    background-color: #ffe0e0;
+    color: #d32f2f;
+    border: 1px solid #ffd0d0;
+  }
+  
+  @media (max-width: 992px) {
+    .register-container {
+      flex-direction: column;
+    }
+    
+    .threejs-container {
+      height: 300px;
+      order: -1;
+    }
+  }
+</style>
+{% endblock %}

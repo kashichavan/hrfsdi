@@ -20,3 +20,20 @@ def get_filter_count(context):
     count += 1 if context.get('min_yop') else 0
     count += 1 if context.get('max_yop') else 0
     return count
+
+
+@register.filter
+def get_item(dictionary, key):
+    return dictionary.get(key)
+
+
+@register.simple_tag(takes_context=True)
+def modify_query(context, **kwargs):
+    """
+    Allows updating query parameters in templates.
+    Usage: {% modify_query page=2 %}
+    """
+    query = context['request'].GET.copy()
+    for key, value in kwargs.items():
+        query[key] = value
+    return query.urlencode()

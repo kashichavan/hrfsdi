@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Assign Students{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h2 class="mb-4 text-primary">Assign Students to Requirement: <span class="text-dark">{{ requirement.title }}</span></h2>
+
+    <form method="get" class="mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Search by Name or Mobile</label>
+                <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Stream</label>
+                <select name="streams" id="streamSelect" class="form-select" multiple>
+                    {% for stream in all_streams %}
+                        <option value="{{ stream }}" {% if stream in selected_streams %}selected{% endif %}>{{ stream }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Year of Passing</label>
+                <div class="input-group">
+                    <input type="number" name="year_from" class="form-control" placeholder="From" value="{{ year_from }}">
+                    <span class="input-group-text">to</span>
+                    <input type="number" name="year_to" class="form-control" placeholder="To" value="{{ year_to }}">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">10th % Greater Than or Equal To</label>
+                <input type="number" step="0.01" name="tenth_percentage" class="form-control" value="{{ tenth_percentage }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">12th % Greater Than or Equal To</label>
+                <input type="number" step="0.01" name="twelfth_percentage" class="form-control" value="{{ twelfth_percentage }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Degree % Greater Than or Equal To</label>
+                <input type="number" step="0.01" name="degree_percentage" class="form-control" value="{{ degree_percentage }}">
+            </div>
+
+            <div class="col-12 text-end">
+                <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-outline-secondary">Clear</a>
+                <button type="submit" class="btn btn-success">Apply Filters</button>
+            </div>
+        </div>
+    </form>
+
+    <form method="post">
+        {% csrf_token %}
+        {% if students %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th><input type="checkbox" id="selectAll"></th>
+                        <th>Name</th>
+                        <th>Mobile</th>
+                        <th>Degree</th>
+                        <th>Stream</th>
+                        <th>YOP</th>
+                        <th>10th %</th>
+                        <th>12th %</th>
+                        <th>Degree %</th>
+                        <th>Gender</th>
+                        <th>Type</th>
+                        <th>Total Req.</th>
+                        <th>Scheduled</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for student in students %}
+                        {% if student.id not in already_assigned_student_ids %}
+                        <tr>
+                            <td><input type="checkbox" name="student_ids" class="student-checkbox" value="{{ student.id }}"></td>
+                            <td>{{ student.name }}</td>
+                            <td>{{ student.contact_number }}</td>
+                            <td>{{ student.degree }}</td>
+                            <td>{{ student.stream }}</td>
+                            <td>{{ student.yop }}</td>
+                            <td>{{ student.tenth_percent }}</td>
+                            <td>{{ student.twelfth_percent }}</td>
+                            <td>{{ student.degree_percent }}</td>
+                            <td>{{ student.gender }}</td>
+                            <td>{{ student.type_of_data }}</td>
+                            <td>{{ student.total_requirements }}</td>
+                            <td>{{ student.scheduled_requirements }}</td>
+                        </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="text-end">
+            <button type="submit" class="btn btn-primary mt-3">Assign Selected Students</button>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">No students found matching the filters.</div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function () {
+        $('#streamSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Streams',
+            width: '100%'
+        });
+
+        $('#selectAll').change(function () {
+            $('.student-checkbox').prop('checked', this.checked);
+        });
+    });
+</script>
+{% endblock %}

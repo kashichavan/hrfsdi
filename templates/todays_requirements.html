@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Today's Requirements{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary">Today's Requirements</h2>
+        <a href="/dashboard" class="btn btn-outline-primary">Back to Dashboard</a>
+    </div>
+
+    {% if requirements %}
+        <!-- Export Button for Today's Scheduled Requirements -->
+        <a href="{% url 'student_data:export_todays_requirements' %}" class="btn btn-success mb-3">
+            📥 Export Today's Scheduled Students
+        </a>
+
+        <div class="table-responsive">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Title</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Company</th>
+                        <th scope="col">Created At</th>
+                        <th scope="col">Schedule Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in requirements %}
+                    <tr>
+                        <th scope="row">{{ forloop.counter }}</th>
+                        <td>{{ req.company_name }}</td>
+                        <td>{{ req.description }}</td>
+                        <td>{{ req.company_code }}</td>
+                        <td>{{ req.created_at|date:"Y-m-d H:i" }}</td>
+                        <td>{{ req.schedule_status|capfirst }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">No scheduled requirements for today.</div>
+    {% endif %}
+</div>
+{% endblock %}

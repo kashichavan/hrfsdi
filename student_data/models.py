@@ -13,12 +13,12 @@ class Requirement(models.Model):
     ]
     
     company_name = models.CharField(max_length=100)
-    company_code = models.CharField(max_length=20, blank=True)  # New
+    company_code = models.CharField(max_length=20, blank=False, unique=True)  # Added unique=True
     
-    requirement_date = models.DateField(null=True, blank=True)  # New
-    is_scheduled = models.BooleanField(default=False)           # New
-    schedule_date = models.DateField(null=True, blank=True)     # New
-    description = models.TextField(blank=True)                  # New
+    requirement_date = models.DateField(null=True, blank=True)
+    is_scheduled = models.BooleanField(default=False)
+    schedule_date = models.DateField(null=True, blank=True)
+    description = models.TextField(blank=True)
     schedule_status = models.CharField(
         max_length=20, 
         choices=SCHEDULE_STATUS_CHOICES,
@@ -30,7 +30,7 @@ class Requirement(models.Model):
     schedule_time = models.TimeField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.company_name} - {self.position}"
+        return "self.company_name"
 
     def update_student_counts(self):
         """Update counts for all students in this requirement"""

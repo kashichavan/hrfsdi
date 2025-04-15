@@ -2,7 +2,9 @@
 from django.urls import path
 from . import views
 
-qpp_name='student_data'
+app_name='student_data'
+
+
 
 urlpatterns = [
     # Dashboard URLs
@@ -35,14 +37,24 @@ urlpatterns = [
          views.remove_requirement_student, name='remove_requirement_student'),
     path('requirements/<int:requirement_id>/bulk-remove/',
          views.bulk_remove_requirement_students, name='bulk_remove_requirement_students'),
-    
-    # Add Students to Requirements
-    path('requirements/<int:requirement_id>/add-students/',
-         views.add_students_to_requirement, name='add_students_to_requirement'),
+
     
     # Update Requirement Schedule
     path('requirements/<int:requirement_id>/update-schedule/',
-         views.update_requirement_schedule, name='update_requirement_schedule'),
+         views.update_student_status, name='update_requirement_schedule'),
 
-      path('analytics/', views.student_analytics, name='student_analytics'),
+     path('analytics/', views.student_analytics, name='student_analytics'),
+     path('performance/',views.performance_trends,name='performance'),
+
+      # urls.py
+path('requirements/<int:requirement_id>/', 
+     views.add_students_to_requirement, 
+     name='add_students_to_requirement'),
+
+     path('assign-students/<int:requirement_id>/', views.add_students_to_requirement, name='add-student-to-requirement'),
+     path('todays-requirements/', views.todays_requirements_view, name='todays_requirements'),
+     path('students-attending-today/', views.students_attending_today, name='students_attending_today'),
+     path('export/todays-requirements/', views.export_today_scheduled_requirements, name='export_todays_requirements'),
+     path('requirement/<int:requirement_id>/student/<int:student_id>/remove/', views.remove_student_from_requirement, name='remove_student'),
+      path('student/delete/<int:pk>/',views.StudentDeleteView.as_view(), name='student_delete'),
 ]

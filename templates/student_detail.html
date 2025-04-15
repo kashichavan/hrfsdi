@@ -1,0 +1,1040 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.name }} - Student Profile{% endblock %}
+
+{% block extra_head %}
+<!-- Font imports -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700;900&family=Montserrat:wght@700;800;900&family=DM+Sans:wght@400;500;700&display=swap">
+
+<!-- Include GSAP, ScrollTrigger, and Three.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.156.1/three.min.js"></script>
+
+<style>
+<table class="requirements-table">
+    <thead>
+        <tr>
+            <th>Company Name</th>
+            <th>Scheduled Date</th>
+            <th>Requirement Date</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for req in student_requirements %}
+        <tr>
+            <td>{{ req.requirement.company_name }}</td>
+            <td>
+                {% if req.requirement.is_scheduled and req.requirement.schedule_date %}
+                    {{ req.requirement.schedule_date|date:"d M Y" }}
+                {% else %}
+                    N/A
+                {% endif %}
+            </td>
+            <td>{{ req.requirement.requirement_date|date:"d M Y" }}</td>
+            <td>
+                <span class="table-status {% if req.requirement.is_scheduled %}status-scheduled{% else %}status-pending{% endif %}">
+                    <i class="fas {% if req.requirement.is_scheduled %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                    {% if req.requirement.is_scheduled %}Scheduled{% else %}Pending{% endif %}
+                </span>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<style>
+/* Improved curved table with orange and white theme */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
+
+.requirements-table {
+    width: 95%;
+    max-width: 1200px;
+    margin: 40px auto;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Montserrat', sans-serif;
+    color: white;
+    font-size: 16px;
+    background: black;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 0 50px rgba(255, 120, 0, 0.2),
+                inset 0 0 20px rgba(255, 120, 0, 0.1);
+    position: relative;
+}
+
+/* Glass morphism effect for the table */
+.requirements-table::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255, 120, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+    border-radius: 20px;
+    pointer-events: none;
+}
+
+/* Header styling */
+.requirements-table thead {
+    background: linear-gradient(to right, #000000, #1a0d00, #000000);
+    position: relative;
+}
+
+.requirements-table thead::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #ff7800, transparent);
+}
+
+.requirements-table th {
+    padding: 20px 25px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 18px;
+    color: #ff7800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    position: relative;
+}
+
+/* Table body styling */
+
+/* Table body styling with extra smooth curves */
+.requirements-table tbody tr {
+    background: transparent;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    transform-origin: center;
+    margin-bottom: 15px;
+    height: 70px;
+    border: none;
+}
+
+.requirements-table tbody tr:nth-child(odd) {
+    background: linear-gradient(to right, rgba(20, 10, 0, 0.8), rgba(40, 20, 0, 0.6), rgba(20, 10, 0, 0.8));
+}
+
+.requirements-table tbody tr:nth-child(even) {
+    background: linear-gradient(to right, rgba(10, 5, 0, 0.9), rgba(30, 15, 0, 0.7), rgba(10, 5, 0, 0.9));
+}
+
+/* Cell styling */
+.requirements-table td {
+    padding: 18px 20px;
+    font-weight: 500;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 120, 0, 0.05);
+}
+
+/* First and last cells in a row - for curved effect */
+.requirements-table tbody tr td:first-child {
+    border-top-left-radius: 12px;
+    border-bottom-left-radius: 12px;
+    border-left: 3px solid rgba(255, 120, 0, 0.3);
+    padding-left: 25px;
+}
+
+.requirements-table tbody tr td:last-child {
+    border-top-right-radius: 12px;
+    border-bottom-right-radius: 12px;
+    border-right: 3px solid rgba(255, 120, 0, 0.3);
+    padding-right: 25px;
+}
+
+/* Hover effect for rows */
+.requirements-table tbody tr:hover {
+    transform: translateY(-2px) scale(1.01);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+    background: linear-gradient(to right, rgba(40, 20, 0, 0.9), rgba(60, 30, 0, 0.7), rgba(40, 20, 0, 0.9));
+    z-index: 10;
+}
+
+.requirements-table tbody tr:hover td {
+    color: #ffffff;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+/* Status styles */
+.table-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    width: fit-content;
+    min-width: 120px;
+    text-align: center;
+}
+
+.status-scheduled {
+    background: linear-gradient(135deg, rgba(255, 120, 0, 0.2), rgba(255, 160, 0, 0.3));
+    border: 2px solid rgba(255, 120, 0, 0.6);
+    color: #ff9d45;
+    box-shadow: 0 0 15px rgba(255, 120, 0, 0.4);
+}
+
+.status-pending {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.2));
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+}
+
+/* Icon styles */
+.table-status i {
+    font-size: 16px;
+}
+
+.status-scheduled i {
+    color: #ff7800;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .requirements-table {
+        width: 98%;
+        font-size: 14px;
+    }
+    
+    .requirements-table th {
+        font-size: 16px;
+        padding: 15px;
+    }
+    
+    .requirements-table td {
+        padding: 12px 15px;
+    }
+    
+    .table-status {
+        padding: 6px 12px;
+        font-size: 12px;
+    }
+}
+    :root {
+        --primary: #f97316; /* Main orange */
+        --primary-light: #fb923c; /* Lighter orange */
+        --primary-dark: #ea580c; /* Darker orange */
+        --secondary: #fdba74; /* Light orange */
+        --accent: #ffffff; /* White accent */
+        --dark-bg: #1a1a1a; /* Darker background for more contrast */
+        --card-bg: #2a2a2a; /* Card background */
+        --card-hover: #3a3a3a; /* Card hover */
+        --text-light: #ffffff; /* White text */
+        --text-dim: #e2e2e2; /* Slightly dimmed white */
+        --success: #22c55e; /* Success green */
+        --warning: #facc15; /* Warning yellow */
+        --danger: #ef4444; /* Danger red */
+        --gradient-1: linear-gradient(135deg, #f97316, #fdba74);
+        --gradient-2: linear-gradient(135deg, #fb923c, #ffffff);
+    }
+
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        background-color: var(--dark-bg);
+        font-family: 'DM Sans', system-ui, sans-serif;
+        color: var(--text-light);
+        overflow-x: hidden;
+    }
+
+    .student-dashboard {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    #canvas-background {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+    }
+
+    /* Improved Profile Header with Enhanced Orange-White Theme */
+    .profile-header {
+        position: relative;
+        background: var(--gradient-1);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        overflow: hidden;
+    }
+
+    .profile-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        transform: translate(100px, -100px);
+    }
+
+    .student-name {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 1rem;
+        color: var(--accent);
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Improved Student Info Display with Better Visibility */
+    .student-info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .student-info-card {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 16px;
+        padding: 1.25rem;
+        backdrop-filter: blur(5px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .info-label {
+        font-size: 0.9rem;
+        font-weight: 500;
+        opacity: 0.9;
+        margin-bottom: 0.5rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--accent);
+    }
+
+    .info-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .info-value i {
+        color: var(--accent);
+        opacity: 0.8;
+    }
+
+    /* Requirements Summary Section with Enhanced White Accents */
+    .requirements-summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .requirement-stat-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 1.75rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border-left: 5px solid var(--primary);
+        border: 1px solid rgba(249, 115, 22, 0.1);
+    }
+
+    .requirement-stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--primary-light);
+    }
+
+    .req-stat-value {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+    }
+
+    .req-stat-value i {
+        font-size: 2rem;
+        opacity: 0.8;
+    }
+
+    .req-stat-label {
+        color: var(--text-dim);
+        font-size: 1rem;
+        font-weight: 500;
+        letter-spacing: 0.5px;
+    }
+
+    /* Stats section with Orange-White Harmony */
+    .stats-container {
+        margin-bottom: 3rem;
+    }
+
+    .stats-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 1.5rem;
+        padding-left: 1rem;
+        border-left: 4px solid var(--primary);
+        color: var(--text-light);
+    }
+
+    .stats-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+    }
+
+    .stat-card {
+        flex: 1 1 250px;
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 2rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(249, 115, 22, 0.1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px);
+        background: var(--card-hover);
+        box-shadow: 0 12px 20px rgba(0, 0, 0, 0.15);
+        border: 1px solid var(--primary-light);
+    }
+
+    .stat-card::after {
+        content: '';
+        position: absolute;
+        width: 100%;
+        height: 5px;
+        bottom: 0;
+        left: 0;
+        background: var(--primary);
+    }
+
+    .stat-value {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 3.5rem;
+        font-weight: 800;
+        color: var(--primary);
+        line-height: 1;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        color: var(--text-dim);
+        font-size: 1.1rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    /* Enhanced Requirements Section with Orange-White Theme */
+    .requirements-section {
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 2.5rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(249, 115, 22, 0.1);
+    }
+
+    .requirements-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .requirements-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-light);
+    }
+
+    .requirements-title i {
+        color: var(--primary);
+    }
+
+    .requirements-counter {
+        background: rgba(249, 115, 22, 0.2);
+        color: var(--primary);
+        font-weight: 700;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+
+    /* Redesigned Requirement Card with Orange-White Accents */
+    .requirement-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border-left: 4px solid var(--primary);
+        transition: all 0.3s ease;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 1.5rem;
+        align-items: center;
+    }
+
+    .requirement-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateX(5px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--primary-light);
+        border-left: 4px solid var(--primary);
+    }
+
+    .company-logo {
+        width: 60px;
+        height: 60px;
+        background: var(--primary);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 800;
+        font-size: 1.4rem;
+        color: white;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .requirement-details {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .requirement-name {
+        font-weight: 700;
+        font-size: 1.2rem;
+        color: var(--text-light);
+    }
+
+    .requirement-meta {
+        display: flex;
+        gap: 1.5rem;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-dim);
+        font-size: 0.9rem;
+    }
+
+    .meta-item i {
+        color: var(--primary-light);
+        font-size: 0.9rem;
+    }
+
+    .status-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.5rem;
+    }
+
+    .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .status-scheduled {
+        background: rgba(34, 197, 94, 0.15);
+        color: var(--success);
+    }
+
+    .status-pending {
+        background: rgba(250, 204, 21, 0.15);
+        color: var(--warning);
+    }
+
+    .status-badge i {
+        font-size: 0.75rem;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: var(--text-dim);
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--primary);
+        opacity: 0.5;
+    }
+
+    .empty-state p {
+        font-size: 1.1rem;
+    }
+
+    @media (max-width: 768px) {
+        .student-dashboard {
+            padding: 1rem;
+        }
+
+        .profile-header {
+            padding: 1.5rem;
+        }
+
+        .student-name {
+            font-size: 2rem;
+        }
+
+        .student-info-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .requirements-summary {
+            grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            flex-direction: column;
+        }
+
+        .requirement-card {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            padding: 1.2rem;
+        }
+
+        .company-logo {
+            margin: 0 auto;
+        }
+
+        .requirement-details {
+            text-align: center;
+        }
+
+        .requirement-meta {
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .status-wrapper {
+            align-items: center;
+        }
+    }
+
+    /* Delete Button Styling - Matches Orange Theme */
+.btn-delete-student {
+    background: linear-gradient(135deg, rgba(255, 87, 34, 0.9), rgba(230, 74, 25, 0.9));
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    display: flex;
+    align-items: center;
+}
+
+.btn-delete-student:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+    background: linear-gradient(135deg, rgba(255, 87, 34, 1), rgba(230, 74, 25, 1));
+    color: white;
+}
+
+.btn-delete-student:active {
+    transform: translateY(0);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div id="canvas-background"></div>
+
+<div class="student-dashboard">
+    <!-- Enhanced Profile Header -->
+    <div class="d-flex justify-content-end mb-4">
+        <form method="POST" action="{% url 'student_data:student_delete' student.id %}" class="delete-form">
+            {% csrf_token %}
+            <button type="button" class="btn btn-delete-student" onclick="confirmDelete()">
+                <i class="fas fa-trash-alt me-2"></i> Delete Student
+            </button>
+        </form>
+    </div>
+    
+    <div class="profile-header">
+        <div class="student-name" id="student-name">{{ student.name }}</div>
+        
+        <!-- Improved Student Info Grid with Fixed Year of Passing -->
+        <div class="student-info-grid">
+            <div class="student-info-card">
+                <div class="info-label">Degree</div>
+                <div class="info-value">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>{{ student.degree }}</span>
+                </div>
+            </div>
+            <div class="student-info-card">
+                <div class="info-label">Stream</div>
+                <div class="info-value">
+                    <i class="fas fa-stream"></i>
+                    <span>{{ student.stream }}</span>
+                </div>
+            </div>
+            <div class="student-info-card">
+                <div class="info-label">Contact</div>
+                <div class="info-value">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ student.contact_number }}</span>
+                </div>
+            </div>
+            <div class="student-info-card">
+                <div class="info-label">Year of Passing</div>
+                <div class="info-value">
+                    <i class="fas fa-calendar-alt"></i>
+                    <span>{{ student.yop }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Requirements Summary Section -->
+    <div class="requirements-summary">
+        <div class="requirement-stat-card">
+            <div class="req-stat-value">
+                <i class="fas fa-clipboard-list"></i>
+                <span>{{ total_requirements }}</span>
+            </div>
+            <div class="req-stat-label">Total Requirements</div>
+        </div>
+        
+        <div class="requirement-stat-card">
+            <div class="req-stat-value">
+                <i class="fas fa-calendar-check"></i>
+                <span>{{ scheduled_requirements }}</span>
+            </div>
+            <div class="req-stat-label">Scheduled Requirements</div>
+        </div>
+        
+        <div class="requirement-stat-card">
+            <div class="req-stat-value">
+                <i class="fas fa-clock"></i>
+                <span>{{ pending_requirements_count }}</span>
+            </div>
+            <div class="req-stat-label">Pending Requirements</div>
+        </div>
+    </div>
+
+    <!-- Academic Performance Section -->
+    <div class="stats-container">
+        <h2 class="stats-title">Academic Performance</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="degree-percent">{{ student.degree_percent|floatformat:1 }}%</div>
+                <div class="stat-label">Degree Performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="twelfth-percent">{{ student.twelfth_percent|floatformat:1 }}%</div>
+                <div class="stat-label">12th Performance</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tenth-percent">{{ student.tenth_percent|floatformat:1 }}%</div>
+                <div class="stat-label">10th Performance</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Requirements List Section -->
+    <div class="requirements-section">
+        <div class="requirements-header">
+            <h2 class="requirements-title">
+                <i class="fas fa-clipboard-list"></i>
+                Requirements
+                <span class="requirements-counter">{{ total_requirements }}</span>
+            </h2>
+        </div>
+
+        {% if student_requirements %}
+        <table class="requirements-table">
+            <thead>
+                <tr>
+                    <th>Company Name</th>
+                    <th>Scheduled Date</th>
+                    <th>Requirement Date</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in student_requirements %}
+                <tr>
+                    <td>{{ req.requirement.company_name }}</td>
+                    <td>
+                        {% if req.requirement.is_scheduled and req.requirement.schedule_date %}
+                            {{ req.requirement.schedule_date|date:"d M Y" }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                    <td>{{ req.requirement.requirement_date|date:"d M Y" }}</td>
+                    <td>
+                        <span class="table-status {% if req.requirement.is_scheduled %}status-scheduled{% else %}status-pending{% endif %}">
+                            <i class="fas {% if req.requirement.is_scheduled %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
+                            {% if req.requirement.is_scheduled %}Scheduled{% else %}Pending{% endif %}
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-folder-open"></i>
+                <p>No requirements added yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+
+function confirmDelete() {
+    if (confirm('Are you sure you want to permanently delete {{ student.name }}? This action cannot be undone.')) {
+        document.querySelector('.delete-form').submit();
+    }
+}
+document.addEventListener('DOMContentLoaded', function () {
+    // GSAP Setup with faster animations
+    gsap.registerPlugin(ScrollTrigger);
+    
+    // Animate the student name with a faster text reveal effect
+    const studentName = document.getElementById('student-name');
+    gsap.from(studentName, {
+        opacity: 0,
+        y: 20,
+        duration: 0.7, // Faster animation (was 1.2)
+        ease: "power2.out"
+    });
+     // Table reveal animation
+     gsap.from(".requirements-table", {
+        opacity: 0,
+        y: 30,
+        duration: 1.2,
+        ease: "power3.out"
+    });
+    // Table header animation with light sweep
+    gsap.from(".requirements-table thead", {
+        opacity: 0,
+        y: -20,
+        duration: 0.8,
+        ease: "power2.out"
+    });
+    
+    
+    // Animate the profile header content faster
+    gsap.from(".student-info-card", {
+        opacity: 0,
+        y: 15,
+        duration: 0.5, // Faster animation (was 0.8)
+        stagger: 0.1, // Quicker stagger (was 0.15)
+        delay: 0.2, // Shorter delay (was 0.3)
+        ease: "power2.out"
+    });
+    
+    // Animate requirement summary cards faster
+    gsap.from(".requirement-stat-card", {
+        opacity: 0,
+        y: 20,
+        duration: 0.5, // Faster animation (was 0.8)
+        stagger: 0.1, // Quicker stagger (was 0.2)
+        ease: "back.out(1.5)", // Slightly less bounce for speed
+        scrollTrigger: {
+            trigger: ".requirements-summary",
+            start: "top 90%" // Start animation sooner
+        }
+    });
+    
+    // Animate stat cards with faster scroll trigger
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        gsap.from(card, {
+            y: 40, // Less distance (was 60)
+            opacity: 0,
+            duration: 0.5, // Faster animation (was 0.8)
+            delay: index * 0.1, // Quicker delay (was 0.15)
+            ease: "power2.out", // Simpler ease
+            scrollTrigger: {
+                trigger: card,
+                start: "top 90%" // Start animation sooner
+            }
+        });
+    });
+    
+    // Animate stat values with faster counter effect
+    const statValues = document.querySelectorAll('.stat-value');
+    statValues.forEach(statValue => {
+        const finalValue = parseFloat(statValue.textContent);
+        gsap.fromTo(statValue, 
+            { textContent: "0%" },
+            {
+                textContent: statValue.textContent,
+                duration: 1.2, // Faster animation (was 2)
+                ease: "power1.out", // Simpler ease for faster feel
+                scrollTrigger: {
+                    trigger: statValue,
+                    start: "top 90%" // Start animation sooner
+                },
+                onUpdate: function() {
+                    statValue.textContent = parseFloat(this.targets()[0].textContent).toFixed(1) + "%";
+                }
+            }
+        );
+    });
+    const headerSweep = document.createElement('div');
+    headerSweep.classList.add('header-sweep');
+    headerSweep.style.cssText = `
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 50%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 120, 0, 0.2), rgba(255, 255, 255, 0.3), rgba(255, 120, 0, 0.2), transparent);
+        transform: skewX(-20deg);
+        pointer-events: none;
+    `;
+    
+    
+    // Animate requirement cards with faster staggered effect
+    gsap.from(".requirement-card", {
+        x: -20, // Less distance (was -30)
+        opacity: 0,
+        duration: 0.4, // Faster animation (was 0.7)
+        stagger: 0.08, // Quicker stagger (was 0.15)
+        ease: "power2.out",
+        scrollTrigger: {
+            trigger: ".requirements-section",
+            start: "top 85%" // Start animation sooner
+        }
+    });
+    
+    // Three.js background with orange particles
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x000000, 0);
+    document.getElementById('canvas-background').appendChild(renderer.domElement);
+    
+    // Create particles
+    const particleGeometry = new THREE.BufferGeometry();
+    const particleCount = 150;
+    
+    const positions = new Float32Array(particleCount * 3);
+    const scales = new Float32Array(particleCount);
+    
+    for (let i = 0; i < particleCount; i++) {
+        const i3 = i * 3;
+        positions[i3] = (Math.random() - 0.5) * 10;
+        positions[i3 + 1] = (Math.random() - 0.5) * 10;
+        positions[i3 + 2] = (Math.random() - 0.5) * 10;
+        scales[i] = Math.random() * 0.5 + 0.5;
+    }
+    
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute('scale', new THREE.BufferAttribute(scales, 1));
+    
+    // Brighter orange color for particles
+    const particleMaterial = new THREE.PointsMaterial({
+        color: 0xff8533, // Brighter orange for better visibility
+        size: 0.12,
+        transparent: true,
+        opacity: 0.9,
+        sizeAttenuation: true
+    });
+    
+    const particles = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particles);
+    
+    camera.position.z = 5;
+    
+    function animate() {
+        requestAnimationFrame(animate);
+        
+        particles.rotation.x += 0.0005;
+        particles.rotation.y += 0.001;
+        
+        // Respond to mouse movement
+        const positions = particles.geometry.attributes.position.array;
+        
+        for (let i = 0; i < particleCount; i++) {
+            const i3 = i * 3;
+            positions[i3 + 1] += Math.sin(Date.now() * 0.0005 + i) * 0.003;
+        }
+        
+        particles.geometry.attributes.position.needsUpdate = true;
+        
+        renderer.render(scene, camera);
+    }
+    
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    animate();
+    
+    // Load student data from context if available
+    const studentData = {{ js_data|safe }};
+    console.log("Student Data:", studentData);
+});
+</script>
+{% endblock %}

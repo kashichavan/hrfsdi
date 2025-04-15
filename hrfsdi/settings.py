@@ -24,9 +24,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-^!r3quy2eiko@01y*iz53z^@qv7aev0juz185dh*j7g1^98nu9'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG =True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -57,13 +57,14 @@ ROOT_URLCONF = 'hrfsdi.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR/'template'],
+        'DIRS': [BASE_DIR/'templates'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                 'student_data.context_processors.user_info',
             ],
         },
     },
@@ -148,7 +149,7 @@ DEFAULT_FROM_EMAIL = 'kashinathc067@gmail.com'
 
 AUTH_USER_MODEL = 'accounts.CustomUser'
 
-LOGIN_REDIRECT_URL = 'home_dashboard'  # Redirect after login
+LOGIN_REDIRECT_URL = 'student_data:home_dashboard'  # Redirect after login
 LOGIN_URL = 'accounts:login'  # URL to redirect to when login is required
 LOGOUT_REDIRECT_URL = '/' 
 
