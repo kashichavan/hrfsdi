@@ -1,0 +1,33 @@
+<!-- templates/studentlist.html -->
+{% extends 'base.html' %}
+
+{% block title %}Student List{% endblock %}
+
+{% block content %}
+<!-- Filter Buttons -->
+<div class="filter-buttons">
+    <div class="d-flex flex-wrap justify-content-center">
+        <a href="{% url 'student_list' %}" class="btn btn-outline-primary {% if not request.GET.type_filter %}active{% endif %}">
+            <i class="fas fa-users"></i> All Students
+        </a>
+        <a href="{% url 'student_list' %}?type_filter=fsdi" class="btn btn-outline-success {% if request.GET.type_filter == 'fsdi' %}active{% endif %}">
+            <i class="fas fa-graduation-cap"></i> FSDI
+        </a>
+        <a href="{% url 'student_list' %}?type_filter=super100" class="btn btn-outline-danger {% if request.GET.type_filter == 'super100' %}active{% endif %}">
+            <i class="fas fa-award"></i> Super100
+        </a>
+        <a href="{% url 'student_list' %}?type_filter=fastrack" class="btn btn-outline-warning {% if request.GET.type_filter == 'fastrack' %}active{% endif %}">
+            <i class="fas fa-bolt"></i> Fastrack
+        </a>
+        <a href="{% url 'student_list' %}?type_filter=legend" class="btn btn-outline-info {% if request.GET.type_filter == 'legend' %}active{% endif %}">
+            <i class="fas fa-star"></i> Legend
+        </a>
+    </div>
+</div>
+
+<!-- Student List Table or Cards -->
+<div>
+    <!-- You can render your student list here -->
+    {% include 'student_list.html' with students=students %}
+</div>
+{% endblock %}
