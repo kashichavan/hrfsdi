@@ -11,7 +11,7 @@ class Requirement(models.Model):
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled')
     ]
-    
+
     company_name = models.CharField(max_length=100)
     company_code = models.CharField(max_length=20, blank=False, unique=True)  # Added unique=True
     
@@ -114,6 +114,20 @@ class RequirementStudent(models.Model):
 
     def __str__(self):
         return f"{self.student.name} - {self.requirement.company_name}"
+    # models.py (add this to your RequirementStudent model)
+    def check_auto_reject_status(self):
+        from django.utils import timezone
+        from datetime import timedelta
+    
+        if self.requirement.is_scheduled and self.requirement.schedule_date:
+        # Check if schedule date is older than 1 day
+            expiration_time = self.requirement.schedule_date + timedelta(days=1)
+        
+            if timezone.now() > expiration_time and self.status == 'pending':
+                self.status = 'rejected'
+                self.save()
+                return True
+        return False
 
 # Signal to track requirement schedule status changes
 @receiver(pre_save, sender=Requirement)

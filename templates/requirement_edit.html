@@ -45,51 +45,6 @@
         transition: all 0.3s ease;
     }
 
-    .toggle-switch {
-        position: relative;
-        display: inline-block;
-        width: 50px;
-        height: 24px;
-    }
-
-    .toggle-switch input {
-        opacity: 0;
-        width: 0;
-        height: 0;
-    }
-
-    .toggle-slider {
-        position: absolute;
-        cursor: pointer;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background-color: #ccc;
-        transition: .4s;
-        border-radius: 34px;
-    }
-
-    .toggle-slider:before {
-        position: absolute;
-        content: "";
-        height: 16px;
-        width: 16px;
-        left: 4px;
-        bottom: 4px;
-        background-color: white;
-        transition: .4s;
-        border-radius: 50%;
-    }
-
-    input:checked + .toggle-slider {
-        background-color: #2196F3;
-    }
-
-    input:checked + .toggle-slider:before {
-        transform: translateX(26px);
-    }
-
     .validation-error {
         color: #dc3545;
         font-size: 0.8rem;
@@ -101,39 +56,39 @@
         color: #6c757d;
         text-align: right;
     }
-    /* Yes/No Toggle Button Styles */
-.btn-schedule-toggle {
-    background-color: white;
-    color: #f97316;
-    border: 1px solid #f97316;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    flex: 1;
-    text-align: center;
-}
 
-.btn-schedule-toggle:hover {
-    background-color: rgba(249, 115, 22, 0.1);
-    color: #f97316;
-}
+    .btn-schedule-toggle {
+        background-color: white;
+        color: #f97316;
+        border: 1px solid #f97316;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        flex: 1;
+        text-align: center;
+    }
 
-.btn-schedule-toggle.active {
-    background-color: #f97316;
-    color: white;
-    border-color: #f97316;
-}
+    .btn-schedule-toggle:hover {
+        background-color: rgba(249, 115, 22, 0.1);
+        color: #f97316;
+    }
 
-.btn-group-toggle .btn:first-child {
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
-    border-right: none;
-}
+    .btn-schedule-toggle.active {
+        background-color: #f97316;
+        color: white;
+        border-color: #f97316;
+    }
 
-.btn-group-toggle .btn:last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-    border-left: none;
-}
+    .btn-group-toggle .btn:first-child {
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+        border-right: none;
+    }
+
+    .btn-group-toggle .btn:last-child {
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+        border-left: none;
+    }
 </style>
 {% endblock %}
 
@@ -148,136 +103,92 @@
         <div class="card-body">
             <form method="post" id="editRequirementForm">
                 {% csrf_token %}
-                
-                <!-- Company Information Section -->
+
+                <!-- Company Info -->
                 <div class="form-section">
                     <div class="form-section-header">
                         <i class="fas fa-building"></i>
                         <h4 class="mb-0">Company Details</h4>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="id_company_name" class="form-label required-field">Company Name</label>
-                            <input type="text" 
-                                   name="company_name" 
-                                   id="id_company_name" 
-                                   class="form-control" 
-                                   value="{{ form.company_name.value }}" 
-                                   required
-                                   maxlength="255">
+                            <input type="text" name="company_name" id="id_company_name" class="form-control"
+                                value="{{ form.company_name.value }}" required maxlength="255">
                             {% if form.company_name.errors %}
-                                <div class="validation-error">
-                                    {{ form.company_name.errors }}
-                                </div>
+                                <div class="validation-error">{{ form.company_name.errors }}</div>
                             {% endif %}
                         </div>
-                        
                         <div class="col-md-6 mb-3">
                             <label for="id_company_code" class="form-label required-field">Company Code</label>
-                            <input type="text" 
-                                   name="company_code" 
-                                   id="id_company_code" 
-                                   class="form-control" 
-                                   value="{{ form.company_code.value }}" 
-                                   required
-                                   maxlength="50">
+                            <input type="text" name="company_code" id="id_company_code" class="form-control"
+                                value="{{ form.company_code.value }}" required maxlength="50">
                             {% if form.company_code.errors %}
-                                <div class="validation-error">
-                                    {{ form.company_code.errors }}
-                                </div>
+                                <div class="validation-error">{{ form.company_code.errors }}</div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                
-                <!-- Requirement Details Section -->
+
+                <!-- Requirement Details -->
                 <div class="form-section">
                     <div class="form-section-header">
                         <i class="fas fa-calendar-alt"></i>
                         <h4 class="mb-0">Requirement Details</h4>
                     </div>
-                    
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="id_requirement_date" class="form-label required-field">Requirement Date</label>
-                            <input type="date" 
-                                   name="requirement_date" 
-                                   id="id_requirement_date" 
-                                   class="form-control" 
-                                   value="{{ form.requirement_date.value|date:'Y-m-d' }}" 
-                                   required>
+                            <input type="date" name="requirement_date" id="id_requirement_date" class="form-control"
+                                value="{{ form.requirement_date.value|date:'Y-m-d' }}" required>
                             {% if form.requirement_date.errors %}
-                                <div class="validation-error">
-                                    {{ form.requirement_date.errors }}
-                                </div>
+                                <div class="validation-error">{{ form.requirement_date.errors }}</div>
                             {% endif %}
                         </div>
-                        
+
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Scheduled Requirement</label>
                             <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
                                 <label class="btn btn-schedule-toggle {% if not form.is_scheduled.value %}active{% endif %}">
-                                    <input type="radio" 
-                                           name="is_scheduled" 
-                                           id="id_is_scheduled_no" 
-                                           value="0" 
-                                           autocomplete="off"
-                                           {% if not form.is_scheduled.value %}checked{% endif %}> No
+                                    <input type="radio" name="is_scheduled" value="0" autocomplete="off"
+                                        {% if not form.is_scheduled.value %}checked{% endif %}> No
                                 </label>
                                 <label class="btn btn-schedule-toggle {% if form.is_scheduled.value %}active{% endif %}">
-                                    <input type="radio" 
-                                           name="is_scheduled" 
-                                           id="id_is_scheduled_yes" 
-                                           value="1" 
-                                           autocomplete="off"
-                                           {% if form.is_scheduled.value %}checked{% endif %}> Yes
+                                    <input type="radio" name="is_scheduled" value="1" autocomplete="off"
+                                        {% if form.is_scheduled.value %}checked{% endif %}> Yes
                                 </label>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="row schedule-date-container" id="scheduleDateContainer" 
-                         style="display: {{ form.is_scheduled.value|yesno:'block,none' }};">
+
+                    <div class="row schedule-date-container" id="scheduleDateContainer"
+                        style="display: {{ form.is_scheduled.value|yesno:'block,none' }};">
                         <div class="col-md-6 mb-3">
                             <label for="id_schedule_date" class="form-label required-field">Schedule Date</label>
-                            <input type="date" 
-                                   name="schedule_date" 
-                                   id="id_schedule_date" 
-                                   class="form-control" 
-                                   value="{{ form.schedule_date.value|date:'Y-m-d'|default:'' }}">
+                            <input type="date" name="schedule_date" id="id_schedule_date" class="form-control"
+                                value="{{ form.schedule_date.value|date:'Y-m-d'|default:'' }}">
                             {% if form.schedule_date.errors %}
-                                <div class="validation-error">
-                                    {{ form.schedule_date.errors }}
-                                </div>
+                                <div class="validation-error">{{ form.schedule_date.errors }}</div>
                             {% endif %}
                         </div>
                     </div>
                 </div>
-                
-                <!-- Description Section -->
+
+                <!-- Description -->
                 <div class="form-section">
                     <div class="form-section-header">
                         <i class="fas fa-align-left"></i>
                         <h4 class="mb-0">Additional Description</h4>
                     </div>
-                    
                     <div class="mb-3">
                         <label for="id_description" class="form-label">Description</label>
-                        <textarea 
-                            name="description" 
-                            id="id_description" 
-                            class="form-control" 
-                            rows="4" 
-                            maxlength="500"
-                        >{{ form.description.value|default:'' }}</textarea>
-                        <div class="description-counter" id="descriptionCounter">
-                            0 / 500 characters
-                        </div>
+                        <textarea name="description" id="id_description" class="form-control" rows="4"
+                            maxlength="500">{{ form.description.value|default:'' }}</textarea>
+                        <div class="description-counter" id="descriptionCounter">0 / 500 characters</div>
                     </div>
                 </div>
-                
-                <!-- Action Buttons -->
+
+                <!-- Buttons -->
                 <div class="d-flex justify-content-end">
                     <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="btn btn-secondary me-2">
                         <i class="fas fa-times"></i> Cancel
@@ -294,46 +205,52 @@
 
 {% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Replace the checkbox event listener with this
-const scheduleRadios = document.querySelectorAll('input[name="is_scheduled"]');
-const scheduleDateContainer = document.getElementById('scheduleDateContainer');
-const scheduleDateInput = document.getElementById('id_schedule_date');
+    document.addEventListener('DOMContentLoaded', function () {
+        const scheduleRadios = document.querySelectorAll('input[name="is_scheduled"]');
+        const scheduleDateContainer = document.getElementById('scheduleDateContainer');
+        const scheduleDateInput = document.getElementById('id_schedule_date');
 
-scheduleRadios.forEach(radio => {
-    radio.addEventListener('change', function() {
-        if (this.value === '1') {
-            scheduleDateContainer.style.display = 'block';
-            scheduleDateInput.required = true;
-        } else {
-            scheduleDateContainer.style.display = 'none';
-            scheduleDateInput.required = false;
-            scheduleDateInput.value = '';
-        }
-    });
-});
+        // Toggle scheduleDate display based on radio button
+        scheduleRadios.forEach(radio => {
+            radio.addEventListener('change', function () {
+                if (this.value === '1') {
+                    scheduleDateContainer.style.display = 'block';
+                    scheduleDateInput.required = true;
+                } else {
+                    scheduleDateContainer.style.display = 'none';
+                    scheduleDateInput.required = false;
+                    scheduleDateInput.value = '';
+                }
+            });
+        });
 
         // Description character counter
         const descriptionTextarea = document.getElementById('id_description');
         const descriptionCounter = document.getElementById('descriptionCounter');
 
-        descriptionTextarea.addEventListener('input', function() {
-            const currentLength = this.value.length;
+        const updateCharCount = () => {
+            const currentLength = descriptionTextarea.value.length;
             descriptionCounter.textContent = `${currentLength} / 500 characters`;
-            
-            if (currentLength > 500) {
+        };
+
+        descriptionTextarea.addEventListener('input', function () {
+            if (this.value.length > 500) {
                 this.value = this.value.substring(0, 500);
-                descriptionCounter.textContent = '500 / 500 characters';
             }
+            updateCharCount();
         });
+
+        updateCharCount();
 
         // Form validation
         const form = document.getElementById('editRequirementForm');
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', function (event) {
             let isValid = true;
 
-            // Company name validation
             const companyName = document.getElementById('id_company_name');
+            const companyCode = document.getElementById('id_company_code');
+            const requirementDate = document.getElementById('id_requirement_date');
+
             if (!companyName.value.trim()) {
                 companyName.classList.add('is-invalid');
                 isValid = false;
@@ -341,8 +258,6 @@ scheduleRadios.forEach(radio => {
                 companyName.classList.remove('is-invalid');
             }
 
-            // Company code validation
-            const companyCode = document.getElementById('id_company_code');
             if (!companyCode.value.trim()) {
                 companyCode.classList.add('is-invalid');
                 isValid = false;
@@ -350,8 +265,6 @@ scheduleRadios.forEach(radio => {
                 companyCode.classList.remove('is-invalid');
             }
 
-            // Requirement date validation
-            const requirementDate = document.getElementById('id_requirement_date');
             if (!requirementDate.value) {
                 requirementDate.classList.add('is-invalid');
                 isValid = false;
@@ -359,14 +272,12 @@ scheduleRadios.forEach(radio => {
                 requirementDate.classList.remove('is-invalid');
             }
 
-            // Schedule date validation (if scheduled)
-            if (isScheduledCheckbox.checked) {
-                if (!scheduleDateInput.value) {
-                    scheduleDateInput.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    scheduleDateInput.classList.remove('is-invalid');
-                }
+            const isScheduled = [...scheduleRadios].find(r => r.checked)?.value === '1';
+            if (isScheduled && !scheduleDateInput.value) {
+                scheduleDateInput.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                scheduleDateInput.classList.remove('is-invalid');
             }
 
             if (!isValid) {

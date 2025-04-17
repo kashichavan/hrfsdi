@@ -838,11 +838,29 @@
                 </a>
             </li>
 
+            <!-- Got Placed Link -->
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'update_status' %}active{% endif %}" 
+                   href="{% url 'student_data:update_status' %}">
+                    <i class="fas fa-check-double"></i>
+                    <span>Update Status</span>
+                </a>
+            </li>
+
+            <!-- Placed Students Link -->
+            <li class="nav-item">
+                <a class="nav-link {% if request.resolver_match.url_name == 'placed_students' %}active{% endif %}" 
+                   href="{% url 'student_data:placed_students' %}">
+                    <i class="fas fa-trophy"></i>
+                    <span>Placed Students</span>
+                </a>
+            </li>
+
             <!-- Upload Excel Link -->
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'upload_excel' %}active{% endif %}" href="{% url 'student_data:upload_excel' %}">
                     <i class="fas fa-file-excel"></i>
-                    <span>Upload Excel</span>
+                    <span>Upload Student</span>
                 </a>
             </li>
 

@@ -197,11 +197,20 @@ from django.core.paginator import Paginator
 from django.shortcuts import render
 
 from .models import Student  # Make sure this import exists and matches your actual model location
-@login_required
+from django.db.models import Q, Count
+from django.core.paginator import Paginator
+from django.shortcuts import render, get_object_or_404
+from .models import Student, RequirementStudent
+
+from django.shortcuts import render
+from django.core.paginator import Paginator
+from django.db.models import Q
+import json
+
 def student_list(request):
-    # Get filter params
+    # Get filter parameters from request
     search_query = request.GET.get('search', '')
-    sort_by = request.GET.get('sort', 'name')
+    sort_by = request.GET.get('sort', '-scheduled_requirements')  # Default sort
     page_number = request.GET.get('page', 1)
     type_filter = request.GET.get('type_filter', '')
     degree_filter = request.GET.get('degree', '')
@@ -219,10 +228,7 @@ def student_list(request):
     # Apply type_of_data filter
     if type_filter:
         if type_filter.lower() != 'all':
-            if type_filter.lower() == 'placement_activity':
-                students = students.filter(type_of_data__iexact='placement activity')
-            else:
-                students = students.filter(type_of_data__iexact=type_filter.lower())
+            students = students.filter(type_of_data__iexact=type_filter.lower())
 
     # Filter by degree
     if degree_filter:
@@ -250,37 +256,38 @@ def student_list(request):
         if max_yop:
             students = students.filter(yop__lte=int(max_yop))
     except ValueError:
-        pass  # Ignore bad inputs silently
+        pass  # Ignore bad inputs
 
     # Filter by gender
     if gender_filter:
         students = students.filter(gender__iexact=gender_filter)
 
-    # Search by name or contact number
+    # Search filter
     if search_query:
         students = students.filter(
             Q(name__icontains=search_query) |
             Q(contact_number__icontains=search_query)
         )
 
-    # Sorting
-    ordering_map = {
-        'total_requirements': '-total_requirements',
-        'scheduled_requirements': '-scheduled_requirements',
-        'yop': '-yop',
-        'tenth_percent': '-tenth_percent',
-        'twelfth_percent': '-twelfth_percent',
-        'degree_percent': '-degree_percent'
+    # Sorting configuration
+    valid_sorts = {
+        'name', '-name',
+        'yop', '-yop',
+        'tenth_percent', '-tenth_percent',
+        'twelfth_percent', '-twelfth_percent',
+        'degree_percent', '-degree_percent',
+        'total_requirements', '-total_requirements',
+        'scheduled_requirements', '-scheduled_requirements',
+        'gender', '-gender',
+        'type_of_data', '-type_of_data',
+        'created_at', '-created_at'
     }
 
-    if sort_by in ordering_map:
-        students = students.order_by(ordering_map[sort_by], 'name')
-    elif sort_by.startswith('-'):
-        students = students.order_by(sort_by, 'name')
-    else:
-        students = students.order_by(sort_by, 'name')
+    # Validate and apply sorting
+    sort_by = sort_by if sort_by in valid_sorts else '-scheduled_requirements'
+    students = students.order_by(sort_by, 'name')  # Secondary sort by name
 
-    # For dropdowns
+    # Get unique values for filters
     unique_degrees = Student.objects.values_list('degree', flat=True).distinct().order_by('degree')
     unique_streams = Student.objects.values_list('stream', flat=True).distinct().order_by('stream')
 
@@ -288,17 +295,21 @@ def student_list(request):
     paginator = Paginator(students, 50)
     page_obj = paginator.get_page(page_number)
 
-    # Counts for each type_of_data category
+    # Type counts for quick filters
     type_counts = {
         'all': Student.objects.count(),
         'fsdi': Student.objects.filter(type_of_data__iexact='fsdi').count(),
         'super100': Student.objects.filter(type_of_data__iexact='super100').count(),
-        'tution': Student.objects.filter(type_of_data__iexact='tution').count(),
+        'tuition': Student.objects.filter(type_of_data__iexact='tuition').count(),
         'legend': Student.objects.filter(type_of_data__iexact='legend').count(),
         'placement_activity': Student.objects.filter(type_of_data__iexact='placement activity').count(),
     }
 
+    stream_filters = request.GET.getlist('stream')
+
+    # Context data
     context = {
+        'stream_filters': stream_filters,
         'page_obj': page_obj,
         'search_query': search_query,
         'sort_by': sort_by,
@@ -315,21 +326,28 @@ def student_list(request):
         'max_yop': max_yop,
         'unique_degrees': unique_degrees,
         'unique_streams': unique_streams,
+        'current_sort': sort_by,
         'sort_options': [
-            ('name', 'Name'),
-            ('yop', 'Year of Passing'),
-            ('tenth_percent', '10th Percentage'),
-            ('twelfth_percent', '12th Percentage'),
-            ('degree_percent', 'Degree Percentage'),
-            ('total_requirements', 'Total Requirements'),
-            ('scheduled_requirements', 'Scheduled Requirements'),
-            ('gender', 'Gender'),
-            ('type_of_data', 'Type of Data'),
-            ('created_at', 'Created Date'),
+            ('-scheduled_requirements', 'Scheduled (High to Low)'),
+            ('scheduled_requirements', 'Scheduled (Low to High)'),
+            ('-total_requirements', 'Total (High to Low)'),
+            ('total_requirements', 'Total (Low to High)'),
+            ('name', 'Name (A-Z)'),
+            ('-name', 'Name (Z-A)'),
+            ('yop', 'YOP (Oldest)'),
+            ('-yop', 'YOP (Newest)'),
+            ('tenth_percent', '10th % (Low)'),
+            ('-tenth_percent', '10th % (High)'),
+            ('twelfth_percent', '12th % (Low)'),
+            ('-twelfth_percent', '12th % (High)'),
+            ('degree_percent', 'Degree % (Low)'),
+            ('-degree_percent', 'Degree % (High)'),
         ]
+
     }
 
     return render(request, 'student_list.html', context)
+
 
 
 @login_required
@@ -822,19 +840,18 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q
 from .models import Student, Requirement, RequirementStudent
 from django.core.paginator import Paginator
+from django.core.paginator import Paginator
 
 def add_students_to_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, id=requirement_id)
-    
-    # Get IDs of students already assigned to this requirement
+
     already_assigned_student_ids = RequirementStudent.objects.filter(
         requirement=requirement
     ).values_list('student_id', flat=True)
-    
-    # Get all students not already assigned to this requirement
+
     students = Student.objects.exclude(id__in=already_assigned_student_ids)
-    
-    # Initialize filter variables
+
+    # Filters
     search_query = request.GET.get('search', '')
     selected_streams = request.GET.getlist('streams', [])
     year_from = request.GET.get('year_from', '')
@@ -842,50 +859,51 @@ def add_students_to_requirement(request, requirement_id):
     tenth_percentage = request.GET.get('tenth_percentage', '')
     twelfth_percentage = request.GET.get('twelfth_percentage', '')
     degree_percentage = request.GET.get('degree_percentage', '')
-    
-    # Apply filters
+
     if search_query:
         students = students.filter(
             Q(name__icontains=search_query) | 
             Q(contact_number__icontains=search_query)
         )
-    
+
     if selected_streams:
         students = students.filter(stream__in=selected_streams)
-    
+
     if year_from:
         students = students.filter(yop__gte=year_from)
-    
+
     if year_to:
         students = students.filter(yop__lte=year_to)
-    
+
     if tenth_percentage:
         students = students.filter(tenth_percent__gte=float(tenth_percentage))
-    
+
     if twelfth_percentage:
         students = students.filter(twelfth_percent__gte=float(twelfth_percentage))
-    
+
     if degree_percentage:
         students = students.filter(degree_percent__gte=float(degree_percentage))
-    
-    # Get all unique streams for dropdown
+
+    # Pagination
+    paginator = Paginator(students, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     all_streams = Student.objects.values_list('stream', flat=True).distinct()
-    
+
     if request.method == 'POST':
-        student_ids = request.POST.getlist('student_ids')
-        
-        # Create StudentRequirement records for selected students
+        student_ids = request.POST.getlist('student_ids[]')
         for student_id in student_ids:
             RequirementStudent.objects.create(
                 student_id=student_id,
                 requirement=requirement,
             )
-        
         return redirect('student_data:requirement_detail', pk=requirement_id)
-    
+
     context = {
         'requirement': requirement,
         'students': students,
+        'page_obj': page_obj,
         'all_streams': all_streams,
         'selected_streams': selected_streams,
         'search_query': search_query,
@@ -896,8 +914,10 @@ def add_students_to_requirement(request, requirement_id):
         'degree_percentage': degree_percentage,
         'already_assigned_student_ids': already_assigned_student_ids,
     }
-    
+
     return render(request, 'add_student_to_requirement.html', context)
+
+
 # Dashboard views
 @login_required
 def home_dashboard(request):
@@ -1380,3 +1400,94 @@ def map_students_to_requirement_view(request):
         return render(request, 'map_students.html', {'errors': errors})
 
     return render(request, 'map_students.html')
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.urls import reverse
+from django.utils.http import urlencode
+from .models import Student, Requirement, RequirementStudent
+
+
+def combined_view(request):
+    student = None
+    requirement = None
+    req_students = None
+    mobile_number = request.GET.get("mobile_number")
+    company_code = request.GET.get("company_code")
+
+    # Handle POST request for status update
+    if request.method == "POST" and 'req_student_id' in request.POST:
+        req_student_id = request.POST.get("req_student_id")
+        new_status = request.POST.get("status")
+        mobile_number = request.POST.get("mobile_number")
+        company_code = request.POST.get("company_code")
+
+        try:
+            req_student = RequirementStudent.objects.get(id=req_student_id)
+            if new_status in dict(RequirementStudent.STATUS_CHOICES):
+                req_student.status = new_status
+                req_student.save()
+                messages.success(request, "Status updated successfully.")
+            else:
+                messages.error(request, "Invalid status.")
+        except RequirementStudent.DoesNotExist:
+            messages.error(request, "Mapping not found.")
+
+        redirect_url = reverse('student_data:update_status')
+        params = {}
+        if mobile_number:
+            params['mobile_number'] = mobile_number
+        elif company_code:
+            params['company_code'] = company_code
+        if params:
+            redirect_url += '?' + urlencode(params)
+        return redirect(redirect_url)
+
+    # Handle GET requests
+    if mobile_number:
+        try:
+            student = Student.objects.get(contact_number=mobile_number)
+            req_students = RequirementStudent.objects.filter(student=student).select_related('requirement')
+        except Student.DoesNotExist:
+            messages.error(request, "Student not found.")
+
+    elif company_code:
+        try:
+            requirement = Requirement.objects.get(company_code=company_code)
+            req_students = RequirementStudent.objects.filter(requirement=requirement).select_related('student')
+        except Requirement.DoesNotExist:
+            messages.error(request, "Company code not found.")
+
+    context = {
+        "student": student,
+        "requirement": requirement,
+        "req_students": req_students,
+        "STATUS_CHOICES": RequirementStudent.STATUS_CHOICES,
+        "mobile_number": mobile_number,
+        "company_code": company_code,
+    }
+    return render(request, "combined_template.html", context)
+
+
+def placed_students_view(request):
+    placed_students = RequirementStudent.objects.filter(
+        status='selected'
+    ).select_related('student', 'requirement')
+
+    return render(request, 'placed_students.html', {
+        'placed_students': placed_students
+    })
+
+def delete_requirement(request, pk):
+    requirement = get_object_or_404(Requirement, pk=pk)
+    
+    if request.method == 'POST':
+        requirement.delete()
+        messages.success(request, f'Requirement "{requirement.company_name}" deleted successfully.')
+        return redirect('student_data:requirement_list')
+    
+    context = {
+        'requirement': requirement,
+    }
+    return render(request, 'delete_requirement.html', context)

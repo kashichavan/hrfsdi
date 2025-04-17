@@ -2,58 +2,57 @@
 {% load custom_filters %}
 
 {% block extra_css %}
-
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
-
     /* Student Type Badges */
-.badge-type-fsdi {
-    background-color: #4e73df;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 50px;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
-}
+    .badge-type-fsdi {
+        background-color: #4e73df;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
+    }
 
-.badge-type-super100 {
-    background-color: #1cc88a;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 50px;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(28, 200, 138, 0.3);
-}
+    .badge-type-super100 {
+        background-color: #1cc88a;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(28, 200, 138, 0.3);
+    }
 
-.badge-type-fastrack {
-    background-color: #f6c23e;
-    color: #2c3e50;
-    padding: 5px 10px;
-    border-radius: 50px;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(246, 194, 62, 0.3);
-}
+    .badge-type-fastrack {
+        background-color: #f6c23e;
+        color: #2c3e50;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(246, 194, 62, 0.3);
+    }
 
-.badge-type-legend {
-    background-color: #e74a3b;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 50px;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(231, 74, 59, 0.3);
-}
+    .badge-type-legend {
+        background-color: #e74a3b;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(231, 74, 59, 0.3);
+    }
 
-.badge-type-default {
-    background-color: #858796;
-    color: white;
-    padding: 5px 10px;
-    border-radius: 50px;
-    font-weight: 600;
-    box-shadow: 0 2px 5px rgba(133, 135, 150, 0.3);
-}
+    .badge-type-default {
+        background-color: #858796;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(133, 135, 150, 0.3);
+    }
+
     /* Card and button styling */
     .card {
         border-radius: 8px;
@@ -175,11 +174,11 @@
                         Super100 ({{ type_counts.super100|default:0 }})
                     </a>
                     
-                    <!-- Fastrack -->
+                    <!-- Tuition -->
                     <a href="?type_filter=tuition{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-   class="btn quick-filter-btn btn-outline-warning {% if type_filter|lower == 'tuition' %}active bg-warning text-dark{% endif %}">
-    Tuition ({{ type_counts.tuition|default:0 }})
-</a>
+                       class="btn quick-filter-btn btn-outline-warning {% if type_filter|lower == 'tuition' %}active bg-warning text-dark{% endif %}">
+                        Tuition ({{ type_counts.tuition|default:0 }})
+                    </a>
                     
                     <!-- Legend -->
                     <a href="?type_filter=legend{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
@@ -222,7 +221,7 @@
                             <select name="degree" class="form-select">
                                 <option value="">All Degrees</option>
                                 {% for degree in unique_degrees %}
-                                    <option value="{{ degree }}" {% if degree == degree_filter %}selected{% endif %}>{{ degree }}</option>
+                                    <option value="{{ degree }}" {% if degree == degree_filter %}selected{% endif %}>{{ degree|lower }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -231,7 +230,7 @@
                             <label class="form-label">Stream</label>
                             <select name="stream" id="streamSelect" class="form-select" multiple="multiple">
                                 {% for stream in unique_streams %}
-                                    <option value="{{ stream }}" {% if stream in stream_filters %}selected{% endif %}>{{ stream }}</option>
+                                    <option value="{{ stream }}" {% if stream in stream_filters %}selected{% endif %}>{{ stream|lower }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -308,7 +307,18 @@
                             <th>Stream</th>
                             <th>Score</th>
                             <th>Type</th>
-                            <th>Requirements</th>
+                            <th>
+                                <a href="?{% modify_query sort='scheduled' %}" class="text-dark text-decoration-none">
+                                    Requirements 
+                                    {% if current_sort == 'scheduled' %}
+                                        <i class="fas fa-sort-amount-down"></i>
+                                    {% elif current_sort == '-scheduled' %}
+                                        <i class="fas fa-sort-amount-up"></i>
+                                    {% else %}
+                                        <i class="fas fa-sort"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             <th>Actions</th>
                             <th></th>
                         </tr>
@@ -316,14 +326,14 @@
                     <tbody>
                         {% for student in page_obj %}
                         <tr class="{% if student.scheduled_requirements >= 10 %}table-danger{% endif %}">
-                            <td>{{ student.name }}</td>
+                            <td>{{ student.name|lower }}</td>
                             <td>{{ student.contact_number }}</td>
-                            <td>{{ student.degree }}</td>
-                            <td>{{ student.stream }}</td>
+                            <td>{{ student.degree|lower }}</td>
+                            <td>{{ student.stream|lower }}</td>
                             <td>{{ student.degree_percent }}%</td>
                             <td>
                                 <span class="badge bg-warning text-dark badge-type-{{ student.type_of_data|lower|default:'default' }}">
-                                    {{ student.type_of_data }}
+                                    {{ student.type_of_data|lower }}
                                 </span>
                             </td>
                             
@@ -434,25 +444,40 @@ $(document).ready(function() {
         selectionCssClass: 'select2-selection-improved'
     });
 
-    {% if stream_filters %}
-    var streamArray = {{ stream_filters|safe|json_script:"stream-data" }};
-    $('#streamSelect').val(streamArray).trigger('change');
-    {% endif %}
+    // Set the selected values for the stream select
+{% if stream_filters %}
+try {
+    var streamArray = JSON.parse(document.getElementById('stream-data').textContent);
+    if (Array.isArray(streamArray)) {
+        $('#streamSelect').val(streamArray).trigger('change');
+    } else {
+        console.error('Invalid stream data: Expected an array, but got', streamArray);
+    }
+} catch (e) {
+    console.error('Error parsing stream data:', e);
+}
+{% endif %}
 
-    // Preserve filters in pagination links
-    $('.pagination a').each(function() {
-        const href = $(this).attr('href');
+// Preserve filters in pagination links
+$('.pagination a').each(function() {
+    const href = $(this).attr('href');
+    if (href) {
         const params = new URLSearchParams(window.location.search);
         
         // Remove page parameter if it exists
         params.delete('page');
         
+        // Append filters to pagination link
         if (href.includes('?')) {
             $(this).attr('href', href + '&' + params.toString());
         } else {
             $(this).attr('href', href + '?' + params.toString());
         }
-    });
+    } else {
+        console.warn('Pagination link does not have a valid href:', $(this));
+    }
+});
+
 });
 </script>
 {% endblock %}

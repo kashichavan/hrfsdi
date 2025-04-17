@@ -52,3 +52,12 @@ def modify_query(context, **kwargs):
     for key, value in kwargs.items():
         query[key] = value
     return query.urlencode()
+
+from django import template
+from urllib.parse import urlencode
+
+@register.simple_tag(takes_context=True)
+def url_replace(context, **kwargs):
+    query = context['request'].GET.dict()
+    query.update(kwargs)
+    return urlencode(query)

@@ -1,4 +1,5 @@
 {% extends 'base.html' %}
+{% load custom_filters %}
 
 {% block title %}Assign Students{% endblock %}
 
@@ -51,7 +52,7 @@
 
     <form method="post">
         {% csrf_token %}
-        {% if students %}
+        {% if page_obj %}
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
                 <thead class="table-dark">
@@ -72,10 +73,10 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% for student in students %}
+                    {% for student in page_obj %}
                         {% if student.id not in already_assigned_student_ids %}
                         <tr>
-                            <td><input type="checkbox" name="student_ids" class="student-checkbox" value="{{ student.id }}"></td>
+                            <td><input type="checkbox" name="student_ids[]" class="student-checkbox" value="{{ student.id }}"></td>
                             <td>{{ student.name }}</td>
                             <td>{{ student.contact_number }}</td>
                             <td>{{ student.degree }}</td>
@@ -97,6 +98,33 @@
         <div class="text-end">
             <button type="submit" class="btn btn-primary mt-3">Assign Selected Students</button>
         </div>
+
+        <!-- Pagination Controls -->
+        <div class="pagination mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=1 %}">First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=page_obj.previous_page_number %}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=page_obj.next_page_number %}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?{% url_replace page=page_obj.paginator.num_pages %}">Last</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
         {% else %}
         <div class="alert alert-warning">No students found matching the filters.</div>
         {% endif %}
@@ -112,6 +140,11 @@
             placeholder: 'Select Streams',
             width: '100%'
         });
+
+        const selectedStreams = {{ selected_streams|safe }};
+        if (selectedStreams.length > 0) {
+            $('#streamSelect').val(selectedStreams).trigger('change');
+        }
 
         $('#selectAll').change(function () {
             $('.student-checkbox').prop('checked', this.checked);
