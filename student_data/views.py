@@ -293,7 +293,7 @@ def student_list(request):
         'all': Student.objects.count(),
         'fsdi': Student.objects.filter(type_of_data__iexact='fsdi').count(),
         'super100': Student.objects.filter(type_of_data__iexact='super100').count(),
-        'fastrack': Student.objects.filter(type_of_data__iexact='fastrack').count(),
+        'tution': Student.objects.filter(type_of_data__iexact='tution').count(),
         'legend': Student.objects.filter(type_of_data__iexact='legend').count(),
         'placement_activity': Student.objects.filter(type_of_data__iexact='placement activity').count(),
     }
@@ -1188,3 +1188,195 @@ class StudentDeleteView(LoginRequiredMixin, DeleteView):
         qs = super().get_queryset()
         # Add any additional filtering logic here if needed
         return qs
+    
+# views.py
+from django.shortcuts import redirect
+from django.contrib import messages
+from .models import Requirement
+
+def delete_all_requirements(request):
+    if request.method == 'POST':
+        # Delete all requirements (this will also delete entries in RequirementStudent due to FK CASCADE)
+        Requirement.objects.all().delete()
+        
+        messages.success(request, "✅ All requirements deleted and students updated.")
+    else:
+        messages.error(request, "❌ Invalid request method.")
+
+    return redirect('student_data:requirement_list')  # Replace with your actual list view name
+
+
+# views.py
+import openpyxl
+from django.shortcuts import render
+from .models import Requirement
+from datetime import datetime
+
+# views.py
+import openpyxl
+from django.shortcuts import render
+from .models import Requirement
+from datetime import datetime
+
+# views.py
+import openpyxl
+from django.shortcuts import render
+from .models import Requirement
+from datetime import datetime
+
+def parse_excel_date(cell_value, row_index, field_name, failed_rows):
+    """
+    Safely parse a cell value to a date using DD-MM-YYYY format.
+    If it's a datetime object, swap day and month to correct for MDY parsing.
+    If it's a string, try parsing it as DD-MM-YYYY.
+    """
+    if isinstance(cell_value, datetime):
+        try:
+            # Swap day and month to correct for Excel's MDY interpretation
+            parsed_date = datetime(cell_value.year, cell_value.day, cell_value.month).date()
+            return parsed_date
+        except ValueError as e:
+            failed_rows.append(f"Row {row_index}: Invalid {field_name} after swapping day/month — {str(e)}.")
+            return None
+    elif isinstance(cell_value, str):
+        try:
+            return datetime.strptime(cell_value.strip(), "%d-%m-%Y").date()
+        except ValueError:
+            failed_rows.append(f"Row {row_index}: Invalid {field_name} format ('{cell_value}') — expected DD-MM-YYYY.")
+            return None
+    else:
+        failed_rows.append(f"Row {row_index}: Invalid {field_name} type.")
+        return None
+
+def upload_requirements_view(request):
+    message = None
+    success_count = 0
+    failed_rows = []
+
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+        wb = openpyxl.load_workbook(excel_file, data_only=True)
+        sheet = wb.active
+
+        for i, row in enumerate(sheet.iter_rows(min_row=3), start=3):  # Skip header
+            try:
+                company_name = row[1].value
+                company_code = row[2].value
+                requirement_date_raw = row[3].value
+                schedule_date_raw = row[4].value
+
+                if not company_code or not company_name:
+                    failed_rows.append(f"Row {i}: Missing company name/code.")
+                    continue
+
+                # Use custom parser
+                requirement_date = parse_excel_date(requirement_date_raw, i, "requirement date", failed_rows)
+                schedule_date = parse_excel_date(schedule_date_raw, i, "schedule date", failed_rows)
+
+                if requirement_date is None or (schedule_date_raw is not None and schedule_date is None):
+                    # Error message already added by parse_excel_date
+                    continue
+
+                is_scheduled = bool(schedule_date)
+                schedule_status = 'scheduled' if is_scheduled else 'not_scheduled'
+
+                Requirement.objects.update_or_create(
+                    company_code=company_code,
+                    defaults={
+                        'company_name': company_name,
+                        'requirement_date': requirement_date,
+                        'schedule_date': schedule_date,
+                        'is_scheduled': is_scheduled,
+                        'schedule_status': schedule_status
+                    }
+                )
+                success_count += 1
+
+            except Exception as e:
+                failed_rows.append(f"Row {i}: {str(e)}")
+
+        message = f"{success_count} requirement(s) uploaded successfully."
+        if failed_rows:
+            message += f" {len(failed_rows)} row(s) failed to upload."
+
+    return render(request, 'upload_requirements.html', {
+        'message': message,
+        'errors': failed_rows
+    })
+
+# views.py (add this new view)
+import openpyxl
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .models import Requirement, Student, RequirementStudent
+
+# views.py
+def map_students_to_requirement_view(request):
+    if request.method == 'POST' and request.FILES.get('excel_file'):
+        excel_file = request.FILES['excel_file']
+        wb = openpyxl.load_workbook(excel_file, data_only=True)
+        sheet = wb.active
+        success_count = 0
+        errors = []
+
+        # Find column indices by header names
+        header_row = next(sheet.iter_rows(min_row=1, max_row=1))
+        column_indices = {
+            'mobile_number': None,
+            'company_code': None
+        }
+
+        for idx, cell in enumerate(header_row):
+            header_name = str(cell.value).strip().lower()
+            if 'mobile' in header_name:
+                column_indices['mobile_number'] = idx
+            elif 'company' in header_name and 'code' in header_name:
+                column_indices['company_code'] = idx
+
+        # Validate headers
+        if None in column_indices.values():
+            errors.append("Missing required columns: Mobile number and/or Company code")
+            messages.error(request, "Invalid file format")
+            return render(request, 'map_students.html', {'errors': errors})
+
+        for row_idx, row in enumerate(sheet.iter_rows(min_row=2), start=2):
+            try:
+                # Get values from correct columns
+                mobile = str(row[column_indices['mobile_number']].value).strip()
+                company_code = str(row[column_indices['company_code']].value).strip()
+
+                if not mobile or not company_code:
+                    errors.append(f"Row {row_idx}: Missing required data")
+                    continue
+
+                # Case-sensitive company code lookup
+                requirement = Requirement.objects.get(company_code__exact=company_code)
+                student = Student.objects.get(contact_number=mobile)
+
+                # Create mapping if not exists
+                _, created = RequirementStudent.objects.get_or_create(
+                    requirement=requirement,
+                    student=student,
+                    defaults={'status': 'pending'}
+                )
+
+                if created:
+                    success_count += 1
+                else:
+                    errors.append(f"Row {row_idx}: Mapping already exists for {mobile} - {company_code}")
+
+            except Requirement.DoesNotExist:
+                errors.append(f"Row {row_idx}: Requirement with code '{company_code}' not found")
+            except Student.DoesNotExist:
+                errors.append(f"Row {row_idx}: Student with mobile '{mobile}' not found")
+            except Exception as e:
+                errors.append(f"Row {row_idx}: Error - {str(e)}")
+
+        if success_count > 0:
+            messages.success(request, f"Successfully mapped {success_count} students!")
+        if errors:
+            messages.error(request, f"Completed with {len(errors)} errors")
+
+        return render(request, 'map_students.html', {'errors': errors})
+
+    return render(request, 'map_students.html')

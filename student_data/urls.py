@@ -59,4 +59,7 @@ path('requirements/<int:requirement_id>/',
      path('export/todays-requirements/', views.export_today_scheduled_requirements, name='export_todays_requirements'),
      path('requirement/<int:requirement_id>/student/<int:student_id>/remove/', views.remove_student_from_requirement, name='remove_student'),
       path('student/delete/<int:pk>/',views.StudentDeleteView.as_view(), name='student_delete'),
+     path('requirements/delete_all/', views.delete_all_requirements, name='delete_all_requirements'),
+      path('upload-requirements/', views.upload_requirements_view, name='upload_requirements'),
+       path('map-students/', views.map_students_to_requirement_view, name='map_students'),
 ]
