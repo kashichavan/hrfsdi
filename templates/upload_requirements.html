@@ -1,0 +1,28 @@
+<!-- templates/upload_requirements.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Upload Requirement Excel</title>
+</head>
+<body>
+    <h2>Upload Requirement Excel</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="file" name="excel_file" accept=".xlsx" required>
+        <button type="submit">Upload</button>
+    </form>
+
+    {% if message %}
+        <p style="color: green;">{{ message }}</p>
+    {% endif %}
+
+    {% if errors %}
+        <h4>Errors:</h4>
+        <ul style="color: red;">
+            {% for error in errors %}
+                <li>{{ error }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+</body>
+</html>

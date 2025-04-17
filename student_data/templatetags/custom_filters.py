@@ -26,6 +26,21 @@ def get_filter_count(context):
 def get_item(dictionary, key):
     return dictionary.get(key)
 
+from django import template
+
+register = template.Library()
+
+@register.simple_tag
+def query_transform(request, **kwargs):
+    updated = request.GET.copy()
+    for k, v in kwargs.items():
+        if v is None:
+            if k in updated:
+                del updated[k]
+        else:
+            updated[k] = v
+    return updated.urlencode()
+
 
 @register.simple_tag(takes_context=True)
 def modify_query(context, **kwargs):

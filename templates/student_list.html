@@ -69,21 +69,6 @@
         transform: translateY(-2px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
-    
-    /* Type badges */
-    .badge-type-fsdi {
-        background-color: #4cc9f0;
-    }
-    .badge-type-super100 {
-        background-color: #f72585;
-    }
-    .badge-type-fastrack {
-        background-color: #f8961e;
-    }
-    .badge-type-legend {
-        background-color: #4895ef;
-    }
-    
     /* Filter section */
     .filter-section {
         padding: 15px;
@@ -191,10 +176,10 @@
                     </a>
                     
                     <!-- Fastrack -->
-                    <a href="?type_filter=fastrack{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-warning {% if type_filter|lower == 'fastrack' %}active bg-warning text-dark{% endif %}">
-                        Fastrack ({{ type_counts.fastrack|default:0 }})
-                    </a>
+                    <a href="?type_filter=tuition{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+   class="btn quick-filter-btn btn-outline-warning {% if type_filter|lower == 'tuition' %}active bg-warning text-dark{% endif %}">
+    Tuition ({{ type_counts.tuition|default:0 }})
+</a>
                     
                     <!-- Legend -->
                     <a href="?type_filter=legend{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
@@ -330,17 +315,18 @@
                     </thead>
                     <tbody>
                         {% for student in page_obj %}
-                        <tr class="{% if student.scheduled_requirements_count >= 10 %}table-danger{% endif %}">
+                        <tr class="{% if student.scheduled_requirements >= 10 %}table-danger{% endif %}">
                             <td>{{ student.name }}</td>
                             <td>{{ student.contact_number }}</td>
                             <td>{{ student.degree }}</td>
                             <td>{{ student.stream }}</td>
                             <td>{{ student.degree_percent }}%</td>
                             <td>
-                                <span class="badge badge-type-{{ student.type_of_data|default:'default' }}">
+                                <span class="badge bg-warning text-dark badge-type-{{ student.type_of_data|lower|default:'default' }}">
                                     {{ student.type_of_data }}
                                 </span>
                             </td>
+                            
                             <td>
                                 <div class="d-flex align-items-center">
                                     <span class="me-2">
