@@ -863,6 +863,13 @@ from django.shortcuts import get_object_or_404
 
 def add_students_to_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, id=requirement_id)
+    
+    # 1. Get students who are SELECTED (placed) for this requirement to exclude
+    selected_student_ids = RequirementStudent.objects.filter(
+        status='selected'
+    ).values_list('student_id', flat=True)
+    
+    # 2. Maintain existing functionality of already assigned students
     already_assigned_students = requirement.students.all()
     already_assigned_student_ids = already_assigned_students.values_list('id', flat=True)
     
@@ -884,21 +891,8 @@ def add_students_to_requirement(request, requirement_id):
 
     # Get unique sorted streams from available students
     unique_streams = students.values_list('stream', flat=True).distinct().order_by('stream')
-    # Create a dictionary of student_id: status for template
-    student_status_map = {
-        rs.student_id: rs.status 
-        for rs in requirement_students
-    }
 
-    # Base queryset - exclude only SELECTED students
-    students = Student.objects.exclude(
-        id__in=selected_student_ids
-    ).order_by('scheduled_requirements')
-
-    # Get unique sorted streams from available students
-    unique_streams = students.values_list('stream', flat=True).distinct().order_by('stream')
-
-    # Filter handling
+    # Filter handling (same as before)
     search_query = request.GET.get('search', '')
     selected_streams = request.GET.getlist('streams', [])
     year_from = request.GET.get('year_from')
@@ -1540,3 +1534,213 @@ def delete_requirement(request, pk):
         'requirement': requirement,
     }
     return render(request, 'delete_requirement.html', context)
+
+import pandas as pd
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
+from .models import Student, RequirementStudent
+from io import BytesIO
+
+import pandas as pd
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
+from .models import Student, Requirement, RequirementStudent
+from io import BytesIO
+from django.core.exceptions import ObjectDoesNotExist
+
+import pandas as pd
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
+from .models import Student, Requirement, RequirementStudent
+from io import BytesIO
+from django.core.exceptions import ObjectDoesNotExist
+
+def update_selected_students(request):
+    context = {
+        'existing_companies': Requirement.objects.exclude(
+            company_code__isnull=True
+        ).exclude(
+            company_code__exact=''
+        ).order_by('company_code').values_list('company_code', flat=True).distinct()
+    }
+    
+    if request.method == 'POST':
+        try:
+            excel_file = request.FILES.get('excel_file')
+            mobile_column = request.POST.get('mobile_column', 'mobile_number').strip()
+            company_column = request.POST.get('company_column', 'company_code').strip()
+            
+            if not excel_file:
+                raise ValueError("Please upload an Excel file")
+            
+            # Read Excel file
+            try:
+                if excel_file.name.endswith('.xlsx'):
+                    df = pd.read_excel(excel_file)
+                elif excel_file.name.endswith('.csv'):
+                    df = pd.read_csv(excel_file)
+                else:
+                    raise ValueError("Unsupported file format. Please upload .xlsx or .csv")
+            except Exception as e:
+                raise ValueError(f"Error reading file: {str(e)}")
+            
+            # Validate columns exist
+            for col in [mobile_column, company_column]:
+                if col not in df.columns:
+                    available_columns = ", ".join(df.columns)
+                    raise ValueError(
+                        f"Column '{col}' not found in Excel. Available columns: {available_columns}"
+                    )
+            
+            # Clean data
+            df = df.dropna(subset=[mobile_column, company_column])  # Remove rows with empty values
+            df[mobile_column] = df[mobile_column].astype(str).str.replace(r'\D', '', regex=True)  # Clean phone numbers
+            df[company_column] = df[company_column].astype(str).str.strip()  # Clean company codes
+            
+            # Process in transaction
+            with transaction.atomic():
+                results = {
+                    'companies_processed': set(),
+                    'students_selected': 0,
+                    'records_created': 0,
+                    'records_updated': 0,
+                    'students_rejected': 0,
+                    'numbers_not_found': 0,
+                    'invalid_companies': set(),
+                    'processed_count': len(df)
+                }
+                
+                # First pass: Process all selected students
+                for _, row in df.iterrows():
+                    mobile = row[mobile_column]
+                    company_code = row[company_column]
+                    
+                    if not mobile or not company_code:
+                        continue
+                    
+                    try:
+                        # Get requirement
+                        try:
+                            requirement = Requirement.objects.get(company_code=company_code)
+                            results['companies_processed'].add(company_code)
+                        except ObjectDoesNotExist:
+                            results['invalid_companies'].add(company_code)
+                            continue
+                        
+                        # Find student
+                        try:
+                            student = Student.objects.get(contact_number=mobile)
+                        except ObjectDoesNotExist:
+                            results['numbers_not_found'] += 1
+                            continue
+                            
+                        # Update or create record
+                        obj, created = RequirementStudent.objects.update_or_create(
+                            student=student,
+                            requirement=requirement,
+                            defaults={'status': 'selected'}
+                        )
+                        
+                        if created:
+                            results['records_created'] += 1
+                            results['students_selected'] += 1
+                        else:
+                            if obj.status != 'selected':
+                                obj.status = 'selected'
+                                obj.save()
+                                results['records_updated'] += 1
+                                results['students_selected'] += 1
+                            
+                        # Update student counts
+                        student.update_requirement_counts()
+                        
+                    except Exception as e:
+                        continue
+                
+                # Second pass: Reject non-selected students for each company
+                for company_code in results['companies_processed']:
+                    try:
+                        requirement = Requirement.objects.get(company_code=company_code)
+                        selected_students = Student.objects.filter(
+                            requirementstudent__requirement=requirement,
+                            requirementstudent__status='selected'
+                        )
+                        
+                        rejected = RequirementStudent.objects.filter(
+                            requirement=requirement,
+                            status='pending'  # Only reject pending status students
+                        ).exclude(
+                            student__in=selected_students
+                        ).update(status='rejected')
+                        
+                        results['students_rejected'] += rejected
+                    except Exception as e:
+                        continue
+                
+                # Prepare results message
+                msg = [
+                    f"<strong>Processed {len(df)} rows</strong>",
+                    f"<strong>Companies processed:</strong> {len(results['companies_processed'])}",
+                    f"<strong>Students selected:</strong> {results['students_selected']}",
+                    f"<strong>New records created:</strong> {results['records_created']}",
+                    f"<strong>Existing records updated:</strong> {results['records_updated']}",
+                    f"<strong>Students marked as rejected:</strong> {results['students_rejected']}",
+                    f"<strong>Phone numbers not found:</strong> {results['numbers_not_found']}",
+                ]
+                
+                if results['invalid_companies']:
+                    sample = ", ".join(list(results['invalid_companies'])[:3])
+                    msg.append(
+                        f"<strong>Invalid company codes ({len(results['invalid_companies'])}):</strong> {sample}{'...' if len(results['invalid_companies']) > 3 else ''}"
+                    )
+                
+                messages.success(request, "<br>".join(msg))
+                context.update(results)
+                
+        except Exception as e:
+            messages.error(request, f"<strong>Error:</strong> {str(e)}")
+    
+    return render(request, 'combined_template.html', context)
+
+from .forms import *
+from django.contrib import messages
+from .forms import StudentForm
+from django.http import JsonResponse
+
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
+
+@csrf_exempt
+@require_http_methods(["POST"])  # This view only accepts POST requests
+def add_student(request):
+    if request.method == 'POST':
+        try:
+            name = request.POST.get('name')
+            contact_number = request.POST.get('contact_number')
+            gender = request.POST.get('gender')
+            
+            # Just return what we received for testing
+            return JsonResponse({
+                'success': True,
+                'received_data': {
+                    'name': name,
+                    'contact_number': contact_number,
+                    'gender': gender
+                }
+            })
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': str(e)
+            })
+    
+    # This line should never be reached due to @require_http_methods
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
