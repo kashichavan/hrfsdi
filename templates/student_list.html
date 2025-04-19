@@ -137,6 +137,7 @@
         display: flex;
         align-items: center;
     }
+   
 </style>
 {% endblock %}
 
@@ -218,7 +219,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Degree</label>
-                            <select name="degree" class="form-select">
+                            <select name="degree" class="form-select" >
                                 <option value="">All Degrees</option>
                                 {% for degree in unique_degrees %}
                                     <option value="{{ degree }}" {% if degree == degree_filter %}selected{% endif %}>{{ degree|lower }}</option>
@@ -228,7 +229,7 @@
 
                         <div class="col-md-4">
                             <label class="form-label">Stream</label>
-                            <select name="stream" id="streamSelect" class="form-select" multiple="multiple">
+                            <select name="stream" id="streamSelect" class="form-select" multiple="multiple" >
                                 {% for stream in unique_streams %}
                                     <option value="{{ stream }}" {% if stream in stream_filters %}selected{% endif %}>{{ stream|lower }}</option>
                                 {% endfor %}
@@ -344,8 +345,8 @@
                                     </span>
                                     <div class="progress progress-thin flex-grow-1">
                                         <div class="progress-bar bg-success" 
-                                             style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%">
-                                        </div>
+                                        style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%;">
+                                   </div>
                                     </div>
                                 </div>
                             </td>
@@ -415,12 +416,14 @@
 
 {% if stream_filters %}
 <script id="stream-data" type="application/json">
-    {{ stream_filters|json_script:"stream-data" }}
+{{ stream_filters|json_script:"stream-data" }}
 </script>
 {% endif %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
     // Make sure advanced filters are hidden initially
@@ -445,39 +448,30 @@ $(document).ready(function() {
     });
 
     // Set the selected values for the stream select
-{% if stream_filters %}
-try {
-    var streamArray = JSON.parse(document.getElementById('stream-data').textContent);
-    if (Array.isArray(streamArray)) {
-        $('#streamSelect').val(streamArray).trigger('change');
-    } else {
-        console.error('Invalid stream data: Expected an array, but got', streamArray);
+    {% if stream_filters %}
+    var streamData = JSON.parse(document.getElementById('stream-data').textContent);
+    if(Array.isArray(streamData)) {
+        $('#streamSelect').val(streamData).trigger('change');
     }
-} catch (e) {
-    console.error('Error parsing stream data:', e);
-}
-{% endif %}
+    {% endif %}
 
-// Preserve filters in pagination links
-$('.pagination a').each(function() {
-    const href = $(this).attr('href');
-    if (href) {
-        const params = new URLSearchParams(window.location.search);
-        
-        // Remove page parameter if it exists
-        params.delete('page');
-        
-        // Append filters to pagination link
-        if (href.includes('?')) {
-            $(this).attr('href', href + '&' + params.toString());
-        } else {
-            $(this).attr('href', href + '?' + params.toString());
+    // Preserve filters in pagination links
+    $('.pagination a').each(function() {
+        const href = $(this).attr('href');
+        if (href) {
+            const params = new URLSearchParams(window.location.search);
+            
+            // Remove page parameter if it exists
+            params.delete('page');
+            
+            // Append filters to pagination link
+            if (href.includes('?')) {
+                $(this).attr('href', href + '&' + params.toString());
+            } else {
+                $(this).attr('href', href + '?' + params.toString());
+            }
         }
-    } else {
-        console.warn('Pagination link does not have a valid href:', $(this));
-    }
-});
-
+    });
 });
 </script>
 {% endblock %}

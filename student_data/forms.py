@@ -56,3 +56,40 @@ class RequirementForm(BaseRequirementForm):
 
 class RequirementEditForm(BaseRequirementForm):
     pass
+
+
+
+from django import forms
+from .models import Student
+
+class StudentForm(forms.ModelForm):
+    class Meta:
+        model = Student
+        fields = '__all__'
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'contact_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'degree': forms.TextInput(attrs={'class': 'form-control'}),
+            'stream': forms.TextInput(attrs={'class': 'form-control'}),
+            'yop': forms.NumberInput(attrs={'class': 'form-control'}),
+            'tenth_percent': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
+            'twelfth_percent': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
+            'degree_percent': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'min': '0',
+                'max': '100'
+            }),
+            'gender': forms.Select(attrs={'class': 'form-control'}),
+            'type_of_data': forms.TextInput(attrs={'class': 'form-control'}),
+        }

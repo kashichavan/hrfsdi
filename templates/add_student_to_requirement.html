@@ -5,328 +5,320 @@
 {% block title %}Assign Students{% endblock %}
 
 {% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
 <style>
-    *, *::before, *::after {
-        box-sizing: border-box;
-    }
-
-    body {
-        overflow-x: hidden;
-    }
-
-    .assign-students-container {
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 20px;
-    }
-
-    .requirement-card {
-        border-radius: 10px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        overflow: hidden;
-        margin-bottom: 30px;
-    }
-
-    .requirement-header {
-        background: linear-gradient(135deg, #ff7700, #ff9933);
+    /* Student Type Badges */
+    .badge-type-fsdi {
+        background-color: #4e73df;
         color: white;
-        padding: 20px;
-        margin: 0;
-    }
-
-    .requirement-details {
-        padding: 20px;
-        background-color: #f9fafb;
-    }
-
-    .detail-item {
-        margin-bottom: 12px;
-    }
-
-    .detail-label {
-        font-weight: 600;
-        color: #6b7280;
-        min-width: 120px;
-        display: inline-block;
-    }
-
-    .detail-value {
-        color: #374151;
-    }
-
-    .filter-card {
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-        margin-bottom: 25px;
-    }
-
-    .filter-header {
-        background-color: #f3f4f6;
-        padding: 15px 20px;
-        border-bottom: 1px solid #e5e7eb;
-        font-weight: 600;
-    }
-
-    .filter-body {
-        padding: 20px;
-    }
-
-    .student-table-container {
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        background: white;
-    }
-
-    .table-responsive {
-        width: 100%;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    .student-table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        margin-bottom: 0;
-        min-width: 1200px;
-    }
-
-    .student-table thead th {
-        background-color: #1f2937;
-        color: white;
-        padding: 15px;
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
-
-    .student-table tbody td {
-        padding: 12px 15px;
-        vertical-align: middle;
-        border-top: 1px solid #f3f4f6;
-    }
-
-    .student-table tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-
-    .checkbox-cell {
-        width: 40px;
-        text-align: center;
-    }
-
-    .checkbox-lg {
-        width: 18px;
-        height: 18px;
-        margin: 0;
-        cursor: pointer;
-    }
-
-    .percentage-cell {
-        font-weight: 600;
-        color: #374151;
-    }
-
-    .gender-badge {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
+        padding: 5px 10px;
         border-radius: 50px;
-        font-size: 0.75rem;
-        font-weight: 500;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
     }
 
-    .gender-male {
-        background-color: rgba(59, 130, 246, 0.1);
-        color: #3b82f6;
-    }
-
-    .gender-female {
-        background-color: rgba(236, 72, 153, 0.1);
-        color: #ec4899;
-    }
-
-    .type-badge {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 500;
-    }
-
-    .req-count {
-        display: inline-flex;
-        align-items: center;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        background-color: #f3f4f6;
-    }
-
-    .req-count.high {
-        background-color: rgba(239, 68, 68, 0.1);
-        color: #ef4444;
-    }
-
-    .select-all-container {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 15px;
-        background: #f8f9fa;
-        border-bottom: 1px solid #e5e7eb;
-    }
-
-    .assign-btn-container {
-        position: sticky;
-        bottom: 0;
-        background-color: white;
-        padding: 15px;
-        border-top: 1px solid #e5e7eb;
-        text-align: right;
-        z-index: 5;
-    }
-
-    .no-students {
-        padding: 50px;
-        text-align: center;
-        color: #6b7280;
-    }
-
-    .no-students i {
-        font-size: 2rem;
-        margin-bottom: 15px;
-        color: #d1d5db;
-    }
-
-    .pagination {
-        padding: 15px;
-        background: #f8f9fa;
-        border-top: 1px solid #e5e7eb;
-    }
-
-    .pagination .page-item .page-link {
-        border: none;
-        color: #4b5563;
-        margin: 0 2px;
-        border-radius: 6px;
-    }
-
-    .pagination .page-item.active .page-link {
-        background-color: #1f2937;
+    .badge-type-super100 {
+        background-color: #1cc88a;
         color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(28, 200, 138, 0.3);
     }
 
-    .pagination .page-item:not(.active) .page-link:hover {
-        background-color: #f3f4f6;
+    .badge-type-tuition {
+        background-color: #f6c23e;
+        color: #2c3e50;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(246, 194, 62, 0.3);
     }
 
-    @media (max-width: 992px) {
-        .student-table {
-            display: block;
-            overflow-x: auto;
-        }
+    .badge-type-legend {
+        background-color: #e74a3b;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(231, 74, 59, 0.3);
     }
 
-    @media (max-width: 768px) {
-        .requirement-details {
-            padding: 15px;
-        }
+    .badge-type-default {
+        background-color: #858796;
+        color: white;
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-weight: 600;
+        box-shadow: 0 2px 5px rgba(133, 135, 150, 0.3);
+    }
 
-        .detail-item {
-            display: flex;
-            flex-direction: column;
-        }
+    /* Table styling fixes */
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        overflow: hidden;
+    }
 
-        .detail-label {
-            margin-bottom: 5px;
-        }
+    .table-hover tbody tr {
+        transition: all 0.2s ease;
+    }
 
-        .filter-body {
-            padding: 15px;
-        }
+    .table-hover tbody tr:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        background-color: rgba(78, 115, 223, 0.05);
+        position: relative;
+        z-index: 1;
+    }
 
-        .student-table thead th,
-        .student-table tbody td {
-            padding: 10px;
-            font-size: 0.85rem;
-        }
+    .progress-thin {
+        height: 5px;
+        border-radius: 3px;
+    }
+
+    .table thead th {
+        background: #1a1e29 !important;
+        color: white !important;
+        font-weight: 600;
+        border-bottom: none;
+        padding: 1rem;
+    }
+
+    .table tbody td {
+        vertical-align: middle;
+        padding: 0.75rem;
+        background: white;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    /* Fix select2 styling */
+    .select2-selection--multiple {
+        min-height: 38px !important;
+        border-radius: 0.25rem !important;
+        border: 1px solid #ced4da !important;
+    }
+   
+    /* Table styling from student_list.html */
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .table-hover tbody tr:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        z-index: 1;
+        background-color: rgba(78, 115, 223, 0.05);
+    }
+
+    .progress-thin {
+        height: 5px;
+        border-radius: 3px;
+    }
+
+    .table thead th {
+        background: #1a1e29;
+        color: white;
+        font-weight: 600;
+    }
+
+    .table tbody td {
+        vertical-align: middle;
+    }
+
+    .select2-selection--multiple {
+        min-height: 38px !important;
+        border-radius: 0.25rem !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="assign-students-container">
-    <!-- Your HTML from the previous code remains unchanged -->
-    {{ block.super }}
+<div class="container my-5">
+    <h2 class="mb-4">Assign Students to Requirement: <span class="text-dark">{{ requirement.title }}</span></h2>
+
+    <form method="get" class="mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Search by Name or Mobile</label>
+                <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search_query }}">
+            </div>
+
+            <!-- Enhanced Stream Filter -->
+            <div class="col-md-4">
+                <label class="form-label">Stream</label>
+                <select name="streams" id="streamSelect" class="form-select" multiple>
+                    {% for stream in unique_streams %}
+                        <option value="{{ stream }}" {% if stream in selected_streams %}selected{% endif %}>{{ stream }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Year of Passing</label>
+                <div class="input-group">
+                    <input type="number" name="year_from" class="form-control" placeholder="From" value="{{ year_from }}">
+                    <span class="input-group-text">to</span>
+                    <input type="number" name="year_to" class="form-control" placeholder="To" value="{{ year_to }}">
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">10th % ≥</label>
+                <input type="number" step="0.01" name="tenth_percentage" class="form-control" value="{{ tenth_percentage }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">12th % ≥</label>
+                <input type="number" step="0.01" name="twelfth_percentage" class="form-control" value="{{ twelfth_percentage }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Degree % ≥</label>
+                <input type="number" step="0.01" name="degree_percentage" class="form-control" value="{{ degree_percentage }}">
+            </div>
+
+            <div class="col-12 text-end">
+                <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-outline-secondary">Clear</a>
+                <button type="submit" class="btn btn-success">Apply Filters</button>
+            </div>
+        </div>
+    </form>
+
+    <form method="post">
+        {% csrf_token %}
+        {% if page_obj %}
+        <div class="card">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                <h5 class="m-0">Student List</h5>
+                <span class="badge bg-secondary">{{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th><input type="checkbox" id="selectAll"></th>
+                                <th>Name</th>
+                                <th>Contact</th>
+                                <th>Degree</th>
+                                <th>Stream</th>
+                                <th>YOP</th>
+                                <th>Score</th>
+                                <th>Type</th>
+                                <th>Requirements</th>
+                                <th>Gender</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in page_obj %}
+                                {% if student.id not in already_assigned_student_ids %}
+                                <tr>
+                                    <td><input type="checkbox" name="student_ids[]" class="student-checkbox" value="{{ student.id }}"></td>
+                                    <td>{{ student.name }}</td>
+                                    <td>{{ student.contact_number }}</td>
+                                    <td>{{ student.degree|lower }}</td>
+                                    <td>{{ student.stream|lower }}</td>
+                                    <td>{{ student.yop }}</td>
+                                    <td>{{ student.degree_percent }}%</td>
+                                    <td>
+                                        <span class="badge badge-type-{{ student.type_of_data|lower|default:'default' }}">
+                                            {{ student.type_of_data|lower }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="me-2">
+                                                {{ student.scheduled_requirements }}/{{ student.total_requirements }}
+                                            </span>
+                                            <div class="progress progress-thin flex-grow-1">
+                                                <div class="progress-bar bg-success" 
+                                                     style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="gender-{% if student.gender == 'Male' %}male{% else %}female{% endif %}">
+                                            {{ student.gender }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if page_obj.paginator.num_pages > 1 %}
+                <nav class="m-3">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% url_replace page=1 %}">First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% url_replace page=page_obj.previous_page_number %}">Previous</a>
+                        </li>
+                        {% endif %}
+
+                        <li class="page-item active">
+                            <span class="page-link">
+                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                            </span>
+                        </li>
+
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?{% url_replace page=page_obj.next_page_number %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?{% url_replace page=page_obj.paginator.num_pages %}">Last</a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+        </div>
+        <div class="text-end mt-3">
+            <button type="submit" class="btn btn-primary">Assign Selected Students</button>
+        </div>
+        {% else %}
+        <div class="alert alert-warning">No students found matching the filters.</div>
+        {% endif %}
+    </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-$(document).ready(function() {
-    $('#streamSelect').select2({
-        theme: 'bootstrap-5',
-        placeholder: 'Select streams',
-        width: '100%',
-        closeOnSelect: false,
-        dropdownParent: $('.filter-body')
-    });
+    $(document).ready(function () {
+        $('#streamSelect').select2({
+            theme: 'bootstrap-5',
+            placeholder: 'Select Streams',
+            width: '100%',
+            closeOnSelect: false
+        });
 
-    $('#selectAll').change(function() {
-        var isChecked = this.checked;
-        $('.student-checkbox').prop('checked', isChecked).trigger('change');
-    });
-
-    $(document).on('change', '.student-checkbox', function() {
-        if (!this.checked) {
-            $('#selectAll').prop('checked', false);
-        } else {
-            var allChecked = $('.student-checkbox').length === $('.student-checkbox:checked').length;
-            $('#selectAll').prop('checked', allChecked);
-        }
-        updateAssignButton();
-    });
-
-    function updateAssignButton() {
-        var count = $('.student-checkbox:checked').length;
-        $('#assignBtnText').text(count > 0 ? 
-            'Assign ' + count + ' Student' + (count > 1 ? 's' : '') : 
-            'Assign Selected Students');
-    }
-
-    $('tbody tr').click(function(e) {
-        if (!$(e.target).is('a, input, i, .btn') && !$(e.target).parent().is('a, .btn')) {
-            var checkbox = $(this).find('.student-checkbox');
-            checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+        // Checkbox handling remains unchanged
+        $('#selectAll').change(function () {
+            $('.student-checkbox').prop('checked', this.checked);
+            updateButtonText();
+        });
+        
+        $('.student-checkbox').change(updateButtonText);
+        
+        function updateButtonText() {
+            const count = $('.student-checkbox:checked').length;
+            $('.btn-primary').text(
+                count > 0 ? `Assign ${count} Selected Students` : 'Assign Selected Students'
+            );
         }
     });
-
-    updateAssignButton();
-
-    $('.pagination a').each(function() {
-        var href = $(this).attr('href');
-        if (href) {
-            var params = new URLSearchParams(window.location.search);
-            params.delete('page');
-            
-            if (href.includes('?')) {
-                $(this).attr('href', href + '&' + params.toString());
-            } else {
-                $(this).attr('href', href + '?' + params.toString());
-            }
-        }
-    });
-});
 </script>
 {% endblock %}

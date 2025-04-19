@@ -224,6 +224,7 @@ def student_list(request):
 
     # Start with base queryset
     students = Student.objects.all()
+    students = students.exclude(requirementstudent__status='selected')
 
     # Apply type_of_data filter
     if type_filter:
@@ -310,16 +311,20 @@ def student_list(request):
 
     # Type counts for quick filters
     type_counts = {
-        'all': Student.objects.count(),
-        'fsdi': Student.objects.filter(type_of_data__iexact='fsdi').count(),
-        'super100': Student.objects.filter(type_of_data__iexact='super100').count(),
-        'tuition': Student.objects.filter(type_of_data__iexact='tuition').count(),
-        'legend': Student.objects.filter(type_of_data__iexact='legend').count(),
-        'placement_activity': Student.objects.filter(
-            Q(type_of_data__iexact='placement_activity') | 
-            Q(type_of_data__iexact='placement activity')
-        ).count(),
-    }
+    'all': Student.objects.exclude(requirementstudent__status='selected').count(),
+    'fsdi': Student.objects.filter(type_of_data__iexact='fsdi')
+                          .exclude(requirementstudent__status='selected').count(),
+    'super100': Student.objects.filter(type_of_data__iexact='super100')
+                             .exclude(requirementstudent__status='selected').count(),
+    'tuition': Student.objects.filter(type_of_data__iexact='tuition')
+                            .exclude(requirementstudent__status='selected').count(),
+    'legend': Student.objects.filter(type_of_data__iexact='legend')
+                           .exclude(requirementstudent__status='selected').count(),
+    'placement_activity': Student.objects.filter(
+        Q(type_of_data__iexact='placement_activity') | 
+        Q(type_of_data__iexact='placement activity')
+    ).exclude(requirementstudent__status='selected').count(),
+}
 
     # Context data
     context = {
@@ -860,12 +865,38 @@ def add_students_to_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, id=requirement_id)
     already_assigned_students = requirement.students.all()
     already_assigned_student_ids = already_assigned_students.values_list('id', flat=True)
+    
+    # 3. Get all requirement students for status display
+    requirement_students = RequirementStudent.objects.filter(
+        requirement=requirement
+    ).select_related('student')
+    
+    # Create a dictionary of student_id: status for template
+    student_status_map = {
+        rs.student_id: rs.status 
+        for rs in requirement_students
+    }
 
-    # Get unique sorted streams
-    unique_streams = Student.objects.values_list('stream', flat=True).distinct().order_by('stream')
+    # Base queryset - exclude only SELECTED students
+    students = Student.objects.exclude(
+        id__in=selected_student_ids
+    ).order_by('scheduled_requirements')
 
-    # Base queryset with ordering
-    students = Student.objects.all().order_by('scheduled_requirements')
+    # Get unique sorted streams from available students
+    unique_streams = students.values_list('stream', flat=True).distinct().order_by('stream')
+    # Create a dictionary of student_id: status for template
+    student_status_map = {
+        rs.student_id: rs.status 
+        for rs in requirement_students
+    }
+
+    # Base queryset - exclude only SELECTED students
+    students = Student.objects.exclude(
+        id__in=selected_student_ids
+    ).order_by('scheduled_requirements')
+
+    # Get unique sorted streams from available students
+    unique_streams = students.values_list('stream', flat=True).distinct().order_by('stream')
 
     # Filter handling
     search_query = request.GET.get('search', '')
@@ -905,15 +936,32 @@ def add_students_to_requirement(request, requirement_id):
     if request.method == 'POST':
         student_ids = request.POST.getlist('student_ids[]')
         students_to_add = Student.objects.filter(id__in=student_ids)
-        requirement.students.add(*students_to_add)
+        
+        # Create or update RequirementStudent records
+        for student in students_to_add:
+            RequirementStudent.objects.update_or_create(
+                requirement=requirement,
+                student=student,
+                defaults={'status': 'pending'}  # Default status
+            )
+        
         return redirect('student_data:requirement_detail', pk=requirement.id)
+
+    # Enhance students with all needed information for template
+    enhanced_students = []
+    for student in page_obj.object_list:
+        enhanced_students.append({
+            'student': student,
+            'status': student_status_map.get(student.id),
+            'is_assigned': student.id in already_assigned_student_ids
+        })
 
     context = {
         'requirement': requirement,
         'page_obj': page_obj,
-        'already_assigned_student_ids': already_assigned_student_ids,
+        'enhanced_students': enhanced_students,
+        'already_assigned_student_ids': already_assigned_student_ids,  # For legacy template support
         'unique_streams': unique_streams,
-        # Add other filter parameters to context
         'search_query': search_query,
         'selected_streams': selected_streams,
         'year_from': year_from,
