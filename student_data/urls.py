@@ -63,7 +63,7 @@ path('requirements/<int:requirement_id>/',
      # hidden
      path('upload-requirements/', views.upload_requirements_view, name='upload_requirements'),
      path('map-students/', views.map_students_to_requirement_view, name='map_students'),
-     #path('placement/update-status/', views.update_selected_students, name='update_selected_students'),
+     path('placement/update-status/', views.update_selected_students, name='update_selected_students'),
     
 
     path('add/', views.add_student, name='add_student'),

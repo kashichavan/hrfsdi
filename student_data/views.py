@@ -161,7 +161,7 @@ def upload_excel(request):
             ).start()
 
             request.session['excel_task_id'] = task_id
-            return redirect('processing_page')
+            return redirect('student_data:processing_page')
 
         except Exception as e:
             return render(request, 'upload.html', {'error': f"Error processing file: {str(e)}"})
@@ -1703,7 +1703,7 @@ def update_selected_students(request):
         except Exception as e:
             messages.error(request, f"<strong>Error:</strong> {str(e)}")
     
-    return render(request, 'combined_template.html', context)
+    return render(request, 'update_selected_students.html', context)
 
 from .forms import *
 from django.contrib import messages
