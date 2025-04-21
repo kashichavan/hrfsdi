@@ -66,8 +66,9 @@ path('requirements/<int:requirement_id>/',
      path('placement/update-status/', views.update_selected_students, name='update_selected_students'),
     
 
-    path('add/', views.add_student, name='add_student'),
+     path('add/', views.StudentCreateView.as_view(), name='add'),
      path('update-status/', views.combined_view, name='update_status'),
      path('placed/',views.placed_students_view,name='placed_students'),
       path('requirements/<int:pk>/delete/', views.delete_requirement, name='delete_requirement'),
+      path('download-template/', views.download_template, name='download_template'),
 ]

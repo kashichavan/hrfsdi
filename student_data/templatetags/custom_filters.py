@@ -65,3 +65,28 @@ def url_replace(context, **kwargs):
 @register.filter
 def to_str(value):
     return str(value)
+
+
+@register.filter
+def get_pie_color(index):
+    colors = [
+        '#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b',
+        '#5a5c69', '#858796', '#dddfeb', '#f8f9fc', '#5a5c69'
+    ]
+    return colors[(index - 1) % len(colors)]
+
+@register.filter
+def get_pie_color_hover(index):
+    colors = [
+        '#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617',
+        '#42444e', '#6b6d7d', '#c4c7d4', '#e5e8f4', '#42444e'
+    ]
+    return colors[(index - 1) % len(colors)]
+
+@register.filter
+def intdiv(value, arg):
+    """Integer division filter"""
+    try:
+        return int(value) // int(arg)
+    except (ValueError, ZeroDivisionError):
+        return 0

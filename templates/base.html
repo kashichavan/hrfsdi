@@ -770,6 +770,41 @@
         ::-webkit-scrollbar-thumb:hover {
             background: var(--primary-light);
         }
+        chart-area {
+    position: relative;
+    height: 20rem;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .chart-area {
+        height: 20rem;
+    }
+}
+
+.chart-bar {
+    position: relative;
+    height: 20rem;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .chart-bar {
+        height: 20rem;
+    }
+}
+
+.chart-pie {
+    position: relative;
+    height: 15rem;
+    width: 100%;
+}
+
+@media (min-width: 768px) {
+    .chart-pie {
+        height: calc(20rem - 43px) !important;
+    }
+}
     </style>
 
     {% block extra_head %}{% endblock %}
@@ -860,7 +895,7 @@
             <li class="nav-item">
                 <a class="nav-link {% if request.resolver_match.url_name == 'upload_excel' %}active{% endif %}" href="{% url 'student_data:upload_excel' %}">
                     <i class="fas fa-file-excel"></i>
-                    <span>Upload Student</span>
+                    <span>Add Students</span>
                 </a>
             </li>
 
@@ -869,14 +904,6 @@
                 <a class="nav-link {% if request.resolver_match.url_name == 'requirement_list' %}active{% endif %}" href="{% url 'student_data:requirement_list' %}">
                     <i class="fas fa-clipboard-list"></i>
                     <span>Requirements</span>
-                </a>
-            </li>
-
-            <!-- Add Requirement Link -->
-            <li class="nav-item">
-                <a class="nav-link {% if request.resolver_match.url_name == 'add_requirement' %}active{% endif %}" href="{% url 'student_data:add_requirement' %}">
-                    <i class="fas fa-plus-circle"></i>
-                    <span>Add Requirement</span>
                 </a>
             </li>
         </ul>

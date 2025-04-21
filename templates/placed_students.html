@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load custom_filters %}
 
 {% block title %}Placed Students{% endblock %}
 
@@ -260,6 +261,107 @@
     margin: 0;
     font-weight: 500;
   }
+
+  /* Pagination Styles */
+  .pagination-container {
+    margin-top: 3rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .pagination-inner {
+    display: flex;
+    align-items: center;
+    background: var(--white);
+    border-radius: 50px;
+    padding: 0.5rem;
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.1);
+    position: relative;
+    z-index: 2;
+  }
+
+  .pagination-active-indicator {
+    position: absolute;
+    background: var(--orange-cream);
+    height: 40px;
+    border-radius: 50px;
+    z-index: -1;
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .pagination-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: 0 3px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 1rem;
+    border: none;
+    background: none;
+    cursor: pointer;
+    position: relative;
+    color: var(--text-medium);
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    overflow: hidden;
+  }
+
+  .pagination-button:hover:not(.active-page) {
+    color: var(--orange-bright);
+  }
+
+  .active-page {
+    color: var(--orange-bright);
+  }
+
+  .pagination-dot {
+    width: 30px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: var(--text-medium);
+  }
+
+  .pagination-prev, .pagination-next {
+    font-size: 1.2rem;
+    width: 50px;
+    background: var(--white);
+    border: 1px solid var(--accent-line);
+    margin: 0 5px;
+  }
+
+  .pagination-prev:hover, .pagination-next:hover {
+    background: var(--orange-cream);
+    color: var(--orange-bright);
+  }
+
+  .pagination-prev.disabled, .pagination-next.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: var(--text-medium);
+  }
+
+  .pagination-prev.disabled:hover, .pagination-next.disabled:hover {
+    background: var(--white);
+    color: var(--text-medium);
+  }
+
+  /* Animation for page change */
+  .showcase-grid {
+    transition: opacity 0.4s ease;
+  }
+
+  .page-transition {
+    opacity: 0;
+    transform: translateY(30px);
+  }
 </style>
 {% endblock %}
 
@@ -268,10 +370,10 @@
   <div id="three-background" class="three-background"></div>
   
   <div class="celebration-header">
-        <h1 class="celebration-title">Student Placement Success</h1>
-        <span class="celebration-emoji">🎓</span>
-        <span class="celebration-emoji">🚀</span>
-        <span class="celebration-emoji">🎉</span>
+    <h1 class="celebration-title">Student Placement Success</h1>
+    <span class="celebration-emoji">🎓</span>
+    <span class="celebration-emoji">🚀</span>
+    <span class="celebration-emoji">🎉</span>
     <p class="celebration-subtitle">Congratulations to our talented students on their career journey</p>
     
     <div class="stats-badge">
@@ -280,11 +382,11 @@
     </div>
   </div>
 
-  <div class="students-showcase">
+  <div class="students-showcase" id="students-showcase">
     {% if placed_students %}
-      <div class="showcase-grid">
+      <div id="showcase-grid" class="showcase-grid">
         {% for entry in placed_students %}
-          <div class="student-card">
+          <div class="student-card" data-page="{{ forloop.counter0|intdiv:9|add:1 }}">
             <h3 class="student-name">{{ entry.student.name }}</h3>
             <div class="company-name">{{ entry.requirement.company_name }}</div>
             
@@ -317,6 +419,16 @@
             </div>
           </div>
         {% endfor %}
+      </div>
+      
+      <!-- Pagination -->
+      <div class="pagination-container">
+        <div class="pagination-inner" id="pagination-inner">
+          <div class="pagination-active-indicator" id="pagination-indicator"></div>
+          <button class="pagination-button pagination-prev" id="prev-page" disabled>&larr;</button>
+          <!-- Pagination buttons will be added dynamically -->
+          <button class="pagination-button pagination-next" id="next-page">&rarr;</button>
+        </div>
       </div>
     {% else %}
       <div class="empty-state">
@@ -439,6 +551,186 @@
     };
   }
 
+  // Pagination Logic
+  function initPagination() {
+    const gridContainer = document.getElementById('showcase-grid');
+    const paginationInner = document.getElementById('pagination-inner');
+    const paginationIndicator = document.getElementById('pagination-indicator');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
+    
+    // Check if pagination is needed
+    if (!gridContainer) return;
+    
+    // Get all cards
+    const allCards = document.querySelectorAll('.student-card');
+    
+    // Calculate pagination info
+    const itemsPerPage = 9;
+    const totalItems = allCards.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    // If only one page, hide pagination
+    if (totalPages <= 1) {
+      document.querySelector('.pagination-container').style.display = 'none';
+      return;
+    }
+    
+    let currentPage = 1;
+    
+    // Create pagination buttons
+    const createPaginationButtons = () => {
+      // Clear existing buttons except prev and next
+      const existingButtons = paginationInner.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)');
+      existingButtons.forEach(btn => paginationInner.removeChild(btn));
+      
+      // Determine which page numbers to show
+      let pagesToShow = [];
+      if (totalPages <= 7) {
+        // Show all pages if 7 or fewer
+        pagesToShow = Array.from({length: totalPages}, (_, i) => i + 1);
+      } else {
+        // Always show first, last, and pages around current
+        if (currentPage <= 3) {
+          pagesToShow = [1, 2, 3, 4, 5, '...', totalPages];
+        } else if (currentPage >= totalPages - 2) {
+          pagesToShow = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+        } else {
+          pagesToShow = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+        }
+      }
+      
+      // Create page buttons
+      pagesToShow.forEach((page, index) => {
+        if (page === '...') {
+          const dot = document.createElement('div');
+          dot.className = 'pagination-dot';
+          dot.textContent = '•••';
+          paginationInner.insertBefore(dot, nextPageBtn);
+          return;
+        }
+        
+        const button = document.createElement('button');
+        button.className = `pagination-button ${page === currentPage ? 'active-page' : ''}`;
+        button.textContent = page;
+        button.setAttribute('data-page', page);
+        button.addEventListener('click', () => {
+          if (page !== currentPage) {
+            goToPage(page);
+          }
+        });
+        
+        paginationInner.insertBefore(button, nextPageBtn);
+      });
+      
+      // Set indicator position
+      updateActiveIndicator();
+    };
+    
+    // Update the active indicator
+    const updateActiveIndicator = () => {
+      const activeButton = paginationInner.querySelector('.active-page');
+      if (activeButton) {
+        const buttonRect = activeButton.getBoundingClientRect();
+        const containerRect = paginationInner.getBoundingClientRect();
+        
+        paginationIndicator.style.width = `${buttonRect.width}px`;
+        paginationIndicator.style.left = `${activeButton.offsetLeft}px`;
+      }
+    };
+    
+    // Go to specific page
+    const goToPage = (page) => {
+      if (page < 1 || page > totalPages || page === currentPage) return;
+      
+      // Add transition class
+      gridContainer.classList.add('page-transition');
+      
+      // After short delay to allow transition to finish
+      setTimeout(() => {
+        currentPage = parseInt(page);
+        
+        // Update buttons state
+        prevPageBtn.disabled = currentPage === 1;
+        nextPageBtn.disabled = currentPage === totalPages;
+        
+        // Show only cards for current page
+        allCards.forEach(card => {
+          card.style.display = 'none';
+        });
+        
+        const cardsForPage = document.querySelectorAll(`.student-card[data-page="${currentPage}"]`);
+        cardsForPage.forEach(card => {
+          card.style.display = 'flex';
+        });
+        
+        // Update pagination
+        createPaginationButtons();
+        
+        // Animate cards
+        gsap.fromTo(
+          cardsForPage,
+          { opacity: 0, y: 30 },
+          { 
+            opacity: 1, 
+            y: 0, 
+            stagger: 0.05,
+            duration: 0.6,
+            ease: "power2.out",
+            onComplete: () => {
+              gridContainer.classList.remove('page-transition');
+            }
+          }
+        );
+        
+        // Scroll to top of grid if needed
+        const gridTop = gridContainer.offsetTop - 100; // With some offset
+        if (window.scrollY > gridTop) {
+          window.scrollTo({
+            top: gridTop,
+            behavior: 'smooth'
+          });
+        }
+      }, 300);
+    };
+    
+    // Initialize pagination
+    createPaginationButtons();
+    
+    // Show only first page cards initially
+    allCards.forEach(card => {
+      card.style.display = card.getAttribute('data-page') == currentPage ? 'flex' : 'none';
+    });
+    
+    // Add event listeners for prev/next buttons
+    prevPageBtn.addEventListener('click', () => {
+      if (currentPage > 1) {
+        goToPage(currentPage - 1);
+      }
+    });
+    
+    nextPageBtn.addEventListener('click', () => {
+      if (currentPage < totalPages) {
+        goToPage(currentPage + 1);
+      }
+    });
+    
+    // Animate pagination container
+    gsap.to('.pagination-container', {
+      opacity: 1,
+      y: 0,
+      duration: 0.6,
+      delay: 0.8
+    });
+    
+    // Return control functions for external use
+    return {
+      goToPage,
+      getCurrentPage: () => currentPage,
+      getTotalPages: () => totalPages
+    };
+  }
+
   // GSAP Animations
   function initAnimations() {
     gsap.timeline()
@@ -457,19 +749,30 @@
         ease: "elastic.out(1, 0.5)",
         duration: 0.8
       })
-      .to(".student-card", {
+      .to(".student-card[data-page='1']", {
         opacity: 1,
         y: 0,
         stagger: 0.05,
         ease: "power2.out",
         duration: 0.6
       }, "-=0.2");
+      
+    // Special animation for empty state if present
+    const emptyState = document.querySelector('.empty-state');
+    if (emptyState) {
+      gsap.to(emptyState, {
+        opacity: 1,
+        duration: 0.8,
+        delay: 0.5
+      });
+    }
   }
 
   // Initialize
   document.addEventListener('DOMContentLoaded', () => {
     const cleanThree = initThreeJS();
     initAnimations();
+    const pagination = initPagination();
     
     window.addEventListener('beforeunload', () => {
       cleanThree();

@@ -1,28 +1,710 @@
-<!-- templates/upload_requirements.html -->
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Upload Requirement Excel</title>
-</head>
-<body>
-    <h2>Upload Requirement Excel</h2>
-    <form method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input type="file" name="excel_file" accept=".xlsx" required>
-        <button type="submit">Upload</button>
-    </form>
+{% extends 'base.html' %}
 
-    {% if message %}
-        <p style="color: green;">{{ message }}</p>
-    {% endif %}
+{% block title %}Upload Requirements | Student Management System{% endblock %}
 
-    {% if errors %}
-        <h4>Errors:</h4>
-        <ul style="color: red;">
-            {% for error in errors %}
-                <li>{{ error }}</li>
-            {% endfor %}
+{% block extra_head %}
+<style>
+  /* Custom styles for upload requirements page */
+  .upload-container {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 5px 20px rgba(255, 119, 0, 0.1);
+    border: 1px solid rgba(255, 119, 0, 0.08);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .upload-header {
+    background: linear-gradient(135deg, rgba(255, 119, 0, 0.05), rgba(255, 153, 51, 0.1));
+    padding: 1.5rem;
+    border-bottom: 1px solid rgba(255, 119, 0, 0.1);
+  }
+
+  .upload-header h3 {
+    margin: 0;
+    color: var(--gray-900);
+    font-weight: 700;
+    position: relative;
+    display: inline-block;
+  }
+
+  .upload-header h3:after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 0;
+    width: 40px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 2px;
+  }
+
+  .upload-body {
+    padding: 2rem;
+  }
+
+  .file-drop-area {
+    border: 2px dashed var(--gray-300);
+    border-radius: 1rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    background: var(--gray-100);
+  }
+
+  .file-drop-area.active {
+    border-color: var(--primary);
+    background-color: rgba(255, 119, 0, 0.05);
+  }
+
+  .file-drop-area.has-file {
+    border-color: var(--success);
+    background-color: rgba(16, 185, 129, 0.05);
+  }
+
+  .file-icon {
+    font-size: 3rem;
+    color: var(--gray-400);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .file-drop-area.has-file .file-icon {
+    color: var(--success);
+  }
+
+  .file-drop-area.active .file-icon {
+    color: var(--primary);
+  }
+
+  .file-input {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 100%;
+    opacity: 0;
+    cursor: pointer;
+  }
+
+  .drop-text {
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+    color: var(--gray-700);
+    font-weight: 500;
+  }
+
+  .drop-hint {
+    font-size: 0.9rem;
+    color: var(--gray-600);
+    margin-bottom: 1rem;
+  }
+
+  .file-info {
+    display: none;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 0.5rem;
+    border: 1px solid var(--gray-200);
+    align-items: center;
+  }
+
+  .file-info.show {
+    display: flex;
+  }
+
+  .file-name {
+    flex-grow: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--gray-800);
+    font-weight: 500;
+  }
+
+  .clear-file {
+    color: var(--danger);
+    background: none;
+    border: none;
+    cursor: pointer;
+    margin-left: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .clear-file:hover {
+    transform: scale(1.1);
+  }
+
+  .upload-btn {
+    margin-top: 1.5rem;
+    width: 100%;
+    padding: 0.75rem;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    border-radius: 0.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  }
+
+  .upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 119, 0, 0.3);
+  }
+
+  .upload-btn:disabled {
+    background: var(--gray-300);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .upload-btn .spinner {
+    display: none;
+    width: 1.2rem;
+    height: 1.2rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spinner-rotate 1s linear infinite;
+  }
+
+  .upload-btn.loading .spinner {
+    display: inline-block;
+  }
+
+  .upload-btn.loading .btn-text {
+    display: none;
+  }
+
+  @keyframes spinner-rotate {
+    to { transform: rotate(360deg); }
+  }
+
+  .format-guide {
+    margin-top: 2rem;
+    background: var(--light);
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 119, 0, 0.1);
+  }
+
+  .format-guide h4 {
+    color: var(--gray-800);
+    font-weight: 600;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .format-guide h4 i {
+    color: var(--primary);
+  }
+
+  .table-preview {
+    width: 100%;
+    overflow-x: auto;
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  }
+
+  .preview-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  .preview-table th {
+    background: rgba(255, 119, 0, 0.1);
+    color: var(--primary-dark);
+    font-weight: 600;
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .preview-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--gray-200);
+    color: var(--gray-700);
+    font-size: 0.85rem;
+  }
+
+  .preview-table tr:last-child td {
+    border-bottom: none;
+  }
+
+  /* Message styles */
+  .result-message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .result-message.success {
+    background-color: rgba(16, 185, 129, 0.1);
+    border-left: 4px solid var(--success);
+  }
+
+  .result-message.warning {
+    background-color: rgba(245, 158, 11, 0.1);
+    border-left: 4px solid var(--warning);
+  }
+
+  .result-message.error {
+    background-color: rgba(239, 68, 68, 0.1);
+    border-left: 4px solid var(--danger);
+  }
+
+  .message-icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 1rem;
+  }
+
+  .result-message.success .message-icon {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: var(--success);
+  }
+
+  .result-message.warning .message-icon {
+    background-color: rgba(245, 158, 11, 0.2);
+    color: var(--warning);
+  }
+
+  .result-message.error .message-icon {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: var(--danger);
+  }
+
+  .message-content {
+    flex-grow: 1;
+  }
+
+  .message-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+
+  .result-message.success .message-title {
+    color: var(--success);
+  }
+
+  .result-message.warning .message-title {
+    color: var(--warning);
+  }
+
+  .result-message.error .message-title {
+    color: var(--danger);
+  }
+
+  .message-desc {
+    color: var(--gray-700);
+    font-size: 0.9rem;
+  }
+
+  .errors-container {
+    margin-top: 1rem;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+
+  .error-item {
+    padding: 0.5rem 0.75rem;
+    background-color: rgba(239, 68, 68, 0.05);
+    border-radius: 0.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--danger);
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  /* Animation classes */
+  .reveal-element {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .slide-right {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+
+  .zoom-in {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  .pulse-animation {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  .float-animation {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+    100% { transform: translateY(0px); }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 class="page-title zoom-in">Upload Requirements</h2>
+
+<div class="row">
+  <div class="col-lg-8 col-md-12 mb-4">
+    <div class="upload-container reveal-element">
+      <div class="upload-header">
+        <h3><i class="fas fa-file-upload me-2"></i>Upload Requirements Excel File</h3>
+      </div>
+      <div class="upload-body">
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+          {% csrf_token %}
+          
+          <div class="file-drop-area" id="dropArea">
+            <i class="fas fa-file-excel file-icon float-animation"></i>
+            <h4 class="drop-text">Drag & Drop Excel File Here</h4>
+            <p class="drop-hint">or click to browse files (*.xlsx, *.xls)</p>
+            <input type="file" name="excel_file" id="excelFile" class="file-input" accept=".xlsx, .xls">
+          </div>
+          
+          <div class="file-info" id="fileInfo">
+            <i class="fas fa-file-excel me-2" style="color: var(--success);"></i>
+            <span class="file-name" id="fileName"></span>
+            <button type="button" class="clear-file" id="clearFile">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <button type="submit" class="upload-btn" id="uploadButton" disabled>
+            <span class="spinner"></span>
+            <span class="btn-text"><i class="fas fa-upload me-1"></i> Upload Requirements</span>
+          </button>
+        </form>
+        
+        {% if message %}
+          <div class="result-message {% if errors %}warning{% else %}success{% endif %}" id="resultMessage">
+            <div class="message-icon">
+              <i class="fas {% if errors %}fa-exclamation-triangle{% else %}fa-check{% endif %}"></i>
+            </div>
+            <div class="message-content">
+              <h5 class="message-title">{% if errors %}Partial Success{% else %}Success{% endif %}</h5>
+              <p class="message-desc">{{ message }}</p>
+              
+              {% if errors %}
+                <button type="button" class="btn btn-sm btn-link p-0 mt-2" id="toggleErrors">
+                  Show Error Details <i class="fas fa-chevron-down ms-1"></i>
+                </button>
+                
+                <div class="errors-container" id="errorsContainer" style="display: none;">
+                  {% for error in errors %}
+                    <div class="error-item">{{ error }}</div>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-lg-4 col-md-12">
+    <div class="format-guide slide-right">
+      <h4><i class="fas fa-info-circle"></i> Excel Format Guide</h4>
+      <p class="mb-3">Please ensure your Excel file follows this format:</p>
+      
+      <div class="table-preview">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Company Name</th>
+              <th>Company Code</th>
+              <th>Requirement Date</th>
+              <th>Schedule Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td>Header Row</td>
+              <td>Header Row</td>
+              <td>Header Row</td>
+              <td>Header Row</td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td>Header Row</td>
+              <td>Header Row</td>
+              <td>Header Row</td>
+              <td>Header Row</td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td>ABC Company</td>
+              <td>ABC123</td>
+              <td>15/01/2025</td>
+              <td>20/01/2025</td>
+            </tr>
+            <tr>
+              <td>4</td>
+              <td>XYZ Corp</td>
+              <td>XYZ456</td>
+              <td>10/02/2025</td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="mt-4">
+        <h5 class="mb-2"><i class="fas fa-exclamation-circle text-warning me-2"></i>Important Notes:</h5>
+        <ul class="mb-0">
+          <li>First two rows are considered headers</li>
+          <li>Data begins from row 3</li>
+          <li>Company Name and Code are required</li>
+          <li>Requirement Date is required</li>
+          <li>Schedule Date is optional (leave empty if not scheduled)</li>
+          <li>Use date format: DD/MM/YYYY (e.g., 15/01/2025)</li>
         </ul>
-    {% endif %}
-</body>
-</html>
+      </div>
+    </div>
+    
+    <div class="card mt-4 zoom-in">
+      <div class="card-header">
+        <h5 class="card-title"><i class="fas fa-question-circle me-2"></i>Need Help?</h5>
+      </div>
+      <div class="card-body">
+        <p>If you're having trouble with uploading requirements, check these common issues:</p>
+        <ul>
+          <li>Ensure the file is in Excel format (.xlsx, .xls)</li>
+          <li>Verify all required columns are present</li>
+          <li>Check date formats are in DD/MM/YYYY format</li>
+          <li>Empty cells for Schedule Date are allowed</li>
+        </ul>
+        <a href="{% url 'student_data:download_template' %}" class="btn btn-outline-primary mt-2">
+          <i class="fas fa-download me-1"></i> Download Template
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const dropArea = document.getElementById('dropArea');
+    const fileInput = document.getElementById('excelFile');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const clearFile = document.getElementById('clearFile');
+    const uploadButton = document.getElementById('uploadButton');
+    const uploadForm = document.getElementById('uploadForm');
+    const toggleErrors = document.getElementById('toggleErrors');
+    const errorsContainer = document.getElementById('errorsContainer');
+    
+    // File input change handler
+    fileInput.addEventListener('change', handleFileSelect);
+    
+    // Clear file button
+    if (clearFile) {
+      clearFile.addEventListener('click', function(e) {
+        e.preventDefault();
+        clearFileInput();
+      });
+    }
+    
+    // Toggle error details
+    if (toggleErrors) {
+      toggleErrors.addEventListener('click', function() {
+        if (errorsContainer.style.display === 'none') {
+          errorsContainer.style.display = 'block';
+          toggleErrors.innerHTML = 'Hide Error Details <i class="fas fa-chevron-up ms-1"></i>';
+          
+          // Animate error items
+          const errorItems = document.querySelectorAll('.error-item');
+          errorItems.forEach((item, index) => {
+            gsap.to(item, {
+              opacity: 1,
+              y: 0,
+              duration: 0.3,
+              delay: index * 0.05,
+              ease: 'power2.out'
+            });
+          });
+        } else {
+          errorsContainer.style.display = 'none';
+          toggleErrors.innerHTML = 'Show Error Details <i class="fas fa-chevron-down ms-1"></i>';
+        }
+      });
+    }
+    
+    // Form submit handler - show loading state
+    uploadForm.addEventListener('submit', function() {
+      uploadButton.classList.add('loading');
+      uploadButton.disabled = true;
+    });
+    
+    // File selection handler
+    function handleFileSelect() {
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        fileName.textContent = file.name;
+        fileInfo.classList.add('show');
+        dropArea.classList.add('has-file');
+        uploadButton.disabled = false;
+        
+        // Animate file info
+        gsap.fromTo(fileInfo, 
+          { y: 10, opacity: 0 },
+          { y: 0, opacity: 1, duration: 0.4, ease: 'power2.out' }
+        );
+      } else {
+        clearFileInput();
+      }
+    }
+    
+    // Clear file input
+    function clearFileInput() {
+      fileInput.value = '';
+      fileInfo.classList.remove('show');
+      dropArea.classList.remove('has-file');
+      uploadButton.disabled = true;
+    }
+    
+    // Handle drag and drop
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    function preventDefaults(e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    ['dragenter', 'dragover'].forEach(eventName => {
+      dropArea.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+      dropArea.addEventListener(eventName, unhighlight, false);
+    });
+    
+    function highlight() {
+      dropArea.classList.add('active');
+    }
+    
+    function unhighlight() {
+      dropArea.classList.remove('active');
+    }
+    
+    dropArea.addEventListener('drop', handleDrop, false);
+    
+    function handleDrop(e) {
+      const dt = e.dataTransfer;
+      const files = dt.files;
+      
+      if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect();
+      }
+    }
+    
+    // GSAP Animations
+    // Stagger the animations for a more polished feel
+    gsap.registerPlugin(ScrollTrigger);
+    
+    // Page title animation
+    gsap.to('.zoom-in', {
+      opacity: 1,
+      scale: 1,
+      duration: 0.6,
+      ease: 'back.out(1.7)'
+    });
+    
+    // Main container animation
+    gsap.to('.reveal-element', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      delay: 0.2,
+      ease: 'power2.out'
+    });
+    
+    // Format guide animation
+    gsap.to('.slide-right', {
+      opacity: 1,
+      x: 0,
+      duration: 0.8,
+      delay: 0.4,
+      ease: 'power2.out'
+    });
+    
+    // Help card animation
+    gsap.to('.card.zoom-in', {
+      opacity: 1,
+      scale: 1,
+      duration: 0.6,
+      delay: 0.6,
+      ease: 'back.out(1.7)',
+      scrollTrigger: {
+        trigger: '.card.zoom-in',
+        start: 'top 80%'
+      }
+    });
+    
+    // Animate result message if present
+    const resultMessage = document.getElementById('resultMessage');
+    if (resultMessage) {
+      gsap.from(resultMessage, {
+        opacity: 0,
+        y: 20,
+        duration: 0.8,
+        delay: 0.3,
+        ease: 'power2.out'
+      });
+    }
+    
+    // Add scroll animations to format guide table rows
+    gsap.utils.toArray('.preview-table tr').forEach((row, index) => {
+      gsap.from(row, {
+        opacity: 0,
+        x: -20,
+        duration: 0.4,
+        delay: 0.7 + (index * 0.1),
+        ease: 'power2.out'
+      });
+    });
+  });
+</script>
+{% endblock %}

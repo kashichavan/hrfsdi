@@ -207,6 +207,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q
 import json
 
+@login_required
 def student_list(request):
     # Get filter parameters from request
     search_query = request.GET.get('search', '')
@@ -1268,48 +1269,78 @@ def delete_all_requirements(request):
 
     return redirect('student_data:requirement_list')  # Replace with your actual list view name
 
-
-# views.py
+from datetime import datetime
 import openpyxl
 from django.shortcuts import render
-from .models import Requirement
-from datetime import datetime
-
-# views.py
-import openpyxl
-from django.shortcuts import render
-from .models import Requirement
-from datetime import datetime
-
-# views.py
-import openpyxl
-from django.shortcuts import render
-from .models import Requirement
-from datetime import datetime
+from student_data.models import Requirement
 
 def parse_excel_date(cell_value, row_index, field_name, failed_rows):
     """
-    Safely parse a cell value to a date using DD-MM-YYYY format.
-    If it's a datetime object, swap day and month to correct for MDY parsing.
-    If it's a string, try parsing it as DD-MM-YYYY.
+    Parse dates from Excel, handling multiple formats with priority to DD-MM-YYYY
     """
-    if isinstance(cell_value, datetime):
-        try:
-            # Swap day and month to correct for Excel's MDY interpretation
-            parsed_date = datetime(cell_value.year, cell_value.day, cell_value.month).date()
-            return parsed_date
-        except ValueError as e:
-            failed_rows.append(f"Row {row_index}: Invalid {field_name} after swapping day/month — {str(e)}.")
-            return None
-    elif isinstance(cell_value, str):
-        try:
-            return datetime.strptime(cell_value.strip(), "%d-%m-%Y").date()
-        except ValueError:
-            failed_rows.append(f"Row {row_index}: Invalid {field_name} format ('{cell_value}') — expected DD-MM-YYYY.")
-            return None
-    else:
-        failed_rows.append(f"Row {row_index}: Invalid {field_name} type.")
+    # Handle empty values
+    if cell_value is None or (isinstance(cell_value, str) and not cell_value.strip()):
         return None
+
+    # If Excel gave us a datetime object (it auto-parsed as MM/DD)
+    if isinstance(cell_value, datetime):
+        # Check if the date could be ambiguous (month and day both <= 12)
+        if cell_value.month <= 12 and cell_value.day <= 12:
+            # Ambiguous date - we'll treat it as DD-MM-YYYY as per user preference
+            day = cell_value.month
+            month = cell_value.day
+            year = cell_value.year
+            try:
+                return datetime(year, month, day).date()
+            except ValueError:
+                failed_rows.append(f"Row {row_index}: Invalid date after conversion - {day}-{month}-{year}")
+                return None
+        else:
+            # Not ambiguous - Excel likely parsed it correctly
+            return cell_value.date()
+
+    # Handle string dates
+    if isinstance(cell_value, str):
+        cell_value = cell_value.strip()
+        
+        # Try DD-MM-YYYY format first (user's preferred format)
+        try:
+            day, month, year = map(int, cell_value.split('-'))
+            return datetime(year, month, day).date()
+        except ValueError:
+            pass
+            
+        # Try MM-DD-YYYY format (Excel's preferred format)
+        try:
+            month, day, year = map(int, cell_value.split('-'))
+            return datetime(year, month, day).date()
+        except ValueError:
+            pass
+            
+        # Try DD/MM/YYYY format
+        try:
+            day, month, year = map(int, cell_value.split('/'))
+            return datetime(year, month, day).date()
+        except ValueError:
+            pass
+            
+        # Try MM/DD/YYYY format
+        try:
+            month, day, year = map(int, cell_value.split('/'))
+            return datetime(year, month, day).date()
+        except ValueError:
+            pass
+            
+        # If all parsing attempts fail
+        failed_rows.append(
+            f"Row {row_index}: Invalid {field_name} format ('{cell_value}') - "
+            "must be DD-MM-YYYY, MM-DD-YYYY, DD/MM/YYYY or MM/DD/YYYY"
+        )
+        return None
+
+    # Handle any other type
+    failed_rows.append(f"Row {row_index}: Invalid {field_name} type")
+    return None
 
 def upload_requirements_view(request):
     message = None
@@ -1318,49 +1349,62 @@ def upload_requirements_view(request):
 
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
-        wb = openpyxl.load_workbook(excel_file, data_only=True)
-        sheet = wb.active
+        try:
+            # Read Excel file
+            wb = openpyxl.load_workbook(excel_file, data_only=True)
+            sheet = wb.active
 
-        for i, row in enumerate(sheet.iter_rows(min_row=3), start=3):  # Skip header
-            try:
-                company_name = row[1].value
-                company_code = row[2].value
-                requirement_date_raw = row[3].value
-                schedule_date_raw = row[4].value
+            for i, row in enumerate(sheet.iter_rows(min_row=3), start=3):  # Skip header
+                try:
+                    company_name = row[1].value
+                    company_code = row[2].value
+                    requirement_date_raw = row[3].value
+                    schedule_date_raw = row[4].value
 
-                if not company_code or not company_name:
-                    failed_rows.append(f"Row {i}: Missing company name/code.")
-                    continue
+                    # Validate required fields
+                    if not company_code or not company_name:
+                        failed_rows.append(f"Row {i}: Missing company name/code")
+                        continue
 
-                # Use custom parser
-                requirement_date = parse_excel_date(requirement_date_raw, i, "requirement date", failed_rows)
-                schedule_date = parse_excel_date(schedule_date_raw, i, "schedule date", failed_rows)
+                    # Parse dates with strict DD-MM-YYYY handling
+                    requirement_date = parse_excel_date(
+                        requirement_date_raw, i, "requirement date", failed_rows
+                    )
+                    if requirement_date is None:
+                        continue
 
-                if requirement_date is None or (schedule_date_raw is not None and schedule_date is None):
-                    # Error message already added by parse_excel_date
-                    continue
+                    # Handle optional schedule date
+                    schedule_date = None
+                    if schedule_date_raw is not None and str(schedule_date_raw).strip():
+                        schedule_date = parse_excel_date(
+                            schedule_date_raw, i, "schedule date", failed_rows
+                        )
+                        if schedule_date is None:
+                            continue
 
-                is_scheduled = bool(schedule_date)
-                schedule_status = 'scheduled' if is_scheduled else 'not_scheduled'
+                    # Save to database
+                    Requirement.objects.update_or_create(
+                        company_code=company_code,
+                        defaults={
+                            'company_name': company_name,
+                            'requirement_date': requirement_date,
+                            'schedule_date': schedule_date,
+                            'is_scheduled': schedule_date is not None,
+                            'schedule_status': 'scheduled' if schedule_date else 'not_scheduled'
+                        }
+                    )
+                    success_count += 1
 
-                Requirement.objects.update_or_create(
-                    company_code=company_code,
-                    defaults={
-                        'company_name': company_name,
-                        'requirement_date': requirement_date,
-                        'schedule_date': schedule_date,
-                        'is_scheduled': is_scheduled,
-                        'schedule_status': schedule_status
-                    }
-                )
-                success_count += 1
+                except Exception as e:
+                    failed_rows.append(f"Row {i}: Error processing row - {str(e)}")
 
-            except Exception as e:
-                failed_rows.append(f"Row {i}: {str(e)}")
+            message = f"Successfully uploaded {success_count} requirement(s)."
+            if failed_rows:
+                message += f" Failed to process {len(failed_rows)} row(s)."
 
-        message = f"{success_count} requirement(s) uploaded successfully."
-        if failed_rows:
-            message += f" {len(failed_rows)} row(s) failed to upload."
+        except Exception as e:
+            failed_rows.append(f"Error processing file: {str(e)}")
+            message = "Failed to process the uploaded file."
 
     return render(request, 'upload_requirements.html', {
         'message': message,
@@ -1513,13 +1557,22 @@ def combined_view(request):
     return render(request, "combined_template.html", context)
 
 
+from django.core.paginator import Paginator
+
 def placed_students_view(request):
-    placed_students = RequirementStudent.objects.filter(
+    placed_students_list = RequirementStudent.objects.filter(
         status='selected'
     ).select_related('student', 'requirement')
-
+    
+    # Set how many records per page
+    paginator = Paginator(placed_students_list, 10)  # Show 10 students per page
+    
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
     return render(request, 'placed_students.html', {
-        'placed_students': placed_students
+        'page_obj': page_obj,
+        'placed_students': placed_students_list
     })
 
 def delete_requirement(request, pk):
@@ -1705,42 +1758,68 @@ def update_selected_students(request):
     
     return render(request, 'update_selected_students.html', context)
 
-from .forms import *
+from django.views.generic import CreateView
+from django.urls import reverse_lazy
+from .models import Student
 from django.contrib import messages
-from .forms import StudentForm
-from django.http import JsonResponse
-
-from django.shortcuts import render
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_http_methods
-
-@csrf_exempt
-@require_http_methods(["POST"])  # This view only accepts POST requests
-def add_student(request):
-    if request.method == 'POST':
-        try:
-            name = request.POST.get('name')
-            contact_number = request.POST.get('contact_number')
-            gender = request.POST.get('gender')
-            
-            # Just return what we received for testing
-            return JsonResponse({
-                'success': True,
-                'received_data': {
-                    'name': name,
-                    'contact_number': contact_number,
-                    'gender': gender
-                }
-            })
-        except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': str(e)
-            })
+class StudentCreateView(CreateView):
+    model = Student
+    fields = [
+        'name', 'contact_number', 'degree', 'stream', 'yop',
+        'tenth_percent', 'twelfth_percent', 'degree_percent',
+        'gender', 'type_of_data'
+    ]
+    template_name = 'student_add.html'
+    success_url = reverse_lazy('student_data:add')
     
-    # This line should never be reached due to @require_http_methods
-    return JsonResponse({'error': 'Method not allowed'}, status=405)
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Student added successfully!')
+        return response
+    
+    def form_invalid(self, form):
+        messages.error(self.request, 'Please correct the errors below.')
+        return super().form_invalid(form)
+
+from django.http import HttpResponse
+import openpyxl
+from openpyxl.styles import Protection
+
+def download_template(request):
+    # Create a new workbook
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    
+    # Add headers
+    headers = [
+        "S.No", 
+        "Company Name", 
+        "Company Code", 
+        "Requirement Date (DD-MM-YYYY)", 
+        "Schedule Date (DD-MM-YYYY)"
+    ]
+    ws.append(headers)
+    
+    # Add sample data
+    sample_data = [
+        ["1", "ABC Corp", "ABC001", "15-01-2025", "20-01-2025"],
+        ["2", "XYZ Ltd", "XYZ002", "10-02-2025", ""],
+    ]
+    for row in sample_data:
+        ws.append(row)
+    
+    # Format date columns as text to prevent Excel auto-formatting
+    for cell in ws['D'] + ws['E']:
+        cell.protection = Protection(locked=False)
+        if cell.row > 1:  # Skip header
+            cell.number_format = '@'  # Text format
+    
+    # Create response
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="requirements_template.xlsx"'
+    
+    # Save workbook to response
+    wb.save(response)
+    return response

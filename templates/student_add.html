@@ -1,0 +1,523 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Student - Student Management System{% endblock %}
+
+{% block extra_head %}
+<!-- Modern trending fonts for 2025 -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    .student-registration-page {
+        --primary-orange: #ff7700;
+        --secondary-orange: #ff9933;
+        --light-orange: #FFF3E6;
+        --ultra-light-orange: #FFF9F5;
+        --dark-orange: #E55620;
+        --form-bg: #FFF9F5;
+        --success-green: #10B981;
+        --error-red: #EF4444;
+        --accent-purple: #8B5CF6;
+        --accent-blue: #3B82F6;
+    }
+
+    .student-registration-page .student-form-container {
+        background: var(--form-bg);
+        border-radius: 24px;
+        box-shadow: 0 20px 60px rgba(255, 107, 53, 0.15), 
+                    0 10px 20px rgba(255, 145, 77, 0.1);
+        border: 2px solid var(--light-orange);
+        overflow: hidden;
+        position: relative;
+        margin: 2rem auto;
+        transform-style: preserve-3d;
+        max-width: 800px;
+        z-index: 1;
+    }
+
+    .student-registration-page .form-header {
+        background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+        padding: 2.5rem 2rem;
+        color: white;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .student-registration-page .form-header h2 {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin: 0;
+        position: relative;
+        z-index: 2;
+        text-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        font-size: 2.2rem;
+        color: white;
+    }
+
+    .student-registration-page .form-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 60%);
+        z-index: 1;
+    }
+
+    .student-registration-page .header-subtitle {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 400;
+        font-size: 1.1rem;
+        opacity: 0.9;
+        margin-top: 0.5rem;
+        position: relative;
+        z-index: 2;
+        color: white;
+    }
+
+    .student-registration-page .form-body {
+        padding: 2.5rem;
+        font-family: 'Outfit', sans-serif;
+        background-color: var(--form-bg);
+    }
+
+    .student-registration-page .form-label {
+        color: var(--dark-orange);
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        display: block;
+        font-size: 1rem;
+        transition: transform 0.3s, color 0.3s;
+        font-family: 'Outfit', sans-serif;
+    }
+
+    .student-registration-page .form-control {
+        border: 2px solid var(--light-orange);
+        border-radius: 14px;
+        padding: 1rem 1.25rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        width: 100%;
+        transition: all 0.3s ease;
+        background-color: white;
+        box-sizing: border-box;
+    }
+
+    .student-registration-page .form-control:focus {
+        outline: none;
+        border-color: var(--primary-orange);
+        box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .student-registration-page .input-group:focus-within .form-label {
+        transform: translateY(-5px);
+        color: var(--primary-orange);
+    }
+
+    .student-registration-page .input-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+
+    .student-registration-page .submit-btn {
+        background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+        border: none;
+        border-radius: 16px;
+        padding: 1.2rem 2.5rem;
+        color: white;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+        letter-spacing: 1px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3);
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .student-registration-page .submit-btn::before {
+        content: '';
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        z-index: -1;
+        background: linear-gradient(90deg, var(--primary-orange), var(--accent-purple), var(--accent-blue), var(--primary-orange));
+        background-size: 400%;
+        border-radius: 18px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .student-registration-page .submit-btn:hover::before {
+        opacity: 1;
+        animation: gradient-border 3s linear infinite;
+    }
+
+    @keyframes gradient-border {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    .student-registration-page .submit-btn span {
+        margin-left: 10px;
+    }
+
+    .student-registration-page .error-list {
+        color: var(--error-red);
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        list-style: none;
+        padding-left: 0;
+        font-weight: 500;
+    }
+
+    .student-registration-page .alert {
+        border-radius: 10px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+    }
+
+    .student-registration-page .alert-success {
+        background-color: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        color: var(--success-green);
+    }
+
+    .student-registration-page .alert-error {
+        background-color: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: var(--error-red);
+    }
+
+    .student-registration-page .animated-border {
+        position: absolute;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+        height: 3px;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        transform: translateX(-100%);
+    }
+
+    .student-registration-page .bg-shape {
+        position: absolute;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
+        opacity: 0.05;
+        z-index: 0;
+    }
+
+    .student-registration-page .shape-1 {
+        width: 300px;
+        height: 300px;
+        top: -150px;
+        right: -100px;
+    }
+
+    .student-registration-page .shape-2 {
+        width: 200px;
+        height: 200px;
+        bottom: -100px;
+        left: -80px;
+    }
+
+    .student-registration-page .help-text {
+        color: #6B7280;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
+    }
+
+    .student-registration-page select.form-control {
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FF6B35' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 1rem center;
+        background-size: 16px 12px;
+        padding-right: 2.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .student-registration-page .form-body {
+            padding: 1.5rem;
+        }
+        
+        .student-registration-page .form-header {
+            padding: 1.8rem 1rem;
+        }
+        
+        .student-registration-page .form-header h2 {
+            font-size: 1.8rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="student-registration-page">
+    <div class="container py-5">
+        <div class="student-form-container">
+            <!-- Decorative shapes -->
+            <div class="bg-shape shape-1"></div>
+            <div class="bg-shape shape-2"></div>
+            
+            <div class="form-header">
+                <h2>Student Registration</h2>
+                <p class="header-subtitle">Enter student details to add to the database</p>
+                <div class="animated-border" id="animatedBorder"></div>
+            </div>
+            
+            <div class="form-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags }}{% endif %}" id="alertMessage">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="post" class="student-form" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-error">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    {% for field in form %}
+                        <div class="input-group" id="field-{{ forloop.counter }}">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                            </label>
+                            
+                            {% if field.field.widget.input_type == 'select' %}
+                                <select name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control">
+                                    {% for choice in field.field.choices %}
+                                        <option value="{{ choice.0 }}" {% if field.value == choice.0 %}selected{% endif %}>
+                                            {{ choice.1 }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                {{ field|safe }}
+                            {% endif %}
+                            
+                            {% if field.errors %}
+                                <ul class="error-list">
+                                    {% for error in field.errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                                <small class="help-text">{{ field.help_text }}</small>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                    
+                    <div class="text-center mt-5" id="submit-container">
+                        <button type="submit" class="submit-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon">
+                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                                <polyline points="7 3 7 8 15 8"></polyline>
+                            </svg>
+                            <span>Register Student</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Apply form-control class to all form elements
+        document.querySelectorAll('.student-registration-page input, .student-registration-page select, .student-registration-page textarea').forEach(el => {
+            if (!el.classList.contains('form-control')) {
+                el.classList.add('form-control');
+            }
+        });
+        
+        // Animated border effect
+        gsap.to('#animatedBorder', {
+            x: '200%',
+            duration: 2,
+            ease: "power1.inOut",
+            repeat: -1
+        });
+        
+        // Create a timeline for animations
+        const tl = gsap.timeline();
+        
+        // Form container entrance animation
+        tl.from('.student-form-container', {
+            duration: 1.2,
+            y: 60,
+            opacity: 0,
+            ease: "power3.out"
+        });
+        
+        // Header elements animation
+        tl.from('.form-header h2', {
+            duration: 0.8,
+            y: 30,
+            opacity: 0,
+            ease: "back.out(1.7)"
+        }, "-=0.6");
+        
+        tl.from('.header-subtitle', {
+            duration: 0.8,
+            y: 20,
+            opacity: 0,
+            ease: "power2.out"
+        }, "-=0.5");
+        
+        // Staggered animation for form fields
+        tl.from('.input-group', {
+            duration: 0.7,
+            y: 30,
+            opacity: 0,
+            stagger: 0.1,
+            ease: "power2.out"
+        }, "-=0.3");
+        
+        // Submit button animation
+        tl.from('#submit-container', {
+            duration: 0.8,
+            y: 20,
+            opacity: 0,
+            scale: 0.95,
+            ease: "elastic.out(1, 0.5)"
+        }, "-=0.2");
+        
+        // Background shapes animation
+        tl.from('.bg-shape', {
+            duration: 1.5,
+            scale: 0.5,
+            opacity: 0,
+            stagger: 0.2,
+            ease: "power2.inOut"
+        }, "-=1.5");
+        
+        // Field focus animation
+        document.querySelectorAll('.student-registration-page .form-control').forEach(input => {
+            input.addEventListener('focus', function() {
+                gsap.to(this, {
+                    scale: 1.02,
+                    duration: 0.3,
+                    ease: "power2.out"
+                });
+            });
+            
+            input.addEventListener('blur', function() {
+                gsap.to(this, {
+                    scale: 1,
+                    duration: 0.3,
+                    ease: "power2.out"
+                });
+            });
+        });
+        
+        // Submit button hover animation
+        const submitBtn = document.querySelector('.student-registration-page .submit-btn');
+        if (submitBtn) {
+            submitBtn.addEventListener('mouseenter', () => {
+                gsap.to(submitBtn, {
+                    y: -5,
+                    boxShadow: '0 15px 30px rgba(255,107,53,0.4)',
+                    duration: 0.3,
+                    ease: "power2.out"
+                });
+            });
+            
+            submitBtn.addEventListener('mouseleave', () => {
+                gsap.to(submitBtn, {
+                    y: 0,
+                    boxShadow: '0 8px 20px rgba(255,107,53,0.3)',
+                    duration: 0.3,
+                    ease: "power2.in"
+                });
+            });
+            
+            // Click effect
+            submitBtn.addEventListener('mousedown', () => {
+                gsap.to(submitBtn, {
+                    scale: 0.95,
+                    duration: 0.1
+                });
+            });
+            
+            submitBtn.addEventListener('mouseup', () => {
+                gsap.to(submitBtn, {
+                    scale: 1,
+                    duration: 0.1
+                });
+            });
+        }
+        
+        // Alert message animation if present
+        if (document.getElementById('alertMessage')) {
+            gsap.from('#alertMessage', {
+                duration: 0.8,
+                x: -50,
+                opacity: 0,
+                ease: "elastic.out(1, 0.5)",
+                onComplete: function() {
+                    // Auto dismiss after 5 seconds
+                    setTimeout(() => {
+                        gsap.to('#alertMessage', {
+                            opacity: 0,
+                            y: -20,
+                            duration: 0.5,
+                            ease: "power2.in"
+                        });
+                    }, 5000);
+                }
+            });
+        }
+
+        // MutationObserver to ensure styles are applied to dynamically added elements
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.addedNodes && mutation.addedNodes.length > 0) {
+                    mutation.addedNodes.forEach((node) => {
+                        if (node.nodeType === 1) { // Only process Element nodes
+                            const formControls = node.querySelectorAll('input, select, textarea');
+                            formControls.forEach(el => {
+                                if (!el.classList.contains('form-control')) {
+                                    el.classList.add('form-control');
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+        });
+
+        // Start observing the form for changes
+        observer.observe(document.querySelector('.student-form'), { 
+            childList: true, 
+            subtree: true 
+        });
+    });
+</script>
+{% endblock %}
