@@ -1,73 +1,103 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
 
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+{% block extra_head %}
 <style>
     /* Student Type Badges */
-    .badge-type-fsdi {
-        background-color: #4e73df;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
-    }
+    .badge-type {
+    background-color: #ff7905;
+    color: white;
+    padding: 3px 8px;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 0.75rem;
+    box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
+    display: inline-flex;
+    align-items: center;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
 
-    .badge-type-super100 {
-        background-color: #1cc88a;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(28, 200, 138, 0.3);
-    }
+/* Subtle Shimmer Effect */
+.badge-type::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    transform: rotate(30deg);
+    animation: shimmer 3s infinite linear;
+    pointer-events: none;
+}
 
-    .badge-type-fastrack {
-        background-color: #f6c23e;
-        color: #2c3e50;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(246, 194, 62, 0.3);
-    }
+/* Subtle Scale Effect on Hover */
+.badge-type:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 8px rgba(78, 115, 223, 0.4);
+}
 
-    .badge-type-legend {
-        background-color: #e74a3b;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(231, 74, 59, 0.3);
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%) rotate(30deg);
     }
+    100% {
+        transform: translateX(100%) rotate(30deg);
+    }
+}
 
-    .badge-type-default {
-        background-color: #858796;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(133, 135, 150, 0.3);
-    }
 
-    /* Card and button styling */
-    .card {
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
+    /* Quick filter buttons */
     .quick-filter-btn {
         transition: all 0.2s ease;
         margin-right: 5px;
         margin-bottom: 5px;
         border-radius: 6px;
+        border-width: 2px;
+        font-weight: 500;
+        white-space: nowrap;
     }
     .quick-filter-btn:hover {
         transform: translateY(-2px);
         box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     }
+    .quick-filter-btn.active {
+        box-shadow: 0 0 0 0.25rem rgba(var(--bs-btn-bg-rgb), 0.25);
+        border-color: transparent;
+    }
+    
+    /* Purple button specific styles */
+    .btn-outline-purple {
+        color: #6f42c1;
+        border-color: #6f42c1;
+    }
+    .btn-outline-purple:hover {
+        color: #fff;
+        background-color: #6f42c1;
+        border-color: #6f42c1;
+    }
+    .bg-purple, .btn-purple {
+        background-color: #6f42c1 !important;
+        color: white !important;
+    }
+    
+    /* Button icons */
+    .quick-filter-btn i {
+        transition: all 0.3s ease;
+    }
+    .quick-filter-btn:hover i {
+        transform: scale(1.1);
+    }
+
     /* Filter section */
     .filter-section {
         padding: 15px;
@@ -103,49 +133,31 @@
         margin-left: 10px;
     }
     .advanced-filter-btn.active {
-        background-color: #0d6efd;
+        background-color: var(--primary);
         color: white;
     }
     
-    /* Select2 improvements */
-    .select2-container .select2-selection--multiple {
-        min-height: 38px;
+    /* Horizontal scroll for filter buttons */
+    .filter-scroll-container {
+        overflow-x: auto;
+        white-space: nowrap;
+        padding-bottom: 10px;
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) var(--gray-100);
     }
-    .select2-container--bootstrap-5 .select2-selection {
-        border-radius: 0.25rem;
-        border: 1px solid #ced4da;
+    .filter-buttons-container {
+        display: inline-flex;
+        gap: 8px;
+        padding: 2px;
     }
-    .select2-selection-improved {
-        min-height: 38px !important;
-        border-radius: 0.25rem !important;
-    }
-    .select2-dropdown-large {
-        min-width: 250px;
-        z-index: 9999;
-    }
-    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 5px;
-    }
-    .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-        margin: 2px;
-        padding: 2px 8px;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-    }
-   
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
+<div class="container">
     <!-- Header and quick filters -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4 class="m-0">Student Database</h4>
+        <h4 class="page-title">Student Database</h4>
         <div class="d-flex align-items-center">
             <span class="text-muted me-2">{{ page_obj.paginator.count }} Students Found</span>
         </div>
@@ -156,43 +168,52 @@
         <div class="card-body">
             <!-- Quick Filter Buttons -->
             <div class="mb-4">
-                <div class="d-flex flex-wrap mb-4">
-                    <!-- All Students -->
-                    <a href="?type_filter=all{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-primary {% if type_filter == 'all' or not type_filter %}active bg-primary text-white{% endif %}">
-                        All ({{ type_counts.all|default:0 }})
-                    </a>
-                    
-                    <!-- FSDI -->
-                    <a href="?type_filter=fsdi{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-danger {% if type_filter|lower == 'fsdi' %}active bg-danger text-white{% endif %}">
-                        FSDI ({{ type_counts.fsdi|default:0 }})
-                    </a>
-                    
-                    <!-- Super100 -->
-                    <a href="?type_filter=super100{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-success {% if type_filter|lower == 'super100' %}active bg-success text-white{% endif %}">
-                        Super100 ({{ type_counts.super100|default:0 }})
-                    </a>
-                    
-                    <!-- Tuition -->
-                    <a href="?type_filter=tuition{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-warning {% if type_filter|lower == 'tuition' %}active bg-warning text-dark{% endif %}">
-                        Tuition ({{ type_counts.tuition|default:0 }})
-                    </a>
-                    
-                    <!-- Legend -->
-                    <a href="?type_filter=legend{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-info {% if type_filter|lower == 'legend' %}active bg-info text-white{% endif %}">
-                        Legend ({{ type_counts.legend|default:0 }})
-                    </a>
-                    
-                    <!-- Placement Activity -->
-                    <a href="?type_filter=placement_activity{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
-                       class="btn quick-filter-btn btn-outline-secondary {% if type_filter|lower == 'placement_activity' %}active bg-secondary text-white{% endif %}">
-                        Placement ({{ type_counts.placement_activity|default:0 }})
-                    </a>
+                <div class="filter-scroll-container">
+                    <div class="filter-buttons-container">
+                        <!-- All Students -->
+                        <a href="?type_filter=all{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-primary {% if type_filter == 'all' or not type_filter %}active bg-primary text-white{% endif %}">
+                            <i class="fas fa-layer-group me-1"></i> All ({{ type_counts.all|default:0 }})
+                        </a>
+                        
+                        <!-- FSDI -->
+                        <a href="?type_filter=fsdi{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-danger {% if type_filter|lower == 'fsdi' %}active bg-danger text-white{% endif %}">
+                            <i class="fas fa-laptop-code me-1"></i> FSDI ({{ type_counts.fsdi|default:0 }})
+                        </a>
+                        
+                        <!-- Super100 -->
+                        <a href="?type_filter=super100{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-success {% if type_filter|lower == 'super100' %}active bg-success text-white{% endif %}">
+                            <i class="fas fa-trophy me-1"></i> Super100 ({{ type_counts.super100|default:0 }})
+                        </a>
+                        
+                        <!-- Tuition -->
+                        <a href="?type_filter=tuition{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-warning {% if type_filter|lower == 'tuition' %}active bg-warning text-dark{% endif %}">
+                            <i class="fas fa-book-open me-1"></i> Tuition ({{ type_counts.tuition|default:0 }})
+                        </a>
+                        
+                        <!-- Legend -->
+                        <a href="?type_filter=legend{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-info {% if type_filter|lower == 'legend' %}active bg-info text-white{% endif %}">
+                            <i class="fas fa-fire me-1"></i> Legend ({{ type_counts.legend|default:0 }})
+                        </a>
+                        
+                        <!-- Placement Activity -->
+                        <a href="?type_filter=placement_activity{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-secondary {% if type_filter|lower == 'placement_activity' %}active bg-secondary text-white{% endif %}">
+                            <i class="fas fa-briefcase me-1"></i> Placement ({{ type_counts.placement_activity|default:0 }})
+                        </a>
+                        
+                        <!-- Early Placement -->
+                        <a href="?type_filter=early_placement{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% if stream_filters %}&stream={{ stream_filters|join:',' }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+                           class="btn quick-filter-btn btn-outline-purple {% if type_filter|lower == 'early_placement' %}active bg-purple text-white{% endif %}">
+                            <i class="fas fa-bolt me-1"></i> Early Placement ({{ type_counts.early_placement|default:0 }})
+                        </a>
+                    </div>
                 </div>
+            </div>
 
             <!-- Search form -->
             <form id="filterForm" method="get">
@@ -208,7 +229,7 @@
                     </div>
                     <div class="col-md-4 d-flex justify-content-end">
                         <button type="submit" class="btn btn-primary">Search</button>
-                        <button type="button" id="toggleAdvanced" class="btn btn-secondary advanced-filter-btn">
+                        <button type="button" id="toggleAdvanced" class="btn btn-outline-secondary advanced-filter-btn">
                             <i class="fas fa-sliders-h me-1"></i> Advanced Filters
                         </button>
                     </div>
@@ -219,7 +240,7 @@
                     <div class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Degree</label>
-                            <select name="degree" class="form-select" >
+                            <select name="degree" class="form-select">
                                 <option value="">All Degrees</option>
                                 {% for degree in unique_degrees %}
                                     <option value="{{ degree }}" {% if degree == degree_filter %}selected{% endif %}>{{ degree|lower }}</option>
@@ -229,7 +250,7 @@
 
                         <div class="col-md-4">
                             <label class="form-label">Stream</label>
-                            <select name="stream" id="streamSelect" class="form-select" multiple="multiple" >
+                            <select name="stream" id="streamSelect" class="form-select" multiple="multiple">
                                 {% for stream in unique_streams %}
                                     <option value="{{ stream }}" {% if stream in stream_filters %}selected{% endif %}>{{ stream|lower }}</option>
                                 {% endfor %}
@@ -294,7 +315,7 @@
     <!-- Students Table -->
     <div class="card">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="m-0">Student List</h5>
+            <h5 class="card-title m-0">Student List</h5>
             <span class="badge bg-secondary">{{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
         </div>
         <div class="card-body p-0">
@@ -320,8 +341,7 @@
                                     {% endif %}
                                 </a>
                             </th>
-                            <th>Actions</th>
-                            <th></th>
+                            <th colspan="2">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -333,7 +353,7 @@
                             <td>{{ student.stream|lower }}</td>
                             <td>{{ student.degree_percent }}%</td>
                             <td>
-                                <span class="badge bg-warning text-dark badge-type-{{ student.type_of_data|lower|default:'default' }}">
+                                <span class="badge-type">
                                     {{ student.type_of_data|lower }}
                                 </span>
                             </td>
@@ -345,8 +365,8 @@
                                     </span>
                                     <div class="progress progress-thin flex-grow-1">
                                         <div class="progress-bar bg-success" 
-                                        style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%;">
-                                   </div>
+                                             style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%;">
+                                        </div>
                                     </div>
                                 </div>
                             </td>
@@ -355,18 +375,17 @@
                                    class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-eye"></i> View
                                 </a>
-                                
                             </td>
                             <td>
                                 <a href="{% url 'student_data:student_delete' student.id %}" 
-                                class="btn btn-sm btn-outline-primary">
-                                 <i class="fas fa-trash"></i> Delete
-                             </a>
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-trash"></i> Delete
+                                </a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center py-5">
+                            <td colspan="9" class="text-center py-5">
                                 <i class="fas fa-search fa-2x text-muted mb-3"></i>
                                 <h5>No students found</h5>
                                 <p class="text-muted">Try adjusting your search or filter criteria</p>
@@ -413,17 +432,9 @@
         </div>
     </div>
 </div>
-
-{% if stream_filters %}
-<script id="stream-data" type="application/json">
-{{ stream_filters|json_script:"stream-data" }}
-</script>
-{% endif %}
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
 $(document).ready(function() {
     // Make sure advanced filters are hidden initially
@@ -432,44 +443,56 @@ $(document).ready(function() {
     // Toggle advanced filters 
     $('#toggleAdvanced').click(function() {
         $('#advancedFilters').slideToggle(300);
-        $(this).toggleClass('btn-secondary btn-primary active');
+        $(this).toggleClass('btn-outline-secondary btn-primary active');
     });
 
-    // Initialize Select2 for multiple selection with improved styling
+    // Initialize Select2 for multiple selection
     $('#streamSelect').select2({
         theme: 'bootstrap-5',
         placeholder: 'Select streams',
         width: '100%',
         closeOnSelect: false,
         allowClear: true,
-        tags: true,
-        dropdownCssClass: 'select2-dropdown-large',
-        selectionCssClass: 'select2-selection-improved'
+        tags: true
     });
 
-    // Set the selected values for the stream select
-    {% if stream_filters %}
-    var streamData = JSON.parse(document.getElementById('stream-data').textContent);
-    if(Array.isArray(streamData)) {
-        $('#streamSelect').val(streamData).trigger('change');
+    // Fix for stream filters - parse the URL to set stream filter values
+    function getStreamFiltersFromUrl() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const streamParam = urlParams.get('stream');
+        
+        if (streamParam) {
+            // Split by comma and trim whitespace
+            return streamParam.split(',').map(s => s.trim()).filter(s => s.length > 0);
+        }
+        return [];
     }
-    {% endif %}
-
-    // Preserve filters in pagination links
+    
+    // Set stream values from URL parameters
+    const streamValues = getStreamFiltersFromUrl();
+    if (streamValues.length > 0) {
+        $('#streamSelect').val(streamValues).trigger('change');
+    }
+    
+    // Fix for pagination preserving all filters
     $('.pagination a').each(function() {
-        const href = $(this).attr('href');
+        let href = $(this).attr('href');
         if (href) {
-            const params = new URLSearchParams(window.location.search);
+            // Make sure we keep all current filters when paginating
+            const currentFilters = new URLSearchParams(window.location.search);
+            const newUrl = new URLSearchParams(href);
             
-            // Remove page parameter if it exists
-            params.delete('page');
+            // Get the page parameter from the link
+            const page = newUrl.get('page');
             
-            // Append filters to pagination link
-            if (href.includes('?')) {
-                $(this).attr('href', href + '&' + params.toString());
-            } else {
-                $(this).attr('href', href + '?' + params.toString());
-            }
+            // Start with current filters
+            const finalParams = new URLSearchParams(currentFilters);
+            
+            // Update just the page parameter 
+            finalParams.set('page', page);
+            
+            // Update the href
+            $(this).attr('href', '?' + finalParams.toString());
         }
     });
 });

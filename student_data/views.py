@@ -237,6 +237,12 @@ def student_list(request):
                     Q(type_of_data__iexact='placement_activity') | 
                     Q(type_of_data__iexact='placement activity')
                 )
+            # Handle early placement filter
+            elif type_filter_lower == 'early_placement':
+                students = students.filter(
+                    Q(type_of_data__iexact='early_placement') | 
+                    Q(type_of_data__iexact='early placement')
+                )
             else:
                 students = students.filter(type_of_data__iexact=type_filter_lower)
 
@@ -312,20 +318,24 @@ def student_list(request):
 
     # Type counts for quick filters
     type_counts = {
-    'all': Student.objects.exclude(requirementstudent__status='selected').count(),
-    'fsdi': Student.objects.filter(type_of_data__iexact='fsdi')
-                          .exclude(requirementstudent__status='selected').count(),
-    'super100': Student.objects.filter(type_of_data__iexact='super100')
+        'all': Student.objects.exclude(requirementstudent__status='selected').count(),
+        'fsdi': Student.objects.filter(type_of_data__iexact='fsdi')
                              .exclude(requirementstudent__status='selected').count(),
-    'tuition': Student.objects.filter(type_of_data__iexact='tuition')
-                            .exclude(requirementstudent__status='selected').count(),
-    'legend': Student.objects.filter(type_of_data__iexact='legend')
-                           .exclude(requirementstudent__status='selected').count(),
-    'placement_activity': Student.objects.filter(
-        Q(type_of_data__iexact='placement_activity') | 
-        Q(type_of_data__iexact='placement activity')
-    ).exclude(requirementstudent__status='selected').count(),
-}
+        'super100': Student.objects.filter(type_of_data__iexact='super100')
+                                .exclude(requirementstudent__status='selected').count(),
+        'tuition': Student.objects.filter(type_of_data__iexact='tuition')
+                               .exclude(requirementstudent__status='selected').count(),
+        'legend': Student.objects.filter(type_of_data__iexact='legend')
+                              .exclude(requirementstudent__status='selected').count(),
+        'placement_activity': Student.objects.filter(
+            Q(type_of_data__iexact='placement_activity') | 
+            Q(type_of_data__iexact='placement activity')
+        ).exclude(requirementstudent__status='selected').count(),
+        'early_placement': Student.objects.filter(
+            Q(type_of_data__iexact='early_placement') | 
+            Q(type_of_data__iexact='early placement')
+        ).exclude(requirementstudent__status='selected').count(),
+    }
 
     # Context data
     context = {
