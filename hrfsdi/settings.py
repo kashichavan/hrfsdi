@@ -28,6 +28,15 @@ DEBUG =True
 
 ALLOWED_HOSTS = ['*']
 
+CSRF_TRUSTED_ORIGINS = [
+    'https://382e-2405-201-c007-d0e9-1da1-c1f1-3c64-a940.ngrok-free.app'
+]
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+
 
 # Application definition
 
