@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Placement Details for {{ month_name }} {{ year }}</h2>
+        <a href="{% url 'student_data:monthly_placement_report' %}?year={{ year }}" class="btn btn-secondary">
+            Back to Monthly Report
+        </a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Company Name</th>
+                    <th>Company Code</th>
+                    <th>Requirement Date</th>
+                    <th>Selected</th>
+                    <th>Rejected</th>
+                    <th>Pending</th>
+                    <th>Total Students</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for req in requirements %}
+                <tr>
+                    <td>{{ req.company_name }}</td>
+                    <td>{{ req.company_code }}</td>
+                    <td>{{ req.requirement_date|date:"Y-m-d" }}</td>
+                    <td>{{ req.selected }}</td>
+                    <td>{{ req.rejected }}</td>
+                    <td>{{ req.pending }}</td>
+                    <td>{{ req.total }}</td>
+                    <td>
+                        <a href="{% url 'student_data:requirement_detail' req.requirement_id %}" 
+                           class="btn btn-sm btn-info">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

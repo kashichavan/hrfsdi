@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Placement Report - {{ year }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        h1 { color: #333; text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total-row { font-weight: bold; background-color: #e6f3ff; }
+        .footer { margin-top: 30px; text-align: right; font-size: 0.8em; }
+    </style>
+</head>
+<body>
+    <h1>Monthly Placement Report - {{ year }}</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Month</th>
+                <th>Selected</th>
+                <th>Rejected</th>
+                <th>Pending</th>
+                <th>Total</th>
+                <th>Placement Rate</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in data %}
+            <tr>
+                <td>{{ item.month }}</td>
+                <td>{{ item.selected }}</td>
+                <td>{{ item.rejected }}</td>
+                <td>{{ item.pending }}</td>
+                <td>{{ item.total_students }}</td>
+                <td>{{ item.placement_rate }}%</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td>Year Total</td>
+                <td>{{ total_selected }}</td>
+                <td>{{ total_rejected }}</td>
+                <td>{{ total_pending }}</td>
+                <td>{{ total_selected|add:total_rejected|add:total_pending }}</td>
+                <td>{{ placement_rate }}%</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p>Report generated on {% now "Y-m-d H:i" %}</p>
+    </div>
+</body>
+</html>

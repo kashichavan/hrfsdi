@@ -1833,3 +1833,108 @@ def download_template(request):
     # Save workbook to response
     wb.save(response)
     return response
+
+from django.shortcuts import render
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from datetime import datetime
+from calendar import monthrange
+from io import BytesIO
+import openpyxl
+from django.db.models import Count
+from .models import Requirement, RequirementStudent
+
+
+def monthly_placement_report(request):
+    selected_year = int(request.GET.get('year', datetime.now().year))
+    selected_month = int(request.GET.get('month', datetime.now().month))
+
+    start_date = datetime(selected_year, selected_month, 1)
+    end_day = monthrange(selected_year, selected_month)[1]
+    end_date = datetime(selected_year, selected_month, end_day)
+
+    requirements = Requirement.objects.filter(
+        requirement_date__range=(start_date, end_date)
+    )
+
+    student_status = RequirementStudent.objects.filter(
+        requirement__in=requirements
+    ).values('status').annotate(count=Count('status'))
+
+    status_counts = {item['status']: item['count'] for item in student_status}
+    selected = status_counts.get('selected', 0)
+    rejected = status_counts.get('rejected', 0)
+    pending = status_counts.get('pending', 0)
+    total_students = selected + rejected + pending
+
+    placement_rate = 0
+    if (selected + rejected) > 0:
+        placement_rate = (selected / (selected + rejected)) * 100
+
+    total_requirements = requirements.count()
+    total_schedules = requirements.exclude(interview_date__isnull=True).count()  # change interview_date if different
+
+    export_format = request.GET.get('export')
+    if export_format in ['pdf', 'excel']:
+        return generate_export(
+            export_format, selected_month, selected_year,
+            selected, rejected, pending, total_students,
+            placement_rate, total_requirements, total_schedules
+        )
+
+    context = {
+        'month_name': start_date.strftime('%B'),
+        'year': selected_year,
+        'month': selected_month,
+        'selected': selected,
+        'rejected': rejected,
+        'pending': pending,
+        'total_students': total_students,
+        'placement_rate': round(placement_rate, 2),
+        'total_requirements': total_requirements,
+        'total_schedules': total_schedules,
+        'requirements': requirements,
+    }
+
+    return render(request, 'monthly_placement_report.html', context)
+
+
+def generate_export(format, month, year, selected, rejected, pending, total, rate, requirements_count, schedules_count):
+    month_name = datetime(year, month, 1).strftime('%B')
+
+    if format == 'pdf':
+        template = get_template('reports/placement_pdf_template.html')
+        context = {
+            'month': month_name,
+            'year': year,
+            'selected': selected,
+            'rejected': rejected,
+            'pending': pending,
+            'total_students': total,
+            'placement_rate': round(rate, 2),
+            'requirements_count': requirements_count,
+            'schedules_count': schedules_count
+        }
+        html = template.render(context)
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="placement_report_{month_name}_{year}.pdf"'
+        pisa.CreatePDF(html, dest=response)
+        return response
+
+    elif format == 'excel':
+        response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+        response['Content-Disposition'] = f'attachment; filename="placement_report_{month_name}_{year}.xlsx"'
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = f"{month_name} {year}"
+
+        headers = ['Selected', 'Rejected', 'Pending', 'Total Students', 'Placement Rate (%)', 'Total Requirements', 'Total Schedules']
+        ws.append(headers)
+        ws.append([
+            selected, rejected, pending, total, round(rate, 2), requirements_count, schedules_count
+        ])
+
+        wb.save(response)
+        return response

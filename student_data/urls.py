@@ -71,4 +71,8 @@ path('requirements/<int:requirement_id>/',
      path('placed/',views.placed_students_view,name='placed_students'),
       path('requirements/<int:pk>/delete/', views.delete_requirement, name='delete_requirement'),
       path('download-template/', views.download_template, name='download_template'),
+
+
+       path('placement-report/', views.monthly_placement_report, name='monthly_placement_report'),
+    #path('month-details/<int:year>/<int:month>/', views.month_details, name='month_details'),
 ]
