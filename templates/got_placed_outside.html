@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block head_extras %}
+<!-- Import trending fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+<!-- AOS Animation Library -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+<!-- Custom CSS -->
+<style>
+    :root {
+        --orange-primary: #ff7a00;
+        --orange-secondary: #ff9f1c;
+        --orange-light: #ffbe0b;
+        --dark-bg: #1a1a2e;
+    }
+    
+    .card-placement {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(255, 122, 0, 0.1);
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .card-placement:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 35px rgba(255, 122, 0, 0.15);
+    }
+    
+    .card-header-gradient {
+        background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
+        border: none;
+        padding: 1.5rem;
+    }
+    
+    .placement-title {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        margin: 0;
+    }
+    
+    .placement-icon {
+        font-size: 1.5rem;
+        margin-right: 12px;
+        vertical-align: middle;
+    }
+    
+    .placement-form-body {
+        padding: 2rem;
+        background-color: #fff;
+    }
+    
+    .form-label {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        color: var(--orange-primary);
+        margin-bottom: 0.5rem;
+        font-size: 1rem;
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        border: 2px solid #e9ecef;
+        padding: 0.75rem 1rem;
+        font-family: 'Outfit', sans-serif;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--orange-light);
+        box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.25);
+    }
+    
+    .btn-gradient {
+        background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
+        border: none;
+        border-radius: 10px;
+        padding: 0.75rem 2rem;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+    }
+    
+    .btn-gradient:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(255, 122, 0, 0.4);
+    }
+    
+    .btn-gradient:active {
+        transform: translateY(1px);
+    }
+    
+    /* Divider style */
+    .styled-divider {
+        height: 3px;
+        background: linear-gradient(45deg, var(--orange-light), transparent);
+        margin: 2rem 0;
+        border-radius: 3px;
+    }
+    
+    /* Field animations */
+    .animate-field {
+        transition: all 0.3s ease;
+    }
+    
+    .animate-field:focus-within {
+        transform: translateY(-5px);
+    }
+    
+    /* Search section styling */
+    .search-container {
+        position: relative;
+        margin-bottom: 2rem;
+    }
+    
+    .search-icon {
+        position: absolute;
+        top: 50%;
+        left: 15px;
+        transform: translateY(-50%);
+        color: #adb5bd;
+        pointer-events: none;
+    }
+    
+    .search-input {
+        padding-left: 40px;
+    }
+
+    /* Required field indicator animation */
+    .required-star {
+        color: var(--orange-primary);
+        display: inline-block;
+        animation: pulse 1.5s infinite;
+    }
+    
+    @keyframes pulse {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    /* Error message styling */
+    .error-message {
+        color: #dc3545;
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+        font-family: 'Outfit', sans-serif;
+        display: block;
+        animation: shake 0.5s;
+    }
+    
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card card-placement" data-aos="fade-up" data-aos-duration="800">
+                <div class="card-header-gradient">
+                    <h2 class="placement-title text-white mb-0">
+                        <i class="fas fa-user-graduate placement-icon"></i>Add Got Placed Outside Student
+                    </h2>
+                </div>
+                <div class="placement-form-body">
+                    <!-- Search Bar for Students -->
+                    <form method="get" action="{% url 'student_data:add_got_placed_outside' %}" class="needs-validation mb-4" novalidate data-aos="fade-up" data-aos-delay="100">
+                        {% csrf_token %}
+                        <div class="form-group animate-field search-container">
+                            <label for="search_query" class="form-label">
+                                Search Student by Name
+                            </label>
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text" class="form-control search-input" id="search_query" name="search_query" placeholder="Enter Student Name" value="{{ search_query }}">
+                        </div>
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="btn btn-gradient">
+                                <i class="fas fa-search mr-2"></i>Search
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="styled-divider" data-aos="fade-right" data-aos-delay="200"></div>
+
+                    <!-- Form for Adding Got Placed Outside -->
+                    <form method="post" class="needs-validation" novalidate data-aos="fade-up" data-aos-delay="300">
+                        {% csrf_token %}
+                        
+                        {% for field in form %}
+                        <div class="form-group animate-field mb-4">
+                            <label for="{{ field.id_for_label }}" class="form-label">
+                                {{ field.label }}
+                                {% if field.field.required %}<span class="required-star">*</span>{% endif %}
+                            </label>
+                            
+                            {% if field.name == 'student' %}
+                                <!-- Display Students Search Dropdown -->
+                                <select class="form-control" id="{{ field.id_for_label }}" name="{{ field.name }}">
+                                    {% for student in students %}
+                                        <option value="{{ student.id }}" {% if form.student.value == student.id %} selected {% endif %}>{{ student.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            {% else %}
+                                {{ field }}
+                            {% endif %}
+                            
+                            {% if field.help_text %}
+                            <small class="form-text text-muted mt-1">{{ field.help_text }}</small>
+                            {% endif %}
+                            
+                            {% for error in field.errors %}
+                            <div class="error-message">
+                                {{ error }}
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endfor %}
+
+                        <div class="form-group text-center mt-5" data-aos="zoom-in" data-aos-delay="400">
+                            <button type="submit" class="btn btn-gradient btn-lg px-5">
+                                <i class="fas fa-paper-plane mr-2"></i>Submit
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Animation Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script>
+    // Initialize AOS animations
+    document.addEventListener('DOMContentLoaded', function() {
+        AOS.init();
+        
+        // Form field focus animation
+        const formControls = document.querySelectorAll('.form-control');
+        formControls.forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+        
+        // Form validation
+        const forms = document.querySelectorAll('.needs-validation');
+        Array.from(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    });
+</script>
+{% endblock %}

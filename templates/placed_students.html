@@ -362,6 +362,40 @@
     opacity: 0;
     transform: translateY(30px);
   }
+
+  .placement-button-container {
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  .placement-button {
+    background: var(--orange-bright);
+    color: var(--white);
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    box-shadow: 0 8px 15px rgba(255, 107, 53, 0.2);
+  }
+
+  .placement-button:hover {
+    background: var(--orange-light);
+    transform: translateY(-2px);
+  }
+
+  .placement-button:focus {
+    outline: none;
+  }
+
+  .placement-button .button-text {
+    margin-right: 10px;
+  }
 </style>
 {% endblock %}
 
@@ -380,6 +414,11 @@
       <div class="stats-badge-number">{{ placed_students|length }}</div>
       <div class="stats-badge-label">Successful Placements</div>
     </div>
+  </div>
+  <div class="placement-button-container">
+    <a href="{% url 'student_data:placed_outside' %}" class="placement-button">
+      <span class="button-text">Students Placed Outside</span> ➡️
+    </a>
   </div>
 
   <div class="students-showcase" id="students-showcase">

@@ -1,0 +1,342 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Outside Placement | Student Management System{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+<style>
+    :root {
+        --primary-color: #FF6B35;
+        --primary-light: #FF8C5A;
+        --primary-dark: #E05A2D;
+        --accent-color: #FFD166;
+        --text-dark: #333333;
+        --text-medium: #555555;
+        --text-light: #777777;
+        --bg-light: #FFF8F0;
+        --card-bg: #FFFFFF;
+    }
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-light);
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1.5rem !important;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
+        transition: all 0.3s ease;
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+        border-color: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    }
+    
+    .btn-outline-secondary {
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-light {
+        background-color: white;
+        color: var(--primary-color) !important;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-light:hover {
+        background-color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
+    }
+    
+    .form-control {
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+    }
+    
+    .alert {
+        border-radius: 8px;
+    }
+    
+    .alert-dismissible .close {
+        padding: 0.5rem 1rem;
+    }
+    
+    .file-input-container {
+        position: relative;
+        overflow: hidden;
+        display: inline-block;
+        width: 100%;
+    }
+    
+    .file-input-btn {
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        padding: 2rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .file-input-btn:hover {
+        border-color: var(--primary-light);
+        background-color: rgba(255, 107, 53, 0.05);
+    }
+    
+    .file-input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        opacity: 0;
+        width: 100%;
+        height: 100%;
+        cursor: pointer;
+    }
+    
+    @media (max-width: 768px) {
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        
+        .btn-light {
+            margin-top: 1rem;
+            width: 100%;
+        }
+        
+        .btn-lg {
+            width: 100%;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-lg + .btn-lg {
+            margin-left: 0 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5" id="bulk-upload-container">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h2 class="mb-0">Bulk Update Outside Placements</h2>
+                    <a href="{% url 'student_data:add_got_placed_outside' %}" class="btn btn-light text-primary btn-sm">
+                        <i class="fas fa-user-plus mr-1"></i> Add / Update Single Student
+                    </a>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" id="bulk-upload-form">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="{{ form.excel_file.id_for_label }}">
+                                <strong>Upload Excel File</strong>
+                            </label>
+                            <div class="file-input-container">
+                                <div class="file-input-btn">
+                                    <i class="fas fa-file-excel fa-3x mb-3" style="color: var(--primary-color);"></i>
+                                    <h5>Drag & Drop or Click to Browse</h5>
+                                    <p class="text-muted">Supports .xlsx, .xls, .csv files</p>
+                                    <div id="file-name" class="text-primary font-weight-bold"></div>
+                                </div>
+                                {{ form.excel_file }}
+                            </div>
+                            <small class="form-text text-muted mt-2">
+                                Required columns: <code>mobile_number</code>, <code>company_name</code>, 
+                                <code>package</code>, <code>role</code>, <code>placed_date</code>
+                            </small>
+                            {% if form.excel_file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {{ form.excel_file.errors }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="form-group text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg px-4" id="submit-btn">
+                                <i class="fas fa-upload mr-2"></i>Upload & Process
+                            </button>
+                            <a href="{% url 'student_data:download_sample' %}" class="btn btn-outline-secondary btn-lg ml-2">
+                                <i class="fas fa-download mr-2"></i>Download Sample
+                            </a>
+                        </div>
+                    </form>
+                    
+                    {% if messages %}
+                        <div class="mt-4" id="messages-container">
+                            {% for message in messages %}
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                    {{ message }}
+                                    <button type="button" class="close" data-dismiss="alert">
+                                        <span>&times;</span>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    {% if request.session.bulk_upload_errors %}
+                        <div class="mt-4" id="errors-container">
+                            <h5>Detailed Errors:</h5>
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    {% for error in request.session.bulk_upload_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% comment %} Clear errors after displaying {% endcomment %}
+                        {% with request.session.bulk_upload_errors as errors %}{% endwith %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate card entrance
+        gsap.to('.card', {
+            y: 0,
+            opacity: 1,
+            duration: 0.8,
+            ease: "back.out(1.2)",
+            delay: 0.2
+        });
+        
+        // File input handling
+        const fileInput = document.querySelector('.file-input');
+        const fileNameDisplay = document.getElementById('file-name');
+        
+        fileInput.addEventListener('change', function() {
+            if (this.files.length > 0) {
+                fileNameDisplay.textContent = this.files[0].name;
+                document.querySelector('.file-input-btn').style.borderColor = 'var(--primary-color)';
+                document.querySelector('.file-input-btn').style.backgroundColor = 'rgba(255, 107, 53, 0.1)';
+            }
+        });
+        
+        // Drag and drop functionality
+        const fileInputBtn = document.querySelector('.file-input-btn');
+        
+        fileInputBtn.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileInputBtn.style.borderColor = 'var(--primary-color)';
+            fileInputBtn.style.backgroundColor = 'rgba(255, 107, 53, 0.2)';
+        });
+        
+        fileInputBtn.addEventListener('dragleave', () => {
+            fileInputBtn.style.borderColor = fileInput.files.length > 0 ? 'var(--primary-color)' : '#ddd';
+            fileInputBtn.style.backgroundColor = fileInput.files.length > 0 ? 'rgba(255, 107, 53, 0.1)' : 'rgba(255, 255, 255, 0.5)';
+        });
+        
+        fileInputBtn.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileInput.files = e.dataTransfer.files;
+            if (fileInput.files.length > 0) {
+                fileNameDisplay.textContent = fileInput.files[0].name;
+                fileInputBtn.style.borderColor = 'var(--primary-color)';
+                fileInputBtn.style.backgroundColor = 'rgba(255, 107, 53, 0.1)';
+            }
+        });
+        
+        // Form submission animation
+        const form = document.getElementById('bulk-upload-form');
+        const submitBtn = document.getElementById('submit-btn');
+        
+        form.addEventListener('submit', function(e) {
+            if (!fileInput.files.length) {
+                e.preventDefault();
+                gsap.to(fileInputBtn, {
+                    x: [-5, 5, -5, 5, 0],
+                    duration: 0.4,
+                    ease: "power1.inOut"
+                });
+                fileInputBtn.style.borderColor = '#dc3545';
+                return;
+            }
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+            
+            // Animate button on submit
+            gsap.to(submitBtn, {
+                scale: 0.95,
+                duration: 0.2,
+                yoyo: true,
+                repeat: 1
+            });
+        });
+        
+        // Animate messages if they exist
+        if (document.getElementById('messages-container')) {
+            gsap.from('#messages-container .alert', {
+                y: -20,
+                opacity: 0,
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "back.out(1.2)"
+            });
+        }
+        
+        // Animate errors if they exist
+        if (document.getElementById('errors-container')) {
+            gsap.from('#errors-container', {
+                y: -20,
+                opacity: 0,
+                duration: 0.6,
+                delay: 0.3,
+                ease: "back.out(1.2)"
+            });
+            
+            gsap.from('#errors-container li', {
+                x: -20,
+                opacity: 0,
+                duration: 0.4,
+                stagger: 0.05,
+                delay: 0.6,
+                ease: "power2.out"
+            });
+        }
+    });
+</script>
+{% endblock %}

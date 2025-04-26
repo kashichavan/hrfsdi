@@ -673,6 +673,24 @@
     color: white;
     font-size: 0.9em;
 }
+.feedback-content {
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.feedback-content:hover {
+    white-space: normal;
+    overflow: visible;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 8px;
+    border-radius: 8px;
+    position: relative;
+    z-index: 100;
+}
 
     /* Delete Button Styling - Matches Orange Theme */
 .btn-delete-student {
@@ -716,7 +734,11 @@
                 <i class="fas fa-trash-alt me-2"></i> Delete Student
             </button>
         </form>
+        <a href="{% url 'student_data:student_edit' student.id %}" class="btn btn-primary ms-2">
+            <i class="fas fa-edit me-2"></i> Update Profile
+        </a>
     </div>
+
     
     <div class="profile-header">
         <div class="student-name" id="student-name">{{ student.name }}</div>
@@ -818,7 +840,9 @@
                     <th>Scheduled Date</th>
                     <th>Requirement Date</th>
                     <th>Schedule Status</th>
-                    <th>Application Status</th>  <!-- New Column -->
+                    <th>Application Status</th>
+                    <th>Reason</th>
+                      <!-- New Column -->
                 </tr>
             </thead>
             <tbody>
@@ -850,6 +874,11 @@
                                 {% else %}fa-clock{% endif %}"></i>
                             {{ req.get_status_display }}
                         </span>
+                    </td>
+                    <td>
+                        <div class="feedback-content" title="{{ req.feedback|default:'No feedback provided' }}">
+                            {{ req.feedback|default:"-"|truncatechars:30 }}
+                        </div>
                     </td>
                 </tr>
                 {% endfor %}

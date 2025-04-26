@@ -11,8 +11,31 @@
 
 {% block content %}
 <style>
+    :root {
+        --primary: #f97316; /* Main orange */
+        --primary-light: #fb923c; /* Lighter orange */
+        --primary-dark: #ea580c; /* Darker orange */
+        --secondary: #fdba74; /* Light orange */
+        --accent: #ffffff; /* White accent */
+        --dark-bg: #fef9f5; /* Very light orange background */
+        --card-bg: #ffffff; /* Card background */
+        --text-dark: #1e293b; /* Dark text */
+        --text-muted: #64748b; /* Muted text */
+        --gradient-1: linear-gradient(135deg, #f97316, #fdba74);
+    }
 
-.action-btns {
+    body {
+        background-color: var(--dark-bg);
+        font-family: 'Quicksand', sans-serif;
+        color: var(--text-dark);
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        overflow-x: hidden;
+        position: relative;
+    }
+
+    .action-btns {
         display: flex;
         gap: 1rem;
         margin-bottom: 2rem;
@@ -46,29 +69,6 @@
 
     .add-student-btn i {
         font-size: 1.1em;
-    }
-    :root {
-        --primary: #f97316; /* Main orange */
-        --primary-light: #fb923c; /* Lighter orange */
-        --primary-dark: #ea580c; /* Darker orange */
-        --secondary: #fdba74; /* Light orange */
-        --accent: #ffffff; /* White accent */
-        --dark-bg: #fef9f5; /* Very light orange background */
-        --card-bg: #ffffff; /* Card background */
-        --text-dark: #1e293b; /* Dark text */
-        --text-muted: #64748b; /* Muted text */
-        --gradient-1: linear-gradient(135deg, #f97316, #fdba74);
-    }
-
-    body {
-        background-color: var(--dark-bg);
-        font-family: 'Quicksand', sans-serif;
-        color: var(--text-dark);
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        overflow-x: hidden;
-        position: relative;
     }
 
     /* Create animated background with orange particles */
@@ -320,6 +320,48 @@
         margin-bottom: 2rem;
     }
 
+    .template-download-btn {
+        background: linear-gradient(135deg, #3b82f6, #4f46e5);
+        border: none;
+        color: #fff;
+        padding: 0.8rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-top: 1.5rem;
+    }
+
+    .template-download-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+    }
+
+    .template-download-btn i {
+        font-size: 1.1em;
+    }
+
+    .error-message {
+        color: #ef4444;
+        background-color: #fee2e2;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .error-message i {
+        font-size: 1.2em;
+    }
+
     @media (max-width: 576px) {
         .upload-card {
             padding: 2rem 1.5rem;
@@ -341,6 +383,16 @@
             padding: 0.8rem 1.5rem;
         }
     }
+
+    /* Add floating animation for particles */
+    @keyframes float {
+        0%, 100% {
+            transform: translateY(0);
+        }
+        50% {
+            transform: translateY(-20px);
+        }
+    }
 </style>
 
 <div class="particles-container" id="particles"></div>
@@ -358,6 +410,13 @@
             <h2><i class="fas fa-file-excel"></i> Upload Excel</h2>
             <p class="upload-subtitle">Upload your student data in Excel format (.xlsx, .xls)</p>
         </div>
+
+        {% if error %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i>
+            {{ error }}
+        </div>
+        {% endif %}
 
         <form id="uploadForm" method="post" enctype="multipart/form-data">
             {% csrf_token %}
@@ -389,6 +448,10 @@
             <p class="success-details">Your student data has been processed successfully.</p>
             <a href="/students/" class="submit-btn">View Students</a>
         </div>
+
+        <a href="{% url 'student_data:download_excel_template' %}" class="template-download-btn">
+            <i class="fas fa-download"></i> Download Excel Template
+        </a>
     </div>
 </div>
 
@@ -528,118 +591,21 @@
             e.preventDefault();
             
             const file = fileInput.files[0];
-            if (!file) return;
+            if (!file) {
+                alert("Please select a file to upload");
+                return;
+            }
             
-            const formData = new FormData();
-            formData.append("excel_file", file);
+            // Check file extension
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            if (fileExtension !== 'xlsx' && fileExtension !== 'xls') {
+                alert("Please upload an Excel file (.xlsx or .xls)");
+                return;
+            }
             
-            // Disable button and update text
-            submitBtn.disabled = true;
-            
-            // Animate button text change
-            gsap.to(submitText, {
-                opacity: 0,
-                duration: 0.3,
-                onComplete: function() {
-                    submitText.textContent = "Uploading...";
-                    gsap.to(submitText, { opacity: 1, duration: 0.3 });
-                }
-            });
-            
-            // Add loading animation to button
-            gsap.to(submitBtn, {
-                background: 'linear-gradient(135deg, #ea580c, #f97316)',
-                repeat: -1,
-                yoyo: true,
-                duration: 1
-            });
-            
-            const xhr = new XMLHttpRequest();
-            xhr.open("POST", "", true);
-            xhr.setRequestHeader("X-CSRFToken", "{{ csrf_token }}");
-            
-            xhr.upload.addEventListener("progress", function(e) {
-                if (e.lengthComputable) {
-                    const percent = (e.loaded / e.total) * 100;
-                    
-                    // Animate progress bar
-                    gsap.to(progressBar, { 
-                        width: percent + "%", 
-                        duration: 0.3,
-                        ease: "power1.out"
-                    });
-                }
-            });
-            
-            xhr.onload = function() {
-                if (xhr.status === 200) {
-                    // Complete the progress bar
-                    gsap.to(progressBar, { 
-                        width: "100%", 
-                        duration: 0.3,
-                        ease: "power1.out"
-                    });
-                    
-                    // Show success animation
-                    setTimeout(() => {
-                        gsap.to(form, {
-                            opacity: 0,
-                            y: 20,
-                            duration: 0.5,
-                            onComplete: function() {
-                                form.style.display = 'none';
-                                uploadSuccess.style.display = 'flex';
-                                
-                                // Animate success message
-                                gsap.from(uploadSuccess, {
-                                    opacity: 0,
-                                    y: -20,
-                                    duration: 0.6,
-                                    ease: "back.out(1.5)"
-                                });
-                                
-                                // Redirect after showing success message
-                                setTimeout(() => {
-                                    window.location.href = "/";
-                                }, 2000);
-                            }
-                        });
-                    }, 500);
-                } else {
-                    alert("Upload failed. Please try again.");
-                    
-                    // Reset button
-                    submitBtn.disabled = false;
-                    gsap.to(submitText, {
-                        opacity: 0,
-                        duration: 0.3,
-                        onComplete: function() {
-                            submitText.textContent = "Upload & Process";
-                            gsap.to(submitText, { opacity: 1, duration: 0.3 });
-                            gsap.killTweensOf(submitBtn);
-                            gsap.to(submitBtn, {
-                                background: 'linear-gradient(135deg, #f97316, #fdba74)',
-                                duration: 0.3
-                            });
-                        }
-                    });
-                }
-            };
-            
-            xhr.send(formData);
+            // Submit the form
+            this.submit();
         });
     });
 </script>
-
-<style>
-    /* Add floating animation for particles */
-    @keyframes float {
-        0%, 100% {
-            transform: translateY(0);
-        }
-        50% {
-            transform: translateY(-20px);
-        }
-    }
-</style>
 {% endblock %}

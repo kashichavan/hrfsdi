@@ -10,6 +10,10 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+# settings.py
+HR_USERNAME = "navaneetha.d@qspiders.in"
+HR_PASSWORD = "V6O4u8!1T0"
+
 from pathlib import Path
 import os
 
@@ -50,6 +54,7 @@ INSTALLED_APPS = [
     'student_data',
       'accounts',
       'whitenoise',
+       'widget_tweaks',
 ]
 
 MIDDLEWARE = [

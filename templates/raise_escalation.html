@@ -1,0 +1,261 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Lexend:wght@400;500;600;700&display=swap">
+<style>
+    /* Custom font implementation */
+    body {
+        font-family: 'Outfit', sans-serif;
+    }
+    
+    h1, h2, h3, h4, h5, h6, .escalation-title, .btn-escalate, .btn-cancel, .btn-back {
+        font-family: 'Lexend', sans-serif;
+    }
+    
+    /* These styles will supplement base.html styles */
+    .escalation-container {
+        max-width: 800px;
+        margin: 2rem auto;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    .nav-container {
+        margin-bottom: 1rem;
+    }
+    
+    .btn-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #666;
+        text-decoration: none;
+        font-size: 0.95rem;
+        font-weight: 500;
+        padding: 0.5rem 0;
+        transition: color 0.2s;
+    }
+    
+    .btn-back:hover {
+        color: #ff7700;
+    }
+    
+    .btn-back svg {
+        transition: transform 0.2s;
+    }
+    
+    .btn-back:hover svg {
+        transform: translateX(-3px);
+    }
+    
+    .escalation-card {
+        border-radius: 12px;
+        padding: 2rem;
+        background-color: #fff;
+        box-shadow: 0 8px 24px rgba(255, 119, 0, 0.08), 0 2px 8px rgba(255, 119, 0, 0.12);
+        border: 1px solid rgba(255, 119, 0, 0.1);
+    }
+    
+    .escalation-title {
+        color: var(--primary);
+        margin-bottom: 1.5rem;
+        font-weight: 600;
+        border-bottom: 2px solid var(--primary);
+        padding-bottom: 0.75rem;
+        letter-spacing: -0.02em;
+    }
+    
+    .escalation-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+    
+    .escalation-label {
+        display: block;
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+        color: var(--gray-800);
+    }
+    
+    .escalation-textarea {
+        width: 100%;
+        padding: 0.85rem;
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.95rem;
+        background-color: var(--light);
+        color: var(--gray-800);
+    }
+    
+    .escalation-textarea:focus {
+        border-color: var(--primary);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 119, 0, 0.1);
+    }
+    
+    .escalation-actions {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    
+    .btn-escalate {
+        background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+        color: white;
+        border: none;
+        padding: 0.85rem 1.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 0.02em;
+        box-shadow: 0 4px 8px rgba(255, 119, 0, 0.2);
+    }
+    
+    .btn-escalate:hover {
+        background: linear-gradient(135deg, var(--primary-dark), var(--accent));
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(255, 119, 0, 0.3);
+    }
+    
+    .btn-cancel {
+        background-color: var(--gray-100);
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+        padding: 0.85rem 1.75rem;
+        border-radius: 8px;
+        font-weight: 500;
+        text-decoration: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        letter-spacing: 0.02em;
+    }
+    
+    .btn-cancel:hover {
+        background-color: white;
+        color: var(--gray-800);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Make the form more responsive on smaller screens */
+    @media (max-width: 768px) {
+        .escalation-card {
+            padding: 1.5rem;
+            border-radius: 10px;
+        }
+        
+        .escalation-actions {
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .btn-escalate, .btn-cancel {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="escalation-container">
+    <div class="nav-container">
+        <a href="{% url 'student_data:requirement_list' %}" class="btn-back">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M19 12H5"></path>
+                <path d="M12 19l-7-7 7-7"></path>
+            </svg>
+            Back to Requirement
+        </a>
+    </div>
+
+    <div class="escalation-card">
+        <h2 class="escalation-title">Raise Escalation for {{ object.company_name }}</h2>
+        
+        <form method="post" class="escalation-form">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label for="id_escalation" class="escalation-label">Escalation Reason:</label>
+                <textarea 
+                    class="escalation-textarea" 
+                    id="id_escalation" 
+                    name="escalation" 
+                    rows="5"
+                    placeholder="Please describe the reason for escalation..."
+                >{{ form.escalation.value|default:'' }}</textarea>
+            </div>
+            
+            <div class="escalation-actions">
+                <button type="submit" class="btn-escalate">Raise Escalation</button>
+                <a href="{{ success_url }}" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animation for form elements using GSAP
+        if (typeof gsap !== 'undefined') {
+            // Timeline for staggered animations
+            const tl = gsap.timeline();
+            
+            tl.from('.nav-container', {
+                y: -15,
+                opacity: 0,
+                duration: 0.6,
+                ease: 'power2.out'
+            })
+            .from('.escalation-card', {
+                y: 30,
+                opacity: 0,
+                duration: 0.8,
+                ease: 'power3.out'
+            }, '-=0.3')
+            .from('.escalation-title', {
+                y: 20,
+                opacity: 0,
+                duration: 0.5,
+                ease: 'back.out'
+            }, '-=0.4')
+            .from('.form-group', {
+                y: 15,
+                opacity: 0,
+                duration: 0.5
+            }, '-=0.2')
+            .from('.escalation-actions', {
+                y: 15,
+                opacity: 0,
+                duration: 0.5
+            }, '-=0.2');
+            
+            // Add focus animation for textarea
+            const textarea = document.getElementById('id_escalation');
+            textarea.addEventListener('focus', function() {
+                gsap.to(this, {
+                    boxShadow: '0 0 0 3px rgba(255, 119, 0, 0.2)',
+                    duration: 0.3
+                });
+            });
+            
+            textarea.addEventListener('blur', function() {
+                gsap.to(this, {
+                    boxShadow: 'none',
+                    duration: 0.3
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,272 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Update Student Information{% endblock %}
+
+{% block extra_head %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+<style>
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: #f8f9fa;
+    }
+    
+    .form-container {
+        background-color: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        padding: 2rem;
+        margin: 2rem auto;
+        max-width: 800px;
+    }
+    
+    .page-title {
+        font-family: 'Montserrat', sans-serif;
+        color: #2c3e50;
+        margin-bottom: 1.5rem;
+        font-weight: 700;
+        text-align: center;
+        border-bottom: 2px solid #3498db;
+        padding-bottom: 10px;
+    }
+    
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group label {
+        font-weight: 500;
+        color: #34495e;
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+    
+    .form-control {
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        padding: 10px 15px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 300;
+        transition: border-color 0.3s;
+        width: 100%;
+    }
+    
+    .form-control:focus {
+        outline: none;
+        border-color: #3498db;
+        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    }
+    
+    .submit-btn {
+        background-color: #3498db;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 12px 25px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: block;
+        width: 100%;
+        margin-top: 1rem;
+    }
+    
+    .submit-btn:hover {
+        background-color: #2980b9;
+    }
+    
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -15px;
+        margin-left: -15px;
+    }
+    
+    .col-md-6 {
+        flex: 0 0 50%;
+        max-width: 50%;
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+    
+    @media (max-width: 768px) {
+        .col-md-6 {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+    }
+    
+    .breadcrumb {
+        background-color: transparent;
+        padding: 0.75rem 0;
+        margin-bottom: 1rem;
+    }
+    
+    .breadcrumb-item {
+        display: inline;
+        font-size: 0.9rem;
+    }
+    
+    .breadcrumb-item a {
+        color: #3498db;
+        text-decoration: none;
+    }
+    
+    .breadcrumb-item.active {
+        color: #7f8c8d;
+    }
+    
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        padding: 0 0.5rem;
+        color: #95a5a6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'student_data:student_list' %}">Students</a></li>
+            <li class="breadcrumb-item active">Update Student</li>
+        </ol>
+    </nav>
+    
+    <div class="form-container">
+        <h2 class="page-title">Update Student Information</h2>
+        
+        <form method="post" novalidate>
+            {% csrf_token %}
+            
+            <div class="form-row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.name.id_for_label }}">Full Name</label>
+                        {{ form.name|add_class:"form-control" }}
+                        {% if form.name.errors %}
+                            <small class="text-danger">{{ form.name.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.contact_number.id_for_label }}">Contact Number</label>
+                        {{ form.contact_number|add_class:"form-control" }}
+                        {% if form.contact_number.errors %}
+                            <small class="text-danger">{{ form.contact_number.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.degree.id_for_label }}">Degree</label>
+                        {{ form.degree|add_class:"form-control" }}
+                        {% if form.degree.errors %}
+                            <small class="text-danger">{{ form.degree.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.stream.id_for_label }}">Stream</label>
+                        {{ form.stream|add_class:"form-control" }}
+                        {% if form.stream.errors %}
+                            <small class="text-danger">{{ form.stream.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.yop.id_for_label }}">Year of Passing</label>
+                        {{ form.yop|add_class:"form-control" }}
+                        {% if form.yop.errors %}
+                            <small class="text-danger">{{ form.yop.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.gender.id_for_label }}">Gender</label>
+                        {{ form.gender|add_class:"form-control" }}
+                        {% if form.gender.errors %}
+                            <small class="text-danger">{{ form.gender.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.tenth_percent.id_for_label }}">10th Percentage</label>
+                        {{ form.tenth_percent|add_class:"form-control" }}
+                        {% if form.tenth_percent.errors %}
+                            <small class="text-danger">{{ form.tenth_percent.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.twelfth_percent.id_for_label }}">12th Percentage</label>
+                        {{ form.twelfth_percent|add_class:"form-control" }}
+                        {% if form.twelfth_percent.errors %}
+                            <small class="text-danger">{{ form.twelfth_percent.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.degree_percent.id_for_label }}">Degree Percentage</label>
+                        {{ form.degree_percent|add_class:"form-control" }}
+                        {% if form.degree_percent.errors %}
+                            <small class="text-danger">{{ form.degree_percent.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.type_of_data.id_for_label }}">Type of Data</label>
+                        {{ form.type_of_data|add_class:"form-control" }}
+                        {% if form.type_of_data.errors %}
+                            <small class="text-danger">{{ form.type_of_data.errors }}</small>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <div class="form-check">
+                    {{ form.is_placed|add_class:"form-check-input" }}
+                    <label class="form-check-label" for="{{ form.is_placed.id_for_label }}">
+                        Is Placed
+                    </label>
+                    {% if form.is_placed.errors %}
+                        <small class="text-danger">{{ form.is_placed.errors }}</small>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <button type="submit" class="submit-btn">Update Student</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

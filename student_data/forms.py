@@ -93,3 +93,28 @@ class StudentForm(forms.ModelForm):
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'type_of_data': forms.TextInput(attrs={'class': 'form-control'}),
         }
+
+from django import forms
+from .models import GotPlacedOutside, Student
+
+class GotPlacedOutsideForm(forms.ModelForm):
+    class Meta:
+        model = GotPlacedOutside
+        fields = ['student', 'company_name', 'role', 'package', 'placed_date']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Show only students not already marked as placed
+        self.fields['student'].queryset = Student.objects.filter(is_placed=False)
+
+
+# forms.py
+from django import forms
+from django.core.validators import FileExtensionValidator
+
+class BulkOutsidePlacementForm(forms.Form):
+    excel_file = forms.FileField(
+        label='Excel File',
+        validators=[FileExtensionValidator(allowed_extensions=['xlsx', 'xls'])],
+        help_text="Upload Excel file with columns: mobile_number, company_name, package, role, placed_date"
+    )

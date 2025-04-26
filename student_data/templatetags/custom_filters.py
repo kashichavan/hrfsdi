@@ -90,3 +90,22 @@ def intdiv(value, arg):
         return int(value) // int(arg)
     except (ValueError, ZeroDivisionError):
         return 0
+    
+@register.filter
+def get_type_badge(type_str):
+    type_str = (type_str or '').lower()
+    badge_map = {
+        'fsdi': 'badge-type-fsdi',
+        'super100': 'badge-type-super100',
+        'tuition': 'badge-type-tuition',
+        'legend': 'badge-type-legend',
+    }
+    return badge_map.get(type_str, 'badge-type-default')
+
+@register.filter
+def replace(value, arg):
+    """Replaces all instances of old with new in the string.
+    Usage: {{ value|replace:"_,-" }} (replaces "_" with "-")
+    """
+    old, new = arg.split(',')
+    return value.replace(old, new)

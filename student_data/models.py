@@ -1,8 +1,9 @@
+from itertools import count
 from django.db import models
 from django.utils import timezone
-from django.db.models.signals import post_save, pre_save,post_delete
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
-
+from datetime import timedelta
 
 class Requirement(models.Model):
     SCHEDULE_STATUS_CHOICES = [
@@ -13,8 +14,7 @@ class Requirement(models.Model):
     ]
 
     company_name = models.CharField(max_length=100)
-    company_code = models.CharField(max_length=20, blank=False, unique=True)  # Added unique=True
-    
+    company_code = models.CharField(max_length=20, blank=False, unique=True)
     requirement_date = models.DateField(null=True, blank=True)
     is_scheduled = models.BooleanField(default=False)
     schedule_date = models.DateField(null=True, blank=True)
@@ -29,24 +29,20 @@ class Requirement(models.Model):
     students = models.ManyToManyField('Student', through='RequirementStudent')
     schedule_time = models.TimeField(null=True, blank=True)
 
+    escalation = models.TextField(blank=True, null=True, help_text="Details about the escalation raised")
+    escalation_raised_at = models.DateTimeField(null=True, blank=True)
+
     def __str__(self):
-        return "self.company_name"
+        return self.company_name
 
     def update_student_counts(self):
-        """Update counts for all students in this requirement"""
-        students = self.students.all()
-        for student in students:
+        for student in self.students.all():
             student.update_requirement_counts()
 
     @property
     def is_scheduled_today(self):
         return self.schedule_date == timezone.now().date()
-    
 
-from django.db import models
-from django.utils import timezone
-from django.db.models.signals import post_save, post_delete, pre_save
-from django.dispatch import receiver
 
 class Student(models.Model):
     GENDER_CHOICES = [
@@ -65,10 +61,9 @@ class Student(models.Model):
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
     type_of_data = models.CharField(max_length=50)
     created_at = models.DateTimeField(default=timezone.now)
-
-    # ✅ These are now stored in the DB
     total_requirements = models.IntegerField(default=0)
     scheduled_requirements = models.IntegerField(default=0)
+    is_placed = models.BooleanField(default=False, verbose_name="Placed Status")
 
     class Meta:
         indexes = [
@@ -79,17 +74,29 @@ class Student(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def save(self, *args, **kwargs):
+        # 🧹 Clean fields before saving
+        if self.name:
+            self.name = self.name.title()  # Proper case
+        if self.degree:
+            self.degree = self.degree.upper()  # All caps
+        if self.stream:
+            self.stream = self.stream.upper()  # All caps
+        super().save(*args, **kwargs)
 
     def update_requirement_counts(self):
-        """Update both total and scheduled requirement counts"""
-        from .models import RequirementStudent  # Avoid circular import
-
-        requirements = RequirementStudent.objects.filter(student=self)
-        self.total_requirements = requirements.count()
-        self.scheduled_requirements = requirements.filter(
+        self.total_requirements = self.requirementstudent_set.count()
+        self.scheduled_requirements = self.requirementstudent_set.filter(
             requirement__schedule_status='scheduled'
         ).count()
         self.save(update_fields=['total_requirements', 'scheduled_requirements'])
+
+    def update_placement_status(self):
+        new_status = self.requirementstudent_set.filter(status='selected').exists()
+        if self.is_placed != new_status:
+            self.is_placed = new_status
+            self.save(update_fields=['is_placed'])
 
 
 class RequirementStudent(models.Model):
@@ -99,10 +106,11 @@ class RequirementStudent(models.Model):
         ('rejected', 'Rejected'),
         ('on_hold', 'On Hold')
     ]
-    
+
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     requirement = models.ForeignKey(Requirement, on_delete=models.CASCADE)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    feedback = models.TextField(blank=True, null=True, verbose_name="Interview Feedback/Status")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -114,49 +122,147 @@ class RequirementStudent(models.Model):
 
     def __str__(self):
         return f"{self.student.name} - {self.requirement.company_name}"
-    # models.py (add this to your RequirementStudent model)
+
+    def save(self, *args, **kwargs):
+        status_changed = False
+        if self.pk:
+            old_instance = RequirementStudent.objects.get(pk=self.pk)
+            status_changed = (old_instance.status != self.status)
+
+        super().save(*args, **kwargs)
+
+        if status_changed or self.status == 'selected':
+            self.student.update_placement_status()
+
     def check_auto_reject_status(self):
-        from django.utils import timezone
-        from datetime import timedelta
-    
         if self.requirement.is_scheduled and self.requirement.schedule_date:
-        # Check if schedule date is older than 1 day
-            expiration_time = self.requirement.schedule_date + timedelta(days=1)
-        
+            expiration_time = self.requirement.schedule_date + timedelta(days=5)
             if timezone.now() > expiration_time and self.status == 'pending':
                 self.status = 'rejected'
                 self.save()
                 return True
         return False
+    
+    @classmethod
+    def get_monthly_summary(cls):
+        return cls.objects.annotate(
+            month=models.functions.TruncMonth('created_at')
+        ).values('month').annotate(
+            total=count('id'),
+            scheduled=count('id', filter=models.Q(is_scheduled=True)),
+            completed=count('id', filter=models.Q(schedule_status='completed'))
+        ).order_by('-month')
+    
+    @classmethod
+    def get_monthly_results(cls):
+        return cls.objects.annotate(
+            month=models.functions.TruncMonth('scheduled_date')
+        ).values('month', 'result').annotate(
+            count=count('id')
+        ).order_by('-month')
 
-# Signal to track requirement schedule status changes
+
+class ScheduledRequirement(models.Model):
+    RESULT_CHOICES = [
+        ('pending', 'Result Pending'),
+        ('selected', 'Got Selects'),
+        ('no_selects', 'No Selects'),
+        ('partial_scheduled', 'Partial Scheduled'),
+        ('cancelled', 'Drive Cancelled'),
+        ('postponed', 'Drive Postponed'),
+    ]
+    
+    requirement = models.OneToOneField(
+        Requirement,
+        on_delete=models.CASCADE,
+        related_name='scheduled_details'
+    )
+    scheduled_date = models.DateField()
+    result = models.CharField(max_length=20, choices=RESULT_CHOICES, default='pending')
+    feedback = models.TextField(blank=True, null=True)
+    students_appeared = models.ManyToManyField(Student, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Scheduled details for {self.requirement}"
+
+    class Meta:
+        ordering = ['-scheduled_date']
+
+
+# Signal Handlers
 @receiver(pre_save, sender=Requirement)
 def track_schedule_status_change(sender, instance, **kwargs):
-    """Track if schedule status is changing"""
-    if instance.pk:  # If this is an existing requirement
-        old_instance = Requirement.objects.get(pk=instance.pk)
-        if old_instance.schedule_status != instance.schedule_status:
-            # Store the old status temporarily
+    if instance.pk:
+        try:
+            old_instance = Requirement.objects.get(pk=instance.pk)
             instance._old_status = old_instance.schedule_status
-    else:
-        instance._old_status = None
+            instance._old_is_scheduled = old_instance.is_scheduled
+        except Requirement.DoesNotExist:
+            pass
 
 @receiver(post_save, sender=Requirement)
-def update_student_counts_on_schedule_change(sender, instance, **kwargs):
-    """Update all associated students' counts when requirement schedule changes"""
-    old_status = getattr(instance, '_old_status', None)
-    
-    if old_status != instance.schedule_status:
-        # Schedule status has changed, update all associated students
-        instance.update_student_counts()
+def handle_scheduled_requirement(sender, instance, created, **kwargs):
+    try:
+        if instance.is_scheduled:
+            # Get or create scheduled details if they don't exist
+            scheduled_details, created = ScheduledRequirement.objects.get_or_create(
+                requirement=instance,
+                defaults={'scheduled_date': instance.schedule_date or timezone.now().date()}
+            )
+            
+            # Update scheduled date if it changed
+            if not created and instance.schedule_date != scheduled_details.scheduled_date:
+                scheduled_details.scheduled_date = instance.schedule_date
+                scheduled_details.save()
+        else:
+            # Try to delete scheduled details if they exist
+            try:
+                if hasattr(instance, 'scheduled_details'):
+                    instance.scheduled_details.delete()
+            except (ScheduledRequirement.DoesNotExist, AttributeError, ValueError):
+                # Handle cases where the object doesn't exist or is invalid
+                pass
+    except Exception as e:
+        # Log the error if needed
+        print(f"Error handling scheduled requirement: {str(e)}")
 
-# Signals for RequirementStudent changes
+@receiver(post_save, sender=Requirement)
+def update_student_counts_on_schedule_change(sender, instance, created, **kwargs):
+    if not created and hasattr(instance, '_old_status'):
+        if instance._old_status != instance.schedule_status:
+            instance.update_student_counts()
+        if hasattr(instance, '_old_is_scheduled') and instance._old_is_scheduled != instance.is_scheduled:
+            instance.update_student_counts()
+
 @receiver(post_save, sender=RequirementStudent)
-def update_counts_on_requirement_student_change(sender, instance, created, **kwargs):
-    """Update student counts when a requirement is added or updated"""
+def handle_requirement_student_save(sender, instance, created, **kwargs):
+    # Update both student counts and placement status
     instance.student.update_requirement_counts()
+    instance.student.update_placement_status()
 
 @receiver(post_delete, sender=RequirementStudent)
-def update_counts_on_requirement_student_delete(sender, instance, **kwargs):
-    """Update student counts when a requirement is removed"""
+def handle_requirement_student_delete(sender, instance, **kwargs):
+    # Update both student counts and placement status
     instance.student.update_requirement_counts()
+    instance.student.update_placement_status()
+
+from django.db import models
+from django.utils import timezone
+
+class GotPlacedOutside(models.Model):
+    student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='placed_outside')
+    company_name = models.CharField(max_length=100,blank=True, null=True)
+    package = models.CharField(max_length=50, blank=True, null=True)
+    role = models.CharField(max_length=100, blank=True, null=True)
+    placed_date = models.DateField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Set is_placed = True on the student
+        self.student.is_placed = True
+        self.student.save()
+
+    def __str__(self):
+        return f"{self.student.name} placed at {self.company_name}"

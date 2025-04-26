@@ -2,106 +2,473 @@
 
 {% block title %}{{ requirement.company_name }} - Requirement Details{% endblock %}
 
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+{% block extra_head %}
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap">
 <style>
-    .requirement-container {
-        margin-top: 30px;
-    }
-    .company-header {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 30px;
-    }
-    .company-logo {
-        font-size: 3rem;
-        background: #f0f0f0;
-        padding: 20px;
-        border-radius: 15px;
-    }
-    .company-info h1 {
+    /* Modern font styling */
+    h1, h2, h3, h4, h5, .company-header h1, .card-header {
+        font-family: 'Space Grotesk', sans-serif !important;
         font-weight: 600;
-        margin-bottom: 5px;
     }
-    .status-badge {
-        font-size: 0.875rem;
-        padding: 0.35rem 0.7rem;
-        border-radius: 0.5rem;
-        font-weight: 500;
-    }
-    .status-scheduled {
-        background-color: #e0f7fa;
-        color: #00695c;
-    }
-    .status-pending {
-        background-color: #fff3cd;
-        color: #856404;
-    }
-    .btn-action {
-        margin-left: 10px;
-    }
-    .detail-card {
-        border: 1px solid #dee2e6;
-        border-radius: 15px;
-        overflow: hidden;
-        margin-bottom: 20px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.05);
-    }
-    .student-table th, .student-table td {
-        vertical-align: middle !important;
+    
+    body, p, table, .btn, .form-control {
+        font-family: 'Inter', sans-serif !important;
     }
 
-    /* Delete Button Styles */
-    .delete-requirement-btn {
-        background: linear-gradient(45deg, #dc3545, #c82333);
-        color: white !important;
-        border: none;
-        border-radius: 8px;
-        padding: 0.6rem 1.5rem;
-        transition: all 0.3s ease;
+    /* Company header styles */
+    .company-header {
+        background: linear-gradient(145deg, #ffffff, #f8f9fa);
+        border-radius: 16px;
+        box-shadow: 0 8px 16px rgba(255, 119, 0, 0.08);
+        padding: 2rem;
+        margin-bottom: 2rem;
+        display: flex;
+        align-items: center;
+        gap: 1.5rem;
+        border: 1px solid rgba(255, 119, 0, 0.1);
         position: relative;
         overflow: hidden;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-weight: 500;
-        margin-left: 10px;
     }
-    .delete-requirement-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-    }
-    .delete-requirement-btn::before {
-        content: "";
+    
+    .company-header::before {
+        content: '';
         position: absolute;
         top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-            120deg,
-            transparent,
-            rgba(255, 255, 255, 0.3),
-            transparent
-        );
-        transition: all 0.5s;
+        right: 0;
+        width: 150px;
+        height: 150px;
+        background: radial-gradient(circle, rgba(255, 119, 0, 0.1) 0%, rgba(255, 119, 0, 0) 70%);
+        border-radius: 50%;
+        transform: translate(30%, -30%);
     }
-    .delete-requirement-btn:hover::before {
-        left: 100%;
+    
+    .company-logo {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 2rem;
+        box-shadow: 0 10px 15px -3px rgba(255, 119, 0, 0.2);
+    }
+    
+    .company-info h1 {
+        font-size: 1.8rem;
+        margin-bottom: 0.5rem;
+        color: var(--gray-900);
+    }
+    
+    .company-badge {
+        display: inline-block;
+        padding: 0.35rem 0.75rem;
+        background-color: rgba(255, 119, 0, 0.1);
+        color: var(--primary);
+        border-radius: 50px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        margin-right: 0.5rem;
+        border: 1px solid rgba(255, 119, 0, 0.2);
+    }
+    
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        gap: 0.375rem;
+    }
+    
+    .status-scheduled {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-pending {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    /* Student status badges */
+    .status-badge-student {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.65rem;
+        border-radius: 50px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        gap: 0.25rem;
+    }
+    
+    .status-pending-student {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .status-processing-student {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    .status-completed-student {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-rejected-student {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Card styling */
+    .card {
+        border-radius: 16px;
+        border: 1px solid rgba(255, 119, 0, 0.1);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+        background-color: white;
+        border-bottom: 1px solid var(--gray-200);
+        padding: 1.25rem 1.5rem;
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        display: flex;
+        align-items: center;
+    }
+    
+    .card-icon {
+        display: inline-flex;
+        width: 32px;
+        height: 32px;
+        background-color: rgba(255, 119, 0, 0.1);
+        color: var(--primary);
+        border-radius: 8px;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+    }
+    
+    /* Info table styling */
+    .info-table {
+        width: 100%;
+    }
+    
+    .info-table th, .info-table td {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--gray-200);
+        vertical-align: top;
+    }
+    
+    .info-table th {
+        color: var(--gray-700);
+        font-weight: 500;
+        width: 40%;
+    }
+    
+    .info-table td {
+        color: var(--gray-900);
+        font-weight: 400;
+    }
+    
+    .info-table tr:last-child th, .info-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    /* Schedule date badge */
+    .schedule-date-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.375rem 0.75rem;
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+        border-radius: 8px;
+        font-weight: 500;
+        font-size: 0.875rem;
+        gap: 0.5rem;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+    
+    /* Description styling */
+    .description-content {
+        padding: 0.75rem;
+        background-color: var(--gray-100);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        border: 1px solid var(--gray-200);
+    }
+    
+    /* Custom select styling */
+    .custom-select {
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        border: 1px solid var(--gray-300);
+        color: var(--gray-800);
+        font-weight: 500;
+        background-color: white;
+    }
+    
+    /* Button styling */
+    .btn-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        border-radius: 8px;
+        gap: 0.5rem;
+    }
+    
+    .btn-light {
+        background-color: white;
+        color: var(--gray-700);
+        border: 1px solid var(--gray-300);
+    }
+    
+    .btn-warning {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .btn-danger {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Student table styling */
+    .student-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .student-table th {
+        background-color: #f9fafb;
+        color: var(--gray-700);
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-size: 0.875rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .student-table td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--gray-200);
+        font-size: 0.875rem;
+    }
+    
+    .student-table tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .student-table tbody tr:hover {
+        background-color: rgba(255, 119, 0, 0.02);
+    }
+    
+    /* Feedback styling */
+    .feedback-view {
+        padding: 0.75rem;
+        background-color: #fff8f2;
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        line-height: 1.5;
+        border-left: 3px solid var(--primary);
+        color: var(--gray-700);
+        transition: all 0.2s ease;
+    }
+    
+    .feedback-btn {
+        background-color: rgba(59, 130, 246, 0.1);
+        color: var(--info);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 8px;
+        font-size: 0.8125rem;
+        transition: all 0.2s ease;
+    }
+    
+    .feedback-btn:hover {
+        background-color: rgba(59, 130, 246, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    .feedback-textarea {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--gray-300);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        resize: vertical;
+        transition: all 0.2s ease;
+        height: 120px;
+    }
+    
+    .feedback-textarea:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(255, 119, 0, 0.1);
+        outline: none;
+    }
+    
+    /* Status select styling */
+    .status-select {
+        padding: 0.3rem 0.5rem;
+        border-radius: 6px;
+        border: 1px solid var(--gray-300);
+        font-size: 0.8125rem;
+        background-color: white;
+        width: 100%;
+        max-width: 130px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .status-select:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(255, 119, 0, 0.1);
+    }
+
+    /* Table animation classes */
+    .table-row {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    
+    /* Modal styling */
+    .modal-content {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--gray-200);
+    }
+    
+    .modal-body {
+        padding: 1.5rem;
+    }
+    
+    .modal-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--gray-200);
+    }
+    
+    /* Added styles for requirement container */
+    .requirement-container {
+        padding-top: 1rem;
+        padding-bottom: 2rem;
+    }
+
+    /* Dropdown menu styling - Fixed z-index and overflow issues */
+    .dropdown-menu {
+        z-index: 1060 !important;
+        animation: fadeIn 0.2s ease-out;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem;
+        position: absolute !important;
+    }
+    
+    .dropdown-item {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+    
+    .dropdown-item:hover {
+        background-color: rgba(255, 119, 0, 0.1);
+    }
+    
+    .dropdown-divider {
+        margin: 0.25rem 0;
+    }
+    
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(5px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Fix dropdown positioning */
+    .dropdown {
+        position: relative;
+    }
+    
+    /* Ensure table dropdowns work properly */
+    .table-responsive {
+        position: relative;
+        overflow: visible !important; /* Changed from hidden to visible */
+    }
+    
+    /* Fix for DataTables scroll */
+    .dataTables_scrollBody {
+        overflow: visible !important;
+    }
+    
+    /* Ensure dropdown stays above other elements */
+    .dataTables_wrapper {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Fix for dropdown menu in tables */
+    .student-table-container {
+        position: relative;
+        z-index: 1;
+    }
+    
+    /* Ensure table cells with dropdowns don't clip content */
+    .student-table td {
+        position: relative;
+        z-index: auto;
+        overflow: visible;
+    }
+    
+    /* Fix for dropdown menus in last row */
+    .dataTables_scrollBody .dropdown-menu {
+        position: absolute !important;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container requirement-container">
-    <div class="company-header">
-        <div class="company-logo"><i class="fas fa-building"></i></div>
-        <div class="company-info">
+    <!-- Company Header -->
+    <div class="company-header fade-in">
+        <div class="company-logo">
+            <i class="fas fa-building"></i>
+        </div>
+        <div class="company-info flex-grow-1">
             <h1>{{ requirement.company_name }}</h1>
-            <div>
-                <span class="badge bg-secondary">{{ requirement.company_code }}</span>
+            <div class="d-flex align-items-center gap-2">
+                <span class="company-badge">{{ requirement.company_code }}</span>
                 {% if requirement.is_scheduled %}
                     <span class="status-badge status-scheduled"><i class="fas fa-calendar-check"></i> Scheduled</span>
                 {% else %}
@@ -109,135 +476,208 @@
                 {% endif %}
             </div>
         </div>
-        <div class="ms-auto">
-            <a href="{% url 'student_data:requirement_list' %}" class="btn btn-outline-secondary btn-action">
+        <div class="d-flex">
+            <a href="{% url 'student_data:requirement_list' %}" class="btn btn-light btn-action me-2">
                 <i class="fas fa-arrow-left"></i> Back
             </a>
-            <a href="{% url 'student_data:requirement_edit' requirement.id %}" class="btn btn-warning btn-action">
+            <a href="{% url 'student_data:requirement_edit' requirement.id %}" class="btn btn-warning btn-action me-2">
                 <i class="fas fa-edit"></i> Edit
             </a>
+            <a href="{% url 'student_data:export_requirement_students_excel' requirement.id %}" 
+       class="btn btn-success btn-action"
+       title="Download Excel of Assigned Students">
+        <i class="fas fa-file-excel"></i> Download Excel
+    </a>
+    <a href="{% url 'student_data:raise_escalation' requirement.id %}" 
+   class="btn btn-primary btn-action me-2"
+   title="Raise Escalation for this Requirement">
+    <i class="fas fa-exclamation-triangle"></i> Raise Escalation
+</a>
             <a href="{% url 'student_data:delete_requirement' requirement.id %}" 
-               class="delete-requirement-btn"
+               class="btn btn-danger btn-action delete-requirement-btn"
                onclick="return confirm('Are you sure you want to permanently delete this requirement?')">
                 <i class="fas fa-trash-can"></i> Delete
             </a>
+
         </div>
     </div>
 
-    <div class="row">
-        <!-- Left column -->
-        <div class="col-md-4">
-            <div class="detail-card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Requirement Info</h5>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless">
-                        <tr><th>Created:</th><td>{{ requirement.created_at|date:"M d, Y" }}</td></tr>
-                        <tr><th>Requirement Date:</th><td>{{ requirement.requirement_date|date:"M d, Y" }}</td></tr>
-                        {% if requirement.is_scheduled %}
-                        <tr><th>Schedule Date:</th><td>{{ requirement.schedule_date|date:"M d, Y" }}</td></tr>
-                        {% endif %}
+    <!-- Requirement Info Card -->
+    <div class="card fade-in" style="animation-delay: 0.1s">
+        <div class="card-header">
+            <div class="d-flex align-items-center">
+                <span class="card-icon"><i class="fas fa-info-circle"></i></span>
+                Requirement Info
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="info-table">
                         <tr>
-                            <th>Status:</th>
+                            <th>Created</th>
+                            <td>{{ requirement.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <th>Requirement Date</th>
+                            <td>{{ requirement.requirement_date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% if requirement.is_scheduled %}
+                        <tr>
+                            <th>Schedule Date</th>
                             <td>
-                                <select class="form-select form-select-sm" id="scheduleStatus">
-                                    <option value="pending" {% if not requirement.is_scheduled %}selected{% endif %}>Pending</option>
-                                    <option value="scheduled" {% if requirement.is_scheduled %}selected{% endif %}>Scheduled</option>
-                                </select>
+                                <span class="schedule-date-badge">
+                                    <i class="fas fa-calendar-alt"></i>
+                                    {{ requirement.schedule_date|date:"M d, Y" }}
+                                </span>
                             </td>
                         </tr>
+                        {% endif %}
+                        <!-- Add this in your requirement info card (after the schedule date row) -->
+{% if requirement.is_scheduled %}
+<tr>
+    <th>Drive Result</th>
+    <td>
+        {% if requirement.scheduled_details %}
+            <button type="button" class="btn btn-sm btn-action 
+                    {% if requirement.scheduled_details.result == 'pending' %}btn-warning
+                    {% elif requirement.scheduled_details.result == 'selected' %}btn-success
+                    {% elif requirement.scheduled_details.result == 'no_selects' %}btn-danger
+                    {% elif requirement.scheduled_details.result == 'partial_scheduled' %}btn-info
+                    {% else %}btn-secondary{% endif %}"
+                    data-bs-toggle="modal" data-bs-target="#driveResultModal">
+                <i class="fas fa-{% if requirement.scheduled_details.result == 'pending' %}clock
+                                {% elif requirement.scheduled_details.result == 'selected' %}check-circle
+                                {% elif requirement.scheduled_details.result == 'no_selects' %}times-circle
+                                {% elif requirement.scheduled_details.result == 'partial_scheduled' %}users
+                                {% else %}calendar{% endif %} me-1"></i>
+                {{ requirement.scheduled_details.get_result_display }}
+            </button>
+        {% else %}
+            <button type="button" class="btn btn-sm btn-warning btn-action"
+                    data-bs-toggle="modal" data-bs-target="#driveResultModal">
+                <i class="fas fa-clock me-1"></i> Set Result
+            </button>
+        {% endif %}
+    </td>
+</tr>
+{% endif %}
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="info-table">
+                        <tr>
+                            <th>Status</th>
+                            <td>
+                                <form id="scheduleStatusForm" method="post" action="{% url 'student_data:update_requirement_schedule' requirement.id %}">
+                                    {% csrf_token %}
+                                    <select class="custom-select" id="scheduleStatus" name="status" onchange="updateScheduleStatus(this.value)">
+                                        <option value="pending" {% if not requirement.is_scheduled %}selected{% endif %}>not scheduled</option>
+                                        <option value="scheduled" {% if requirement.is_scheduled %}selected{% endif %}>Scheduled</option>
+                                    </select>
+                                </form>
+                            </td>
+                        </tr>
+                        {% if requirement.description %}
+                        <tr>
+                            <th>Description</th>
+                            <td>
+                                <div class="description-content">{{ requirement.description }}</div>
+                            </td>
+                        </tr>
+                        {% endif %}
                     </table>
                 </div>
             </div>
+        </div>
+    </div>
 
-            {% if requirement.description %}
-            <div class="detail-card">
-                <div class="card-header bg-info text-white">
-                    <h5 class="mb-0"><i class="fas fa-align-left me-2"></i>Description</h5>
-                </div>
-                <div class="card-body">
-                    {{ requirement.description|linebreaks }}
-                </div>
+    <!-- Students Table Card -->
+    <div class="card fade-in" style="animation-delay: 0.3s">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <span class="card-icon"><i class="fas fa-users"></i></span>
+                Assigned Students
             </div>
-            {% endif %}
+            <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-primary btn-sm btn-action">
+                <i class="fas fa-plus"></i> Add Students
+            </a>
         </div>
 
-        <!-- Right column -->
-        <div class="col-md-8">
-            <div class="detail-card">
-                <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Assigned Students</h5>
-                    <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-light btn-sm">
-                        <i class="fas fa-plus"></i> Add Students
-                    </a>
-                </div>
-
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover student-table">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Name</th>
-                                <th>Degree/Stream</th>
-                                <th>Contact</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for rs in requirement_students %}
-                            <tr>
-                                <td>{{ rs.student.name }}</td>
-                                <td>{{ rs.student.degree }} - {{ rs.student.stream }}</td>
-                                <td>{{ rs.student.contact_number }}</td>
-                                <td>
-                                    <span class="badge 
-                                        {% if rs.status == 'selected' %} bg-success 
-                                        {% elif rs.status == 'rejected' %} bg-danger 
-                                        {% elif rs.status == 'pending' %} bg-warning text-dark 
-                                        {% else %} bg-secondary 
-                                        {% endif %}">
-                                        {{ rs.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <div class="dropdown">
-                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                                            Actions
+        <div class="student-table-container">
+            <div class="table-responsive">
+                <table class="table table-hover student-table" id="studentsTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Degree/Stream</th>
+                            <th>Contact</th>
+                            <th>Status</th>
+                            <th>Feedback</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rs in requirement_students %}
+                        <tr class="table-row">
+                            <td class="fw-medium">{{ rs.student.name }}</td>
+                            <td>{{ rs.student.degree }} - {{ rs.student.stream }}</td>
+                            <td>{{ rs.student.contact_number }}</td>
+                            <td>
+                                <select class="status-select" 
+                                        onchange="updateStudentStatus(this, '{{ requirement.id }}', '{{ rs.student.id }}')">
+                                    <option value="pending" {% if rs.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="selected" {% if rs.status == 'selected' %}selected{% endif %}>Selected</option>
+                                    <option value="rejected" {% if rs.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                                </select>
+                            </td>
+                            <td>
+                                {% if rs.feedback %}
+                                    <div>
+                                        <div class="feedback-view">
+                                            {{ rs.feedback }}
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-link text-primary mt-2" 
+                                                data-bs-toggle="modal" data-bs-target="#feedbackModal"
+                                                data-student-id="{{ rs.student.id }}"
+                                                data-current-feedback="{{ rs.feedback }}">
+                                            <i class="fas fa-edit"></i> Edit
                                         </button>
-                                        <ul class="dropdown-menu dropdown-menu-end">
-                                            <li><a class="dropdown-item" href="{% url 'student_data:student_detail' rs.student.id %}"><i class="fas fa-eye me-2"></i> View</a></li>
-                                            <li><hr class="dropdown-divider"></li>
-                                            {% for status in status_choices %}
-                                            <li>
-                                                <form method="post" action="{% url 'student_data:update_student_status' requirement.id rs.student.id %}">
-                                                    {% csrf_token %}
-                                                    <input type="hidden" name="status" value="{{ status.0 }}">
-                                                    <button type="submit" class="dropdown-item {% if rs.status == status.0 %}active{% endif %}">
-                                                        <i class="fas fa-circle me-2 text-{{ status.3 }}"></i> Mark {{ status.1 }}
-                                                    </button>
-                                                </form>
-                                            </li>
-                                            {% endfor %}
-                                            <li><hr class="dropdown-divider"></li>
-                                            <li>
-                                                <button class="dropdown-item text-danger remove-student-btn"
-                                                        data-student-id="{{ rs.student.id }}"
-                                                        data-student-name="{{ rs.student.name }}"
-                                                        data-remove-url="{% url 'student_data:remove_student' requirement.id rs.student.id %}">
-                                                    <i class="fas fa-trash-alt me-2"></i> Remove
-                                                </button>
-                                            </li>
-                                        </ul>
                                     </div>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr><td colspan="5" class="text-center text-muted">No students assigned.</td></tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+                                {% else %}
+                                    <button type="button" class="btn btn-sm feedback-btn" 
+                                            data-bs-toggle="modal" data-bs-target="#feedbackModal"
+                                            data-student-id="{{ rs.student.id }}"
+                                            data-current-feedback="">
+                                        <i class="fas fa-comment-dots"></i> Add Feedback
+                                    </button>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ rs.student.id }}" data-bs-toggle="dropdown" aria-expanded="false">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ rs.student.id }}">
+                                        <li><a class="dropdown-item" href="{% url 'student_data:student_detail' rs.student.id %}"><i class="fas fa-eye me-2"></i> View</a></li>
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <button class="dropdown-item text-danger remove-student-btn"
+                                                    data-student-id="{{ rs.student.id }}"
+                                                    data-student-name="{{ rs.student.name }}"
+                                                    data-remove-url="{% url 'student_data:remove_student' requirement.id rs.student.id %}">
+                                                <i class="fas fa-trash-alt me-2"></i> Remove
+                                            </button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="6" class="text-center py-4 text-muted">No students assigned to this requirement yet.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -245,45 +685,388 @@
 
 <!-- Remove Student Modal -->
 <div class="modal fade" id="removeStudentModal" tabindex="-1" aria-labelledby="removeStudentModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <form id="removeStudentForm" method="post">
                 {% csrf_token %}
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="removeStudentModalLabel">Confirm Removal</h5>
-                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="modal-body">
-                    Are you sure you want to remove <strong id="modalStudentName"></strong> from this requirement?
+                <div class="modal-body p-4">
+                    <div class="text-center mb-3">
+                        <i class="fas fa-exclamation-triangle text-warning fa-3x mb-3"></i>
+                        <p class="mb-0">Are you sure you want to remove <strong id="modalStudentName"></strong> from this requirement?</p>
+                    </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-danger">Remove</button>
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i> Remove
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- Feedback Modal -->
+<div class="modal fade" id="feedbackModal" tabindex="-1" aria-labelledby="feedbackModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="feedbackForm" method="post" action="{% url 'student_data:update_student_feedback' requirement.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="student_id" id="feedbackStudentId">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="feedbackModalLabel">
+                        <i class="fas fa-comment-dots me-2"></i> Student Feedback
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="feedbackText" class="form-label">Enter feedback for this student:</label>
+                        <textarea class="feedback-textarea" id="feedbackText" name="feedback" rows="4" placeholder="Enter your feedback here..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Save Feedback
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Schedule Date Modal -->
+<div class="modal fade" id="scheduleDateModal" tabindex="-1" aria-labelledby="scheduleDateModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="scheduleDateForm" method="post" action="{% url 'student_data:update_requirement_schedule' requirement.id %}">
+                {% csrf_token %}
+                <input type="hidden" name="status" value="scheduled">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="scheduleDateModalLabel">
+                        <i class="fas fa-calendar-alt me-2"></i> Set Schedule Date
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="scheduleDate" class="form-label">Schedule Date:</label>
+                        <input type="date" class="form-control" id="scheduleDate" name="schedule_date" 
+                               value="{{ requirement.schedule_date|date:'Y-m-d' }}" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Save Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Drive Result Modal -->
+<div class="modal fade" id="driveResultModal" tabindex="-1" aria-labelledby="driveResultModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <form id="driveResultForm" method="post" action="{% url 'student_data:update_drive_result' requirement.id %}">
+                {% csrf_token %}
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="driveResultModalLabel">
+                        <i class="fas fa-chart-line me-2"></i> Update Drive Result
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="resultStatus" class="form-label">Result:</label>
+                        <select class="form-select" id="resultStatus" name="result_status" required>
+                            <option value="pending" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'pending' %}selected{% endif %}>Result Pending</option>
+                            <option value="selected" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'selected' %}selected{% endif %}>Got Selects</option>
+                            <option value="no_selects" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'no_selects' %}selected{% endif %}>No Selects</option>
+                            <option value="partial_scheduled" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'partial_scheduled' %}selected{% endif %}>Partial Scheduled</option>
+                            <option value="cancelled" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'cancelled' %}selected{% endif %}>Drive Cancelled</option>
+                            <option value="postponed" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'postponed' %}selected{% endif %}>Drive Postponed</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="driveFeedback" class="form-label">Feedback:</label>
+                        <textarea class="form-control" id="driveFeedback" name="feedback" rows="4">{% if requirement.scheduled_details %}{{ requirement.scheduled_details.feedback }}{% endif %}</textarea>
+                    </div>
+                    <div class="mb-3" id="selectedStudentsContainer">
+                        <label class="form-label">Selected Students:</label>
+                        <select class="form-select" multiple name="selected_students" id="selectedStudents">
+                            {% for student in requirement.students.all %}
+                            <option value="{{ student.id }}" 
+                                    {% if requirement.scheduled_details and student in requirement.scheduled_details.students_appeared.all %}selected{% endif %}>
+                                {{ student.name }} ({{ student.degree }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <small class="text-muted">Hold Ctrl/Cmd to select multiple students who were selected</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i> Update Result
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden form for student status updates -->
+<form id="statusUpdateForm" method="post" action="{% url 'student_data:update_student_status' requirement_id=0 student_id=0 %}" style="display: none;">
+    {% csrf_token %}
+    <input type="hidden" id="statusUpdateValue" name="status" value="">
+</form>
 {% endblock %}
 
 {% block extra_js %}
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const removeBtns = document.querySelectorAll(".remove-student-btn");
-        const removeModal = new bootstrap.Modal(document.getElementById('removeStudentModal'));
-        const removeForm = document.getElementById('removeStudentForm');
-        const modalStudentName = document.getElementById("modalStudentName");
+document.addEventListener("DOMContentLoaded", function () {
+    // GSAP animations for page elements
+    const timeline = gsap.timeline();
+    
+    timeline.from(".company-header", {
+        opacity: 0,
+        y: -20,
+        duration: 0.5,
+        ease: "power3.out"
+    });
+    
+    timeline.from(".card", {
+        opacity: 0,
+        y: 20,
+        duration: 0.5,
+        stagger: 0.1,
+        ease: "power3.out"
+    }, "-=0.3");
+    
+    // Table row animations
+    const tableRows = document.querySelectorAll(".table-row");
+    gsap.set(tableRows, { opacity: 0, y: 15 });
 
-        removeBtns.forEach(btn => {
-            btn.addEventListener("click", () => {
-                const studentName = btn.getAttribute("data-student-name");
-                const removeUrl = btn.getAttribute("data-remove-url");
-                modalStudentName.textContent = studentName;
-                removeForm.action = removeUrl;
-                removeModal.show();
+    tableRows.forEach((row, index) => {
+        gsap.to(row, {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            delay: index * 0.05,
+            ease: "power2.out"
+        });
+    });
+    // Drive Result Modal Logic
+const driveResultModal = new bootstrap.Modal(document.getElementById('driveResultModal'));
+const resultStatusSelect = document.getElementById('resultStatus');
+const selectedStudentsContainer = document.getElementById('selectedStudentsContainer');
+
+// Show/hide selected students based on result status
+function toggleStudentSelection() {
+    if (resultStatusSelect.value === 'selected') {
+        selectedStudentsContainer.style.display = 'block';
+    } else {
+        selectedStudentsContainer.style.display = 'none';
+    }
+}
+
+// Initialize visibility
+toggleStudentSelection();
+resultStatusSelect.addEventListener('change', toggleStudentSelection);
+
+// Enhance UX on form submit (disable button, show spinner)
+document.getElementById('driveResultForm').addEventListener('submit', function(e) {
+    const resultStatus = resultStatusSelect.value;
+
+    // Validate selected students
+    if (resultStatus === 'selected') {
+        const selectedStudents = document.getElementById('selectedStudents').selectedOptions;
+        if (selectedStudents.length === 0) {
+            e.preventDefault(); // prevent submission
+            showToast('Please select at least one student who was selected', 'warning');
+            return;
+        }
+    }
+
+    // Disable button + show spinner
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+    submitBtn.disabled = true;
+});
+
+
+    // Remove student modal logic
+    const removeBtns = document.querySelectorAll(".remove-student-btn");
+    const removeModal = new bootstrap.Modal(document.getElementById('removeStudentModal'));
+    const removeForm = document.getElementById('removeStudentForm');
+    const modalStudentName = document.getElementById("modalStudentName");
+
+    removeBtns.forEach(btn => {
+        btn.addEventListener("click", () => {
+            const studentName = btn.getAttribute("data-student-name");
+            const removeUrl = btn.getAttribute("data-remove-url");
+            modalStudentName.textContent = studentName;
+            removeForm.action = removeUrl;
+            removeModal.show();
+        });
+    });
+
+    // Feedback modal logic
+    const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+    const feedbackForm = document.getElementById('feedbackForm');
+    const feedbackStudentId = document.getElementById('feedbackStudentId');
+    const feedbackText = document.getElementById('feedbackText');
+    
+    document.querySelectorAll('[data-bs-target="#feedbackModal"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const studentId = this.getAttribute('data-student-id');
+            const currentFeedback = this.getAttribute('data-current-feedback');
+            
+            feedbackStudentId.value = studentId;
+            feedbackText.value = currentFeedback;
+        });
+    });
+    
+    // Initialize schedule date modal
+    window.scheduleDateModal = new bootstrap.Modal(document.getElementById('scheduleDateModal'));
+
+    // Custom styling for status selects
+    document.querySelectorAll('.status-select').forEach(select => {
+        styleStatusSelect(select);
+        
+        // Update styling when value changes
+        select.addEventListener('change', function() {
+            styleStatusSelect(this);
+        });
+    });
+    
+    // Style the feedback views with animations
+    const feedbackViews = document.querySelectorAll('.feedback-view');
+    feedbackViews.forEach(view => {
+        view.addEventListener('mouseenter', () => {
+            gsap.to(view, {
+                backgroundColor: "#fff0e0",
+                borderLeftWidth: "5px",
+                duration: 0.3
+            });
+        });
+        
+        view.addEventListener('mouseleave', () => {
+            gsap.to(view, {
+                backgroundColor: "#fff8f2",
+                borderLeftWidth: "3px",
+                duration: 0.3
             });
         });
     });
+    
+    // Function to update schedule status
+    window.updateScheduleStatus = function(value) {
+        if (value === 'scheduled') {
+            window.scheduleDateModal.show();
+        } else {
+            document.getElementById('scheduleStatusForm').submit();
+        }
+    };
+    
+    // Function to style status select elements
+    function styleStatusSelect(select) {
+        const value = select.value;
+        let color = "#6c757d"; // Default gray
+        
+        // Remove all existing classes
+        select.className = 'form-select status-select';
+        
+        // Add appropriate color class based on status
+        switch(value) {
+            case 'pending':
+                color = "#ffc107"; // Warning yellow
+                select.classList.add('status-pending-student');
+                break;
+            case 'selected':
+                color = "#28a745"; // Success green
+                select.classList.add('status-completed-student');
+                break;
+            case 'rejected':
+                color = "#dc3545"; // Danger red
+                select.classList.add('status-rejected-student');
+                break;
+        }
+        
+        select.style.borderLeft = `4px solid ${color}`;
+        select.style.backgroundColor = `${color}10`; // Very light version of the color
+    }
+
+    // Update the scheduleStatusForm submission
+    window.updateScheduleStatus = function(value) {
+        const form = document.getElementById('scheduleStatusForm');
+        const statusInput = form.querySelector('[name="status"]');
+        statusInput.value = value;
+        
+        if (value === 'scheduled') {
+            window.scheduleDateModal.show();
+        } else {
+            // For pending status, we don't need a date
+            form.submit();
+        }
+    };
+
+    // Update the scheduleDateForm submission
+    const scheduleForm = document.getElementById('scheduleDateForm');
+    if (scheduleForm) {
+        scheduleForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const dateInput = this.querySelector('[name="schedule_date"]');
+            const statusForm = document.getElementById('scheduleStatusForm');
+            
+            // Create a hidden input for the date in the status form
+            const hiddenDateInput = document.createElement('input');
+            hiddenDateInput.type = 'hidden';
+            hiddenDateInput.name = 'schedule_date';
+            hiddenDateInput.value = dateInput.value;
+            statusForm.appendChild(hiddenDateInput);
+            
+            // Submit the status form
+            statusForm.submit();
+        });
+    }
+
+    // Student status update functionality
+    window.updateStudentStatus = function(select, requirementId, studentId) {
+        const status = select.value;
+        const form = document.getElementById('statusUpdateForm');
+        
+        // Update form action with correct IDs
+        form.action = `/requirements/${requirementId}/students/${studentId}/update-status/`;
+        document.getElementById('statusUpdateValue').value = status;
+        form.submit();
+    };
+
+    // Initialize all status selects
+    document.querySelectorAll('.status-select').forEach(select => {
+        styleStatusSelect(select);
+        select.addEventListener('change', function() {
+            styleStatusSelect(this);
+        });
+    });
+    
+    // Initialize DataTables if available
+    if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('studentsTable')) {
+        $('#studentsTable').DataTable({
+            responsive: true,
+            pageLength: 10,
+            lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+            order: [[0, 'asc']],
+            dom: '<"top"lf>rt<"bottom"ip>'
+        });
+    }
+});
 </script>
 {% endblock %}

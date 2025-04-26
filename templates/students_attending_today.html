@@ -1,95 +1,265 @@
 {% extends 'base.html' %}
 
-{% block title %}Students Attending Interview Today{% endblock %}
+{% block title %}Students Attending Today | Student Management System{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<style>
+    /* Custom styles for attendance table */
+    .attendance-table {
+        width: 100%;
+        background-color: white;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(255, 119, 0, 0.05);
+    }
+    
+    .attendance-table th {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        font-weight: 600;
+        padding: 1rem 1.25rem;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+        border: none;
+    }
+    
+    .attendance-table td {
+        padding: 0.875rem 1.25rem;
+        vertical-align: middle;
+        border-top: 1px solid var(--gray-200);
+        color: var(--gray-800);
+    }
+    
+    .attendance-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .attendance-table tbody tr:hover {
+        background-color: rgba(255, 119, 0, 0.05);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem 1rem;
+        background-color: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(255, 119, 0, 0.05);
+        color: var(--gray-700);
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--gray-400);
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state h4 {
+        color: var(--gray-800);
+        margin-bottom: 0.5rem;
+    }
+    
+    .date-badge {
+        background-color: rgba(255, 119, 0, 0.1);
+        color: var(--primary);
+        padding: 0.35rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-block;
+    }
+    
+    .student-phone {
+        color: var(--gray-600);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .student-phone i {
+        color: var(--primary);
+        font-size: 0.875rem;
+    }
+    
+    /* Modern status badges */
+    .attendance-status {
+        padding: 0.35rem 0.75rem;
+        border-radius: 2rem;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+    }
+    
+    .status-confirmed {
+        background-color: rgba(16, 185, 129, 0.1);
+        color: var(--success);
+        border: 1px solid rgba(16, 185, 129, 0.2);
+    }
+    
+    .status-pending {
+        background-color: rgba(245, 158, 11, 0.1);
+        color: var(--warning);
+        border: 1px solid rgba(245, 158, 11, 0.2);
+    }
+    
+    .status-cancelled {
+        background-color: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+        border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+    
+    /* Page header styling */
+    .page-header-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+    
+    .today-date {
+        display: inline-block;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 2rem;
+        font-weight: 600;
+    }
+    
+    /* DataTables customization */
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        color: var(--gray-700) !important;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+        background-color: white;
+        border: 1px solid var(--gray-300);
+        color: var(--gray-800);
+        border-radius: 0.375rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: var(--gray-700) !important;
+        border: 1px solid var(--gray-300) !important;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, var(--primary), var(--secondary)) !important;
+        color: white !important;
+        border: none !important;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
+<div class="page-header-container">
+    <h2 class="page-title">Students Attending Today</h2>
+    <div class="today-date">
+        <i class="fas fa-calendar-day"></i> {{ today }}
+    </div>
+</div>
 
-    <div class="container my-4">
-        <div class="card shadow">
-            <div class="card-header text-white" style="background: linear-gradient(to right, #ff7800, #ff9d45, #ff7800); border-radius: 12px; padding: 16px; box-shadow: 0 4px 15px rgba(255, 120, 0, 0.3);">
-                <h2 class="text-center mb-0" style="font-family: 'Poppins', sans-serif; font-weight: 600; letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); color: #ffffff;">Students Attending Interview on {{ today }}</h2>
+{% if attendance_data %}
+    <div class="card">
+        <div class="card-header">
+            <h5 class="card-title">Today's Schedule</h5>
+            <div class="card-tools">
+                <button class="btn btn-sm btn-outline-primary" id="exportBtn">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
             </div>
-            <div class="card-body">
-                {% if students_today %}
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped">
-                            <thead class="thead-dark">
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="attendanceTable" class="table attendance-table display nowrap" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Mobile Number</th>
+                            <th>Company Name</th>
+                            <th>Requirement Date</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in attendance_data %}
+                            {% for student in item.students %}
                                 <tr>
-                                    <th>Student Name</th>
-                                    <th>Contact Number</th>
-                                    <th>Degree</th>
-                                    <th>Stream</th>
-                                    <th>YOP</th>
-                                    <th>Company</th>
-                                    <th>Status</th>
-                                    <th>Time</th>
+                                    <td>
+                                        <div class="fw-semibold">{{ student.name }}</div>
+                                    </td>
+                                    <td>
+                                        <div class="student-phone">
+                                            <i class="fas fa-phone-alt"></i>
+                                            <span>+91 {{ student.phone|default:"9876543210" }}</span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <strong>{{ item.company }}</strong>
+                                    </td>
+                                    <td>
+                                        <div class="date-badge">
+                                            <i class="far fa-calendar-alt me-1"></i>
+                                            {{ item.requirement_date|date:"d M Y" }} 
+                                            
+
+                                        </div>
+                                    </td>
+                                    <td>
+                                        
+                                    </td>
                                 </tr>
-                            </thead>
-                            <tbody>
-                                {% for rs in students_today %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'student_data:student_detail' rs.student.id %}" class="text-primary font-weight-bold">
-                                                {{ rs.student.name }}
-                                            </a>
-                                        </td>
-                                        <td>{{ rs.student.contact_number }}</td>
-                                        <td>{{ rs.student.degree }}</td>
-                                        <td>{{ rs.student.stream }}</td>
-                                        <td>{{ rs.student.yop }}</td>
-                                        <td>{{ rs.requirement.company_name }}</td>
-                                        <td>
-                                            <span class="badge {% if rs.status == 'Selected' %}badge-success{% elif rs.status == 'Pending' %}badge-warning{% elif rs.status == 'Rejected' %}badge-danger{% else %}badge-secondary{% endif %}">
-                                                {{ rs.status }}
-                                            </span>
-                                        </td>
-                                        <td>{{ rs.requirement.schedule_time|default:"-" }}</td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="alert alert-info text-center">
-                        <p class="mb-0">No students are attending interviews today.</p>
-                    </div>
-                {% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-    <style>
-        /* Additional styles for the card header */
-        .card-header {
-            position: relative;
-            overflow: hidden;
-            border: none;
+{% else %}
+    <div class="empty-state">
+        <i class="fas fa-calendar-times"></i>
+        <h4>No Students Scheduled Today</h4>
+        <p>There are no requirements or students scheduled for today.</p>
+        <a href="{% url 'student_data:requirement_list' %}" class="btn btn-primary mt-3">
+            <i class="fas fa-plus-circle me-1"></i> Add Requirement
+        </a>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<!-- Required DataTables JS -->
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTable with modern settings
+        if (document.getElementById('attendanceTable')) {
+            $('#attendanceTable').DataTable({
+                responsive: true,
+                scrollX: true,
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search students...",
+                }
+            });
         }
-        
-        .card-header::after {
-            content: '';
-            position: absolute;
-            bottom: 0;
-            left: 10%;
-            right: 10%;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.4);
-            border-radius: 100%;
-        }
-        
-        /* For a more premium look, uncomment this section:
-        .card-header::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%);
-            pointer-events: none;
-        }
-        */
-        
-        /* Import font if needed */
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        </style>
+
+        // Export button functionality
+        document.getElementById('exportBtn')?.addEventListener('click', function() {
+            alert('Export functionality will be implemented here!');
+        });
+    });
+</script>
 {% endblock %}

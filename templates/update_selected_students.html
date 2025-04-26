@@ -156,7 +156,7 @@
                             </div>
                             
                             <div class="mt-3">
-                                <a href="{% static 'sample_selected_students.xlsx' %}" class="btn btn-outline-primary me-2">
+                                <a href="{% url 'student_data:download_selected_students_template' %}" class="btn btn-outline-primary me-2">
                                     <i class="fas fa-file-excel me-2"></i>Download Excel Sample
                                 </a>
                                 <a href="{% static 'sample_selected_students.csv' %}" class="btn btn-outline-secondary">

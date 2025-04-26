@@ -4,59 +4,191 @@
 
 {% block extra_css %}
 <style>
-    
     /* Status badges */
     .status-scheduled { background-color: #198754; }
     .status-pending { background-color: #ffc107; color: #212529; }
     
     /* Table styles */
-    .table th { position: relative; }
-    .table-hover tbody tr:hover { background-color: rgba(13, 110, 253, 0.05); }
-    
-    /* Stats cards */
-    .stats-card {
+    .requirements-table {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
         border-radius: 8px;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        transition: all 0.2s ease;
+        overflow: hidden;
     }
-    .stats-card:hover { transform: translateY(-3px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-    .stats-icon { font-size: 2rem; opacity: 0.8; }
+    
+    .table th { 
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.2s ease;
+    }
+    
+    .table th:hover { 
+        background-color: rgba(13, 110, 253, 0.05);
+    }
+    
+    .table-hover tbody tr {
+        transition: all 0.3s ease;
+    }
+    
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.05);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    }
+    
+    /* Search form styles */
+    .search-form {
+        background-color: #f8f9fa;
+        padding: 1.5rem;
+        border-radius: 8px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    /* Loading animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid rgba(0, 0, 0, 0.2);
+        border-top-color: #0d6efd;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    /* Row animation */
+    .row-enter-active {
+        animation: row-in 0.3s;
+    }
+    
+    @keyframes row-in {
+        0% {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Empty state */
+    .empty-state {
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    /* Sort indicators */
+    .sort-indicator {
+        margin-left: 5px;
+    }
+    
+    .active-sort {
+        color: #0d6efd;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    
+<div id="requirements-app" class="container mt-4">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1>Requirements List</h1>
-        <a href="{% url 'student_data:map_students' %}" class="btn btn-primary">
-            <i class="fas fa-users"></i> map students 
-        </a>
-        <a href="{% url 'student_data:upload_requirements' %}" class="btn btn-primary" >
-            <i class="fas fa-plus-circle"></i> Add Multiple Requirements
-        </a>
-        <a href="{% url 'student_data:add_requirement' %}" class="btn btn-primary">
-            <i class="fas fa-plus"></i> Add New Requirement
-        </a>
+        <h1>
+            Requirements List
+            <small v-if="isLoading" class="ms-2">
+                <span class="loading-spinner"></span>
+            </small>
+        </h1>
+        <div>
+            <a href="{% url 'student_data:monthly_reports' %}" class="btn btn-primary me-2">
+                <i class="fas fa-chart-line"></i> Monthly Reports
+            </a>
+            
+            <a href="{% url 'student_data:map_students' %}" class="btn btn-primary me-2">
+                <i class="fas fa-users"></i> Map Students 
+            </a>
+            <a href="{% url 'student_data:upload_requirements' %}" class="btn btn-primary me-2">
+                <i class="fas fa-plus-circle"></i> Add Multiple
+            </a>
+            <a href="{% url 'student_data:add_requirement' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add New
+            </a>
+        </div>
+    </div>
+
+    <!-- Search Form -->
+    <div class="search-form mb-4">
+        <form method="get" class="row g-3">
+            <div class="col-md-5">
+                <label for="company_name" class="form-label">Company Name</label>
+                <input type="text" class="form-control" id="company_name" name="company_name" 
+                       placeholder="Search by company name" value="{{ request.GET.company_name }}">
+            </div>
+            <div class="col-md-3">
+                <label for="month" class="form-label">Month</label>
+                <input type="month" class="form-control" id="month" name="month" 
+                       value="{{ month }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="{% url 'student_data:requirement_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </a>
+            </div>
+        </form>
     </div>
 
     <!-- Requirements Table -->
-    <div class="table-responsive">
+    <div class="requirements-table table-responsive">
         <table class="table table-striped table-hover">
             <thead class="table-light">
                 <tr>
-                    <th>Company</th>
-                    <th>Code</th>
-                    <th>Requirement Date</th>
-                    <th>Status</th>
-                    <th>Schedule Date</th>
-                    <th>Students</th>
+                    <th @click="sortBy('company_name')">
+                        Company
+                        <span class="sort-indicator" :class="{'active-sort': sortField === 'company_name'}">
+                            <i class="fas" :class="getSortIcon('company_name')"></i>
+                        </span>
+                    </th>
+                    <th @click="sortBy('company_code')">
+                        Code
+                        <span class="sort-indicator" :class="{'active-sort': sortField === 'company_code'}">
+                            <i class="fas" :class="getSortIcon('company_code')"></i>
+                        </span>
+                    </th>
+                    <th @click="sortBy('requirement_date')">
+                        Requirement Date
+                        <span class="sort-indicator" :class="{'active-sort': sortField === 'requirement_date'}">
+                            <i class="fas" :class="getSortIcon('requirement_date')"></i>
+                        </span>
+                    </th>
+                    <th @click="sortBy('is_scheduled')">
+                        Status
+                        <span class="sort-indicator" :class="{'active-sort': sortField === 'is_scheduled'}">
+                            <i class="fas" :class="getSortIcon('is_scheduled')"></i>
+                        </span>
+                    </th>
+                    <th @click="sortBy('schedule_date')">
+                        Schedule Date
+                        <span class="sort-indicator" :class="{'active-sort': sortField === 'schedule_date'}">
+                            <i class="fas" :class="getSortIcon('schedule_date')"></i>
+                        </span>
+                    </th>
+                    <th @click="sortBy('student_count')">
+                        Students
+                        <span class="sort-indicator" :class="{'active-sort': sortField === 'student_count'}">
+                            <i class="fas" :class="getSortIcon('student_count')"></i>
+                        </span>
+                    </th>
                     <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 {% for requirement in page_obj %}
-                <tr>
+                <tr class="requirement-row">
                     <td>{{ requirement.company_name }}</td>
                     <td>{{ requirement.company_code }}</td>
                     <td>{{ requirement.requirement_date|date:"M d, Y" }}</td>
@@ -86,15 +218,20 @@
                             <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-sm btn-primary">
                                 <i class="fas fa-users"></i>
                             </a>
+                            <a href="{% url 'student_data:raise_escalation' requirement.id %}" class="btn btn-warning" title="Raise Escalation">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </a>
                         </div>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
                     <td colspan="7" class="text-center py-4">
-                        <div class="alert alert-info mb-0">
-                            <i class="fas fa-info-circle me-2"></i> No requirements found.
-                            <a href="{% url 'student_data:add_requirement' %}" class="btn btn-sm btn-primary ms-3">Add New Requirement</a>
+                        <div class="empty-state">
+                            <div class="alert alert-info mb-0">
+                                <i class="fas fa-info-circle me-2"></i> No requirements found.
+                                <a href="{% url 'student_data:add_requirement' %}" class="btn btn-sm btn-primary ms-3">Add New Requirement</a>
+                            </div>
                         </div>
                     </td>
                 </tr>
@@ -104,14 +241,14 @@
     </div>
 
     <!-- Pagination -->
-    <nav aria-label="Page navigation">
+    <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page=1">&laquo; First</a>
+                    <a class="page-link" href="?page=1{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">&laquo; First</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Previous</a>
                 </li>
             {% endif %}
             
@@ -123,10 +260,10 @@
             
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Next</a>
                 </li>
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.month %}&month={{ request.GET.month }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">Last &raquo;</a>
                 </li>
             {% endif %}
         </ul>
@@ -135,14 +272,71 @@
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
 <script>
+    // Initialize Vue app
     document.addEventListener('DOMContentLoaded', function() {
-        // Highlight table rows on hover
-        const tableRows = document.querySelectorAll('tbody tr');
-        tableRows.forEach(row => {
-            row.addEventListener('mouseenter', () => row.classList.add('bg-light'));
-            row.addEventListener('mouseleave', () => row.classList.remove('bg-light'));
-        });
+        const { createApp } = Vue;
+        
+        createApp({
+            delimiters: ['${', '}'],
+            data() {
+                return {
+                    sortField: '{{ request.GET.sort|default:"-requirement_date" }}',
+                    sortDirection: '{{ request.GET.sort|default:"-requirement_date" }}'.startsWith('-') ? 'desc' : 'asc',
+                    isLoading: false
+                }
+            },
+            methods: {
+                // Sort table by field
+                sortBy(field) {
+                    this.isLoading = true;
+                    
+                    // Toggle sort direction if clicking the same field
+                    let sortParam;
+                    if (this.sortField === field) {
+                        sortParam = this.sortDirection === 'asc' ? `-${field}` : field;
+                    } else {
+                        // Default to ascending for new field
+                        sortParam = field;
+                    }
+                    
+                    // Build URL with existing parameters
+                    let url = new URL(window.location.href);
+                    let params = new URLSearchParams(url.search);
+                    params.set('sort', sortParam);
+                    
+                    // Redirect to sorted view
+                    window.location.href = `${url.pathname}?${params.toString()}`;
+                },
+                
+                // Get sort icon class based on current sort state
+                getSortIcon(field) {
+                    if (this.sortField !== field) return 'fa-sort';
+                    return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+                }
+            },
+            mounted() {
+                // Add animation to table rows
+                const rows = document.querySelectorAll('.requirement-row');
+                rows.forEach((row, index) => {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(10px)';
+                    
+                    setTimeout(() => {
+                        row.style.transition = 'all 0.3s ease';
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, index * 50);
+                });
+                
+                // Highlight table rows on hover
+                rows.forEach(row => {
+                    row.addEventListener('mouseenter', () => row.classList.add('bg-light'));
+                    row.addEventListener('mouseleave', () => row.classList.remove('bg-light'));
+                });
+            }
+        }).mount('#requirements-app');
     });
 </script>
 {% endblock %}

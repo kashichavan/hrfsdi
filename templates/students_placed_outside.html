@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}Students Placed Outside | Student Management System{% endblock %}
+
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+<style>
+    :root {
+        --primary-color: #FF6B35;
+        --primary-light: #FF8C5A;
+        --primary-dark: #E05A2D;
+        --accent-color: #FFD166;
+        --text-dark: #333333;
+        --text-medium: #555555;
+        --text-light: #777777;
+        --bg-light: #FFF8F0;
+        --card-bg: #FFFFFF;
+    }
+    
+    body {
+        font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-light);
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Montserrat', sans-serif;
+    }
+    
+    .placed-students-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        padding: 1rem;
+        opacity: 0; /* Initial state for animation */
+    }
+
+    .student-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border-left: 4px solid var(--primary-color);
+        transform: translateY(20px); /* Initial state for animation */
+        opacity: 0; /* Initial state for animation */
+    }
+
+    .student-card:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 10px 25px rgba(255, 107, 53, 0.15);
+    }
+
+    .student-card-header {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        padding: 1rem;
+    }
+
+    .student-card-body {
+        padding: 1.5rem;
+    }
+
+    .student-info {
+        margin-bottom: 1rem;
+    }
+
+    .student-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.75rem;
+    }
+
+    .student-info-item i {
+        width: 24px;
+        text-align: center;
+        margin-right: 0.75rem;
+        color: var(--primary-color);
+    }
+
+    .student-info-label {
+        font-weight: 600;
+        color: var(--text-medium);
+        min-width: 100px;
+        display: inline-block;
+    }
+
+    .student-info-value {
+        color: var(--text-dark);
+        font-weight: 500;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        background: var(--card-bg);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        grid-column: 1 / -1;
+    }
+
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--primary-light);
+        margin-bottom: 1rem;
+    }
+
+    .empty-state h3 {
+        color: var(--text-dark);
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        color: var(--text-medium);
+        margin-bottom: 1.5rem;
+    }
+
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+        padding: 0 1rem;
+        opacity: 0; /* Initial state for animation */
+    }
+
+    .page-title {
+        color: var(--text-dark);
+        font-weight: 700;
+        font-size: 1.8rem;
+    }
+
+    .badge-count {
+        background: var(--primary-color);
+        color: white;
+        padding: 0.4rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    }
+    
+    .action-buttons {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 1.5rem;
+        padding: 0 1rem;
+        opacity: 0; /* Initial state for animation */
+    }
+    
+    .btn-orange {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 8px rgba(255, 107, 53, 0.3);
+    }
+    
+    .btn-orange:hover {
+        background-color: var(--primary-dark);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+    }
+    
+    .btn-orange-outline {
+        background-color: transparent;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        margin-left: 0.75rem;
+    }
+    
+    .btn-orange-outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .placed-students-container {
+            grid-template-columns: 1fr;
+        }
+        
+        .page-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        .badge-count {
+            margin-top: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="action-buttons">
+    <a href="{% url 'student_data:bulk_outside_placement' %}" class="btn btn-orange">
+        <i class="fas fa-plus-circle me-1"></i> Add Bulk Placements
+    </a>
+    <a href="#" class="btn btn-orange-outline">
+        <i class="fas fa-file-export me-1"></i> Export Data
+    </a>
+</div>
+
+<div class="page-header">
+    <h1 class="page-title">Students Placed Outside</h1>
+    <span class="badge-count">{{ students_placed.count }} Students</span>
+</div>
+
+<div class="placed-students-container">
+    {% if students_placed %}
+        {% for placement in students_placed %}
+        <div class="student-card" data-index="{{ forloop.counter0 }}">
+            <div class="student-card-header">
+                <h3>{{ placement.student.name }}</h3>
+            </div>
+            <div class="student-card-body">
+                <div class="student-info">
+                    <div class="student-info-item">
+                        <i class="fas fa-building"></i>
+                        <span class="student-info-value">{{ placement.company_name }}</span>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-phone"></i>
+                        <span class="student-info-value">{{ placement.student.contact_number }}</span>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-graduation-cap"></i>
+                        <span class="student-info-value">{{ placement.student.degree }}</span>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-tag"></i>
+                        <span class="student-info-value">{{ placement.student.type_of_data }}</span>
+                    </div>
+                    <div class="student-info-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <span class="student-info-value">Placed on {{ placement.placed_date|date:"M d, Y" }}</span>
+                    </div>
+                    {% if placement.package %}
+                    <div class="student-info-item">
+                        <i class="fas fa-money-bill-wave"></i>
+                        <span class="student-info-value">Package: {{ placement.package }}</span>
+                    </div>
+                    {% endif %}
+                    {% if placement.role %}
+                    <div class="student-info-item">
+                        <i class="fas fa-briefcase"></i>
+                        <span class="student-info-value">Role: {{ placement.role }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-user-graduate"></i>
+            <h3>No Students Placed Outside Yet</h3>
+            <p>There are currently no records of students placed outside the campus recruitment program.</p>
+            <a href="{% url 'student_data:bulk_outside_placement' %}" class="btn btn-orange">
+                <i class="fas fa-plus-circle me-1"></i> Add Placement Record
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Animate page elements sequentially
+        gsap.timeline()
+            .to('.action-buttons', { 
+                opacity: 1, 
+                y: 0, 
+                duration: 0.6,
+                ease: "power2.out"
+            })
+            .to('.page-header', { 
+                opacity: 1, 
+                y: 0, 
+                duration: 0.6,
+                ease: "power2.out"
+            }, "-=0.4")
+            .to('.placed-students-container', { 
+                opacity: 1, 
+                duration: 0.6,
+                ease: "power2.out"
+            }, "-=0.4");
+            
+        // Animate each student card with a stagger effect
+        gsap.to('.student-card', {
+            y: 0,
+            opacity: 1,
+            duration: 0.6,
+            stagger: 0.08,
+            ease: "back.out(1.2)",
+            delay: 0.4
+        });
+        
+        // Add hover animation to buttons
+        const buttons = document.querySelectorAll('.btn-orange, .btn-orange-outline');
+        buttons.forEach(button => {
+            button.addEventListener('mouseenter', () => {
+                gsap.to(button, {
+                    scale: 1.05,
+                    duration: 0.2,
+                    ease: "power2.out"
+                });
+            });
+            
+            button.addEventListener('mouseleave', () => {
+                gsap.to(button, {
+                    scale: 1,
+                    duration: 0.2,
+                    ease: "power2.out"
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

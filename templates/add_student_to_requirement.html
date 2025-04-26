@@ -1,324 +1,1035 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
-{% load static %}
 
-{% block title %}Assign Students{% endblock %}
-
-{% block extra_css %}
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
-<style>
-    /* Student Type Badges */
-    .badge-type-fsdi {
-        background-color: #4e73df;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
-    }
-
-    .badge-type-super100 {
-        background-color: #1cc88a;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(28, 200, 138, 0.3);
-    }
-
-    .badge-type-tuition {
-        background-color: #f6c23e;
-        color: #2c3e50;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(246, 194, 62, 0.3);
-    }
-
-    .badge-type-legend {
-        background-color: #e74a3b;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(231, 74, 59, 0.3);
-    }
-
-    .badge-type-default {
-        background-color: #858796;
-        color: white;
-        padding: 5px 10px;
-        border-radius: 50px;
-        font-weight: 600;
-        box-shadow: 0 2px 5px rgba(133, 135, 150, 0.3);
-    }
-
-    /* Table styling fixes */
-    .card {
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-
-    .table-hover tbody tr {
-        transition: all 0.2s ease;
-    }
-
-    .table-hover tbody tr:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        background-color: rgba(78, 115, 223, 0.05);
-        position: relative;
-        z-index: 1;
-    }
-
-    .progress-thin {
-        height: 5px;
-        border-radius: 3px;
-    }
-
-    .table thead th {
-        background: #1a1e29 !important;
-        color: white !important;
-        font-weight: 600;
-        border-bottom: none;
-        padding: 1rem;
-    }
-
-    .table tbody td {
-        vertical-align: middle;
-        padding: 0.75rem;
-        background: white;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    /* Fix select2 styling */
-    .select2-selection--multiple {
-        min-height: 38px !important;
-        border-radius: 0.25rem !important;
-        border: 1px solid #ced4da !important;
-    }
-   
-    /* Table styling from student_list.html */
-    .card {
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .table-hover tbody tr:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-        z-index: 1;
-        background-color: rgba(78, 115, 223, 0.05);
-    }
-
-    .progress-thin {
-        height: 5px;
-        border-radius: 3px;
-    }
-
-    .table thead th {
-        background: #1a1e29;
-        color: white;
-        font-weight: 600;
-    }
-
-    .table tbody td {
-        vertical-align: middle;
-    }
-
-    .select2-selection--multiple {
-        min-height: 38px !important;
-        border-radius: 0.25rem !important;
-    }
-</style>
-{% endblock %}
+{% block title %}Add Students to Requirement{% endblock %}
 
 {% block content %}
-<div class="container my-5">
-    <h2 class="mb-4">Assign Students to Requirement: <span class="text-dark">{{ requirement.title }}</span></h2>
-
-    <form method="get" class="mb-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-4">
-                <label class="form-label">Search by Name or Mobile</label>
-                <input type="text" name="search" class="form-control" placeholder="Search..." value="{{ search_query }}">
-            </div>
-
-            <!-- Enhanced Stream Filter -->
-            <div class="col-md-4">
-                <label class="form-label">Stream</label>
-                <select name="streams" id="streamSelect" class="form-select" multiple>
-                    {% for stream in unique_streams %}
-                        <option value="{{ stream }}" {% if stream in selected_streams %}selected{% endif %}>{{ stream }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">Year of Passing</label>
-                <div class="input-group">
-                    <input type="number" name="year_from" class="form-control" placeholder="From" value="{{ year_from }}">
-                    <span class="input-group-text">to</span>
-                    <input type="number" name="year_to" class="form-control" placeholder="To" value="{{ year_to }}">
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <label class="form-label">10th % ≥</label>
-                <input type="number" step="0.01" name="tenth_percentage" class="form-control" value="{{ tenth_percentage }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">12th % ≥</label>
-                <input type="number" step="0.01" name="twelfth_percentage" class="form-control" value="{{ twelfth_percentage }}">
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Degree % ≥</label>
-                <input type="number" step="0.01" name="degree_percentage" class="form-control" value="{{ degree_percentage }}">
-            </div>
-
-            <div class="col-12 text-end">
-                <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-outline-secondary">Clear</a>
-                <button type="submit" class="btn btn-success">Apply Filters</button>
-            </div>
+<div class="container mt-4" id="app">
+    <h2 class="text-orange">Add Students to Requirement: {{ requirement.company_name }}</h2>
+    <p class="text-muted">{{ requirement.description }}</p>
+    
+    {% if messages %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {% for message in messages %}
+            {{ message }}
+        {% endfor %}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+    {% endif %}
+    
+    <!-- Filter Section -->
+    <div class="card mb-4 filter-card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 text-orange"><i class="fas fa-filter mr-2"></i>Filters</h5>
+            <span class="badge badge-orange">{{ page_obj.paginator.count }} students match filters</span>
         </div>
-    </form>
-
-    <form method="post">
+        <div class="card-body">
+            <form method="GET" id="filterForm">
+                <div class="row">
+                    <!-- Search -->
+                    <div class="col-md-4 mb-3">
+                        <label for="search">Search</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text orange-input-group"><i class="fas fa-search"></i></span>
+                            </div>
+                            <input type="text" class="form-control custom-input" id="search" name="q" 
+                                   placeholder="Name, Email, or Contact" 
+                                   value="{{ query|default:'' }}"
+                                   v-model="searchQuery">
+                        </div>
+                    </div>
+                    
+                    <!-- Stream Filter -->
+                    <div class="col-md-4 mb-3">
+                        <label for="streamFilter">Stream</label>
+                        <div class="select-container">
+                            <select class="form-control select2-orange" id="streamFilter" name="stream" multiple>
+                                {% for stream in unique_streams %}
+                                    <option value="{{ stream }}" {% if stream in selected_streams %}selected{% endif %}>{{ stream }}</option>
+                                {% endfor %}
+                            </select>
+                            <div class="select-info">
+                                <span class="selected-count" id="streamSelectedCount">
+                                    {% if selected_streams %}{{ selected_streams|length }} selected{% else %}None selected{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Degree Filter -->
+                    <div class="col-md-4 mb-3">
+                        <label for="degreeFilter">Degree</label>
+                        <div class="select-container">
+                            <select class="form-control select2-orange" id="degreeFilter" name="degree" multiple>
+                                {% for degree in unique_degrees %}
+                                    {% if degree in degree_filters %}
+                                        <option value="{{ degree }}" selected>{{ degree }}</option>
+                                    {% else %}
+                                        <option value="{{ degree }}">{{ degree }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <div class="select-info">
+                                <span class="selected-count" id="degreeSelectedCount">
+                                    {% if degree_filters %}{{ degree_filters|length }} selected{% else %}None selected{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <!-- Year Range -->
+                    <div class="col-md-4 mb-3">
+                        <label>Year of Passing Range</label>
+                        <div class="row">
+                            <div class="col">
+                                <input type="number" class="form-control custom-input" name="start_year" placeholder="From" value="{{ start_year|default:'' }}">
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control custom-input" name="end_year" placeholder="To" value="{{ end_year|default:'' }}">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Percentage Filters -->
+                    <div class="col-md-6 mb-3">
+                        <label>Minimum Percentage</label>
+                        <div class="row">
+                            <div class="col">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text orange-input-group">10th</span>
+                                    </div>
+                                    <input type="number" step="0.01" class="form-control custom-input" name="tenth" placeholder="Min %" value="{{ tenth|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text orange-input-group">12th</span>
+                                    </div>
+                                    <input type="number" step="0.01" class="form-control custom-input" name="twelfth" placeholder="Min %" value="{{ twelfth|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <span class="input-group-text orange-input-group">Degree</span>
+                                    </div>
+                                    <input type="number" step="0.01" class="form-control custom-input" name="degree_percentage" placeholder="Min %" value="{{ degree_percentage|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Filter Buttons -->
+                    <div class="col-md-2 d-flex align-items-end justify-content-end mb-3">
+                        <button type="submit" class="btn btn-orange mr-2">
+                            <i class="fas fa-filter mr-1"></i> Apply
+                        </button>
+                        <a href="{% url 'student_data:add_students_to_requirement' requirement.id %}" class="btn btn-outline-orange">
+                            <i class="fas fa-undo mr-1"></i> Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Student Selection Form -->
+    <form method="POST" id="studentForm">
         {% csrf_token %}
-        {% if page_obj %}
         <div class="card">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h5 class="m-0">Student List</h5>
-                <span class="badge bg-secondary">{{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ page_obj.paginator.count }}</span>
+            <div class="card-header d-flex justify-content-between align-items-center orange-gradient">
+                <h5 class="mb-0 text-white">Available Students</h5>
+                <div>
+                    <span class="mr-2 badge badge-light" v-show="selectedCount > 0">
+                        <i class="fas fa-user-check mr-1"></i> ${selectedCount} selected
+                    </span>
+                    <button type="submit" class="btn btn-light" id="assignBtn" :disabled="selectedCount === 0">
+                        <i class="fas fa-user-plus mr-1 text-orange"></i> <span class="text-orange">Assign Selected Students</span>
+                    </button>
+                </div>
             </div>
             <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th><input type="checkbox" id="selectAll"></th>
-                                <th>Name</th>
-                                <th>Contact</th>
-                                <th>Degree</th>
-                                <th>Stream</th>
-                                <th>YOP</th>
-                                <th>Score</th>
-                                <th>Type</th>
-                                <th>Requirements</th>
-                                <th>Gender</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for student in page_obj %}
-                                {% if student.id not in already_assigned_student_ids %}
+                {% if page_obj %}
+                    <div class="table-responsive">
+                        <table id="studentDataTable" class="table table-hover display nowrap" style="width:100%">
+                            <thead class="orange-header">
                                 <tr>
-                                    <td><input type="checkbox" name="student_ids[]" class="student-checkbox" value="{{ student.id }}"></td>
-                                    <td>{{ student.name }}</td>
-                                    <td>{{ student.contact_number }}</td>
-                                    <td>{{ student.degree|lower }}</td>
-                                    <td>{{ student.stream|lower }}</td>
-                                    <td>{{ student.yop }}</td>
-                                    <td>{{ student.degree_percent }}%</td>
-                                    <td>
-                                        <span class="badge badge-type-{{ student.type_of_data|lower|default:'default' }}">
-                                            {{ student.type_of_data|lower }}
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <span class="me-2">
-                                                {{ student.scheduled_requirements }}/{{ student.total_requirements }}
-                                            </span>
-                                            <div class="progress progress-thin flex-grow-1">
-                                                <div class="progress-bar bg-success" 
-                                                     style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%">
-                                                </div>
-                                            </div>
+                                    <th width="40px">
+                                        <div class="form-check">
+                                            <input class="form-check-input custom-checkbox" type="checkbox" id="selectAll" v-model="selectAll" @change="toggleSelectAll">
                                         </div>
-                                    </td>
-                                    <td>
-                                        <span class="gender-{% if student.gender == 'Male' %}male{% else %}female{% endif %}">
-                                            {{ student.gender }}
-                                        </span>
-                                    </td>
+                                    </th>
+                                    <th>Name</th>
+                                    <th>Stream</th>
+                                    <th>Degree</th>
+                                    <th>Year</th>
+                                    <th>10th %</th>
+                                    <th>12th %</th>
+                                    <th>Degree %</th>
+                                    <th>Contact</th>
+                                    <th>Gender</th>
+                                    <th>Type of Data</th>
+                                    <th>Requirements</th>
                                 </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in enhanced_students %}
+                                    <tr :class="{'selected-row': isSelected({{ item.student.id }})}" @click="handleRowClick($event, {{ item.student.id }})">
+                                        <td>
+                                            <div class="form-check">
+                                                <input class="form-check-input custom-checkbox student-checkbox" type="checkbox" 
+                                                       name="selected_students" value="{{ item.student.id }}"
+                                                       v-model="selectedStudents">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="student-name">{{ item.student.name }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="stream-badge">{{ item.student.stream }}</span>
+                                        </td>
+                                        <td>{{ item.student.degree }}</td>
+                                        <td>{{ item.student.yop }}</td>
+                                        <td>
+                                            <div class="percentage-pill tenth {% if item.student.tenth_percent > 80 %}high{% elif item.student.tenth_percent < 60 %}low{% else %}medium{% endif %}">
+                                                {{ item.student.tenth_percent|floatformat:2 }}%
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="percentage-pill twelfth {% if item.student.twelfth_percent > 80 %}high{% elif item.student.twelfth_percent < 60 %}low{% else %}medium{% endif %}">
+                                                {{ item.student.twelfth_percent|floatformat:2 }}%
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="percentage-pill degree {% if item.student.degree_percent > 80 %}high{% elif item.student.degree_percent < 60 %}low{% else %}medium{% endif %}">
+                                                {{ item.student.degree_percent|floatformat:2 }}%
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="contact-info">
+                                                <i class="fas fa-phone-alt mr-1"></i>
+                                                {{ item.student.contact_number }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="gender-badge {% if item.student.gender == 'Male' %}male{% elif item.student.gender == 'Female' %}female{% else %}other{% endif %}">
+                                                <i class="fas {% if item.student.gender == 'Male' %}fa-mars{% elif item.student.gender == 'Female' %}fa-venus{% else %}fa-genderless{% endif %} mr-1"></i>
+                                                {{ item.student.gender }}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="data-type-badge">{{ item.student.type_of_data }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress flex-grow-1 mr-2" style="height: 10px;">
+                                                    <div class="progress-bar orange-progress" role="progressbar" 
+                                                         style="width: {% widthratio item.student.scheduled_requirements item.student.total_requirements 100 %}%;" 
+                                                         aria-valuenow="{{ item.student.scheduled_requirements }}" 
+                                                         aria-valuemin="0" 
+                                                         aria-valuemax="{{ item.student.total_requirements|default:1 }}"></div>
+                                                </div>
+                                                <span class="text-muted small">{{ item.student.scheduled_requirements }}/{{ item.student.total_requirements }}</span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% empty %}
+                                    <tr>
+                                        <td colspan="12" class="text-center py-4">
+                                            <div class="alert alert-warning mb-0">
+                                                <i class="fas fa-info-circle mr-2"></i> No matching students found.
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination controls - Keep this as a fallback in case DataTables pagination fails -->
+                    <div class="pagination-container mt-3 mb-3 d-flex justify-content-center">
+                        <nav aria-label="Student pagination">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if query %}&q={{ query }}{% endif %}{% if selected_streams %}&stream={{ selected_streams|join:',' }}{% endif %}{% if degree_filters %}&degree={{ degree_filters|join:',' }}{% endif %}{% if start_year %}&start_year={{ start_year }}{% endif %}{% if end_year %}&end_year={{ end_year }}{% endif %}{% if tenth %}&tenth={{ tenth }}{% endif %}{% if twelfth %}&twelfth={{ twelfth }}{% endif %}{% if degree_percentage %}&degree_percentage={{ degree_percentage }}{% endif %}" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_streams %}&stream={{ selected_streams|join:',' }}{% endif %}{% if degree_filters %}&degree={{ degree_filters|join:',' }}{% endif %}{% if start_year %}&start_year={{ start_year }}{% endif %}{% if end_year %}&end_year={{ end_year }}{% endif %}{% if tenth %}&tenth={{ tenth }}{% endif %}{% if twelfth %}&twelfth={{ twelfth }}{% endif %}{% if degree_percentage %}&degree_percentage={{ degree_percentage }}{% endif %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;&laquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;</span>
+                                    </li>
                                 {% endif %}
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                {% if page_obj.paginator.num_pages > 1 %}
-                <nav class="m-3">
-                    <ul class="pagination justify-content-center">
-                        {% if page_obj.has_previous %}
-                        <li class="page-item">
-                            <a class="page-link" href="?{% url_replace page=1 %}">First</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?{% url_replace page=page_obj.previous_page_number %}">Previous</a>
-                        </li>
-                        {% endif %}
-
-                        <li class="page-item active">
-                            <span class="page-link">
-                                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-                            </span>
-                        </li>
-
-                        {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?{% url_replace page=page_obj.next_page_number %}">Next</a>
-                        </li>
-                        <li class="page-item">
-                            <a class="page-link" href="?{% url_replace page=page_obj.paginator.num_pages %}">Last</a>
-                        </li>
-                        {% endif %}
-                    </ul>
-                </nav>
+                                
+                                {% for i in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
+                                        </li>
+                                    {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ i }}{% if query %}&q={{ query }}{% endif %}{% if selected_streams %}&stream={{ selected_streams|join:',' }}{% endif %}{% if degree_filters %}&degree={{ degree_filters|join:',' }}{% endif %}{% if start_year %}&start_year={{ start_year }}{% endif %}{% if end_year %}&end_year={{ end_year }}{% endif %}{% if tenth %}&tenth={{ tenth }}{% endif %}{% if twelfth %}&twelfth={{ twelfth }}{% endif %}{% if degree_percentage %}&degree_percentage={{ degree_percentage }}{% endif %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if selected_streams %}&stream={{ selected_streams|join:',' }}{% endif %}{% if degree_filters %}&degree={{ degree_filters|join:',' }}{% endif %}{% if start_year %}&start_year={{ start_year }}{% endif %}{% if end_year %}&end_year={{ end_year }}{% endif %}{% if tenth %}&tenth={{ tenth }}{% endif %}{% if twelfth %}&twelfth={{ twelfth }}{% endif %}{% if degree_percentage %}&degree_percentage={{ degree_percentage }}{% endif %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if selected_streams %}&stream={{ selected_streams|join:',' }}{% endif %}{% if degree_filters %}&degree={{ degree_filters|join:',' }}{% endif %}{% if start_year %}&start_year={{ start_year }}{% endif %}{% if end_year %}&end_year={{ end_year }}{% endif %}{% if tenth %}&tenth={{ tenth }}{% endif %}{% if twelfth %}&twelfth={{ twelfth }}{% endif %}{% if degree_percentage %}&degree_percentage={{ degree_percentage }}{% endif %}" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
+                {% else %}
+                    <div class="alert alert-warning m-3">No matching students found.</div>
                 {% endif %}
             </div>
         </div>
-        <div class="text-end mt-3">
-            <button type="submit" class="btn btn-primary">Assign Selected Students</button>
-        </div>
-        {% else %}
-        <div class="alert alert-warning">No students found matching the filters.</div>
-        {% endif %}
     </form>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- Add Vue.js -->
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+<!-- Add Select2 -->
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-<script>
-    $(document).ready(function () {
-        $('#streamSelect').select2({
-            theme: 'bootstrap-5',
-            placeholder: 'Select Streams',
-            width: '100%',
-            closeOnSelect: false
-        });
+<!-- Add SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Add Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-        // Checkbox handling remains unchanged
-        $('#selectAll').change(function () {
-            $('.student-checkbox').prop('checked', this.checked);
-            updateButtonText();
-        });
-        
-        $('.student-checkbox').change(updateButtonText);
-        
-        function updateButtonText() {
-            const count = $('.student-checkbox:checked').length;
-            $('.btn-primary').text(
-                count > 0 ? `Assign ${count} Selected Students` : 'Assign Selected Students'
-            );
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/fixedheader/3.2.2/css/fixedHeader.dataTables.min.css">
+
+<!-- DataTables JS -->
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/fixedheader/3.2.2/js/dataTables.fixedHeader.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+
+<script>
+    // Main Vue application
+    const app = new Vue({
+        el: '#app',
+        delimiters: ['${', '}'],
+        data: {
+            selectedStudents: [],
+            selectAll: false,
+            searchQuery: "{{ query|default:'' }}",
+            isLoading: false,
+            table: null,
+            // Track if we're programmatically changing checkboxes to prevent loops
+            programmaticChange: false,
+            // Track if we're navigating away
+            isNavigating: false
+        },
+        computed: {
+            selectedCount() {
+                return this.selectedStudents.length;
+            }
+        },
+        methods: {
+            // Handle row click
+            handleRowClick(event, studentId) {
+                // Don't toggle if clicking on a button, link, or the checkbox itself
+                if ($(event.target).is('button, a, .btn, .dropdown, .dropdown *, .form-check-label') || 
+                    $(event.target).parents('button, a, .btn, .dropdown').length) {
+                    return;
+                }
+                
+                // Don't toggle if clicking directly on the checkbox (let the checkbox handler deal with it)
+                if ($(event.target).is('input[type="checkbox"]') || $(event.target).parents('input[type="checkbox"]').length) {
+                    return;
+                }
+                
+                this.toggleStudentSelection(studentId, event);
+            },
+            
+            // Toggle all student checkboxes
+            toggleSelectAll() {
+                this.programmaticChange = true;
+                
+                if (this.selectAll) {
+                    // Get all student IDs currently visible in the table
+                    this.selectedStudents = [];
+                    $('.student-checkbox:visible').each((index, checkbox) => {
+                        this.selectedStudents.push($(checkbox).val());
+                    });
+                } else {
+                    this.selectedStudents = [];
+                }
+                
+                this.updateCheckboxStates();
+                this.programmaticChange = false;
+            },
+            
+            // Check if a student is selected
+            isSelected(id) {
+                return this.selectedStudents.includes(id.toString());
+            },
+            
+            // Toggle single student selection
+            toggleStudentSelection(studentId, event) {
+                if (this.programmaticChange) return;
+                
+                const index = this.selectedStudents.indexOf(studentId.toString());
+                if (index === -1) {
+                    this.selectedStudents.push(studentId.toString());
+                } else {
+                    this.selectedStudents.splice(index, 1);
+                }
+                
+                // Update the checkbox state if this was a row click
+                if (event && !$(event.target).is('input[type="checkbox"]')) {
+                    this.programmaticChange = true;
+                    const checkbox = $(`input.student-checkbox[value="${studentId}"]`);
+                    checkbox.prop('checked', !checkbox.prop('checked'));
+                    this.programmaticChange = false;
+                }
+                
+                this.updateSelectAllState();
+            },
+            
+            // Update all checkbox states and row highlighting
+            updateCheckboxStates() {
+                const self = this;
+                
+                // Update all checkboxes
+                $('.student-checkbox').each(function() {
+                    $(this).prop('checked', self.selectedStudents.includes($(this).val()));
+                });
+                
+                // Update row highlighting
+                $('#studentDataTable tbody tr').each(function() {
+                    const checkbox = $(this).find('.student-checkbox');
+                    if (checkbox.length && self.selectedStudents.includes(checkbox.val())) {
+                        $(this).addClass('selected-row');
+                    } else {
+                        $(this).removeClass('selected-row');
+                    }
+                });
+            },
+            
+            // Update the selectAll checkbox state
+            updateSelectAllState() {
+                const visibleCheckboxes = $('.student-checkbox:visible');
+                const checkedVisible = $('.student-checkbox:visible:checked');
+                
+                this.selectAll = visibleCheckboxes.length > 0 && 
+                               checkedVisible.length === visibleCheckboxes.length;
+            },
+            
+            // Initialize DataTable
+            initDataTable() {
+                const self = this;
+                this.table = $('#studentDataTable').DataTable({
+                    dom: '<"top"Bf>rt<"bottom"lip>',
+                    responsive: true,
+                    fixedHeader: true,
+                    pageLength: 10,
+                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                    pagingType: "full_numbers",
+                    buttons: [
+                        {
+                            extend: 'excel',
+                            text: '<i class="fas fa-file-excel"></i> Excel',
+                            className: 'btn btn-sm btn-success mr-1',
+                            exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+                            title: 'Students List'
+                        },
+                        {
+                            extend: 'pdf',
+                            text: '<i class="fas fa-file-pdf"></i> PDF',
+                            className: 'btn btn-sm btn-danger mr-1',
+                            exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
+                            title: 'Students List'
+                        },
+                        {
+                            extend: 'print',
+                            text: '<i class="fas fa-print"></i> Print',
+                            className: 'btn btn-sm btn-info',
+                            exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
+                        }
+                    ],
+                    columnDefs: [
+                        { orderable: false, targets: [0] },
+                        { responsivePriority: 1, targets: [0, 1] },
+                        { responsivePriority: 2, targets: [2, 3, 4] },
+                        { className: "dt-center", targets: [0, 4, 5, 6, 7, 9] }
+                    ],
+                    language: {
+                        search: "<i class='fas fa-search'></i> _INPUT_",
+                        searchPlaceholder: "Search students...",
+                        lengthMenu: "Show _MENU_ students",
+                        info: "Showing _START_ to _END_ of _TOTAL_ students",
+                        infoEmpty: "Showing 0 to 0 of 0 students",
+                        infoFiltered: "(filtered from _MAX_ total students)",
+                        zeroRecords: "<div class='text-center'><i class='fas fa-exclamation-triangle text-warning fa-2x mb-2'></i><br>No matching students found</div>",
+                        paginate: {
+                            first: "<i class='fas fa-angle-double-left'></i>",
+                            previous: "<i class='fas fa-angle-left'></i>",
+                            next: "<i class='fas fa-angle-right'></i>",
+                            last: "<i class='fas fa-angle-double-right'></i>"
+                        }
+                    },
+                    initComplete: function() {
+                        $('.dt-buttons').addClass('mb-2 mt-2 ml-2');
+                        $('.dataTables_filter').addClass('mb-2 mt-2 mr-2');
+                        $('.dataTables_filter input').addClass('search-input');
+                        $('.dataTables_paginate').addClass('mb-3 mt-2');
+                    }
+                });
+                
+                // Handle checkbox changes in DataTable
+                $('#studentDataTable tbody').on('change', '.student-checkbox', function(e) {
+                    if (self.programmaticChange) return;
+                    const studentId = $(this).val();
+                    self.toggleStudentSelection(studentId, e);
+                });
+                
+                // Update checkboxes on DataTable redraw
+                this.table.on('draw', () => {
+                    self.updateCheckboxStates();
+                    self.updateSelectAllState();
+                    self.initTooltips();
+                });
+            },
+            
+            // Initialize tooltips
+            initTooltips() {
+                if (typeof $.fn.tooltip === 'function') {
+                    $('[data-toggle="tooltip"]').tooltip();
+                }
+            },
+            
+            // Show success notification
+            showSuccessNotification(message) {
+                Swal.fire({
+                    title: 'Success!',
+                    text: message,
+                    icon: 'success',
+                    confirmButtonColor: '#ff7b00',
+                    confirmButtonText: 'OK'
+                });
+            },
+            
+            // Show warning notification
+            showWarningNotification(message) {
+                Swal.fire({
+                    title: 'Warning',
+                    text: message,
+                    icon: 'warning',
+                    confirmButtonColor: '#ff7b00',
+                    confirmButtonText: 'OK'
+                });
+            }
+        },
+        mounted() {
+            // Initialize with pre-checked boxes if any
+            const initialSelected = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+                .map(checkbox => checkbox.value);
+            this.selectedStudents = initialSelected;
+                
+            // Initialize components after Vue render
+            this.$nextTick(() => {
+                this.initDataTable();
+                this.initTooltips();
+                this.updateCheckboxStates();
+                this.updateSelectAllState();
+            });
         }
     });
+
+    // Document ready function
+    $(document).ready(function() {
+        // Initialize Select2
+        function initSelect2() {
+            $('.select2-orange').select2({
+                width: '100%',
+                placeholder: 'Select options',
+                allowClear: true,
+                closeOnSelect: false,
+                dropdownAutoWidth: true
+            });
+            
+            updateSelectedCounts();
+            
+            $('#streamFilter, #degreeFilter').on('change', function() {
+                updateSelectedCounts();
+            });
+        }
+        
+        // Update selected counts for filters
+        function updateSelectedCounts() {
+            const streamCount = $('#streamFilter').select2('data').length;
+            const degreeCount = $('#degreeFilter').select2('data').length;
+            
+            $('#streamSelectedCount').text(streamCount > 0 ? `${streamCount} selected` : 'None selected');
+            $('#degreeSelectedCount').text(degreeCount > 0 ? `${degreeCount} selected` : 'None selected');
+        }
+        
+        // Form submission handler
+        function initFormHandlers() {
+            $('#studentForm').submit(function(e) {
+                if (app.selectedStudents.length === 0) {
+                    e.preventDefault();
+                    app.showWarningNotification('Please select at least one student to assign.');
+                    return false;
+                }
+                
+                app.isLoading = true;
+                $('#assignBtn').html('<span class="spinner-border spinner-border-sm text-orange" role="status" aria-hidden="true"></span> <span class="text-orange">Assigning...</span>')
+                    .prop('disabled', true);
+                
+                // Show confirmation dialog
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Confirm Assignment',
+                    html: `You are about to assign <strong>${app.selectedStudents.length}</strong> student(s) to this requirement.<br><br>Do you want to proceed?`,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ff7b00',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, assign students'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Submit the form
+                        $(this).unbind('submit').submit();
+                    } else {
+                        app.isLoading = false;
+                        $('#assignBtn').html('<i class="fas fa-user-plus mr-1 text-orange"></i> <span class="text-orange">Assign Selected Students</span>')
+                            .prop('disabled', false);
+                    }
+                });
+            });
+            
+            // Filter form reset handler
+            $('#filterForm').on('reset', function(e) {
+                e.preventDefault();
+                showResetConfirmation();
+            });
+            
+            // Handle pagination links
+            $('.pagination a').on('click', function(e) {
+                if (app.selectedStudents.length > 0) {
+                    e.preventDefault();
+                    const href = $(this).attr('href');
+                    
+                    Swal.fire({
+                        title: 'Unsaved Selections',
+                        text: 'You have selected students that have not been assigned yet. Navigating away will clear your selections.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ff7b00',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Continue without saving',
+                        cancelButtonText: 'Stay on this page'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            app.isNavigating = true;
+                            window.location.href = href;
+                        }
+                    });
+                }
+            });
+        }
+        
+        // Show reset confirmation dialog
+        function showResetConfirmation() {
+            Swal.fire({
+                title: 'Reset filters?',
+                text: 'This will clear all search filters and show all students.',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#ff7b00',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Yes, reset filters'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = "{% url 'student_data:add_students_to_requirement' requirement.id %}";
+                }
+            });
+        }
+        
+        // Initialize percentage tooltips
+        function initPercentageTooltips() {
+            $('.percentage-pill').tooltip({
+                title: function() {
+                    const percent = $(this).text().trim();
+                    let message = '';
+                    
+                    if ($(this).hasClass('high')) {
+                        message = `Excellent performance: ${percent}`;
+                    } else if ($(this).hasClass('medium')) {
+                        message = `Good performance: ${percent}`;
+                    } else {
+                        message = `Needs improvement: ${percent}`;
+                    }
+                    
+                    return message;
+                },
+                placement: 'top'
+            });
+        }
+        
+        // Window resize handler for DataTable
+        function initWindowResizeHandler() {
+            $(window).resize(function() {
+                if (app.table) {
+                    app.table.columns.adjust().responsive.recalc();
+                }
+            });
+        }
+        
+        // Before unload handler
+        function initBeforeUnloadHandler() {
+            $(window).on('beforeunload', function() {
+                if (app.selectedStudents.length > 0 && !app.isNavigating) {
+                    return "You have selected students that have not been assigned yet. Are you sure you want to leave?";
+                }
+            });
+        }
+        
+        // Initialize all components
+        initSelect2();
+        initFormHandlers();
+        initPercentageTooltips();
+        initWindowResizeHandler();
+        initBeforeUnloadHandler();
+        
+        // Debounced search
+        let searchTimeout;
+        $('#search').on('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(function() {
+                app.searchQuery = $('#search').val();
+            }, 500);
+        });
+    });
 </script>
+
+<style>
+    /* Custom CSS for the Add Students page */
+    .orange-gradient {
+        background: linear-gradient(135deg, #ff7b00, #ff9a44);
+        color: white;
+    }
+    
+    .text-orange {
+        color: #ff7b00;
+    }
+    
+    .btn-orange {
+        background-color: #ff7b00;
+        border-color: #ff7b00;
+        color: white;
+    }
+    
+    .btn-outline-orange {
+        background-color: transparent;
+        border-color: #ff7b00;
+        color: #ff7b00;
+    }
+    
+    .btn-outline-orange:hover {
+        background-color: #ff7b00;
+        color: white;
+    }
+    
+    .btn-orange:hover {
+        background-color: #e06a00;
+        border-color: #e06a00;
+        color: white;
+    }
+    
+    .orange-input-group {
+        background-color: #ff7b00;
+        color: white;
+        border-color: #ff7b00;
+    }
+    
+    .custom-input:focus {
+        border-color: #ff7b00;
+        box-shadow: 0 0 0 0.2rem rgba(255, 123, 0, 0.25);
+    }
+    
+    .orange-header {
+        background-color: #fff5eb;
+    }
+    
+    .filter-card {
+        border-color: #ffead8;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .filter-card .card-header {
+        background-color: #fff5eb;
+        border-bottom: 1px solid #ffead8;
+    }
+    
+    .badge-orange {
+        background-color: #ff7b00;
+        color: white;
+   
+    }
+    
+    .select2-orange .select2-selection {
+        border-color: #ff7b00 !important;
+    }
+    
+    .select2-orange .select2-selection:focus {
+        box-shadow: 0 0 0 0.2rem rgba(255, 123, 0, 0.25) !important;
+    }
+    
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #ff7b00;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice {
+        background-color: #ff7b00;
+        border-color: #ff7b00;
+        color: white;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+        color: white;
+    }
+    
+    .select2-container--default .select2-selection--multiple .select2-selection__choice__remove:hover {
+        color: #ffead8;
+    }
+    
+    .select-container {
+        position: relative;
+    }
+    
+    .select-info {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+        font-size: 0.8rem;
+        color: #6c757d;
+    }
+    
+    .selected-count {
+        background-color: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    
+    .stream-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background-color: #e9ecef;
+        color: #495057;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .percentage-pill {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: white;
+        text-align: center;
+        min-width: 60px;
+    }
+    
+    .percentage-pill.high {
+        background-color: #28a745;
+    }
+    
+    .percentage-pill.medium {
+        background-color: #ffc107;
+        color: #212529;
+    }
+    
+    .percentage-pill.low {
+        background-color: #dc3545;
+    }
+    
+    .gender-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: white;
+    }
+    
+    .gender-badge.male {
+        background-color: #007bff;
+    }
+    
+    .gender-badge.female {
+        background-color: #e83e8c;
+    }
+    
+    .gender-badge.other {
+        background-color: #6c757d;
+    }
+    
+    .data-type-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background-color: #6f42c1;
+        color: white;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .contact-info {
+        white-space: nowrap;
+    }
+    
+    .student-name {
+        font-weight: 500;
+        color: #343a40;
+    }
+    
+    .selected-row {
+        background-color: #fff5eb !important;
+    }
+    
+    .orange-progress {
+        background-color: #ff7b00;
+    }
+    
+    .custom-checkbox .custom-control-input:checked ~ .custom-control-label::before {
+        background-color: #ff7b00;
+        border-color: #ff7b00;
+    }
+    
+    .custom-checkbox .custom-control-input:focus ~ .custom-control-label::before {
+        box-shadow: 0 0 0 0.2rem rgba(255, 123, 0, 0.25);
+    }
+    
+    .search-input {
+        border-radius: 20px;
+        padding-left: 35px;
+    }
+    
+    .search-input:focus {
+        border-color: #ff7b00;
+        box-shadow: 0 0 0 0.2rem rgba(255, 123, 0, 0.25);
+    }
+    
+    .search-input + .input-group-append .input-group-text {
+        border-radius: 0 20px 20px 0;
+    }
+    
+    .dataTables_wrapper .dataTables_filter input {
+        margin-left: 0.5em;
+        border-radius: 20px;
+        padding-left: 30px;
+    }
+    
+    .dataTables_wrapper .dataTables_filter {
+        float: right;
+    }
+    
+    .dataTables_wrapper .dataTables_filter:before {
+        content: "\f002";
+        font-family: "Font Awesome 5 Free";
+        font-weight: 900;
+        position: absolute;
+        left: 15px;
+        top: 10px;
+        color: #6c757d;
+        z-index: 1;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        padding: 0.3em 0.8em;
+        margin: 0 2px;
+        border-radius: 4px;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #ff7b00;
+        color: white !important;
+        border: 1px solid #ff7b00;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+        background: #e06a00;
+        border: 1px solid #e06a00;
+    }
+    
+    .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+        background: #ffead8;
+        border: 1px solid #ff7b00;
+        color: #ff7b00 !important;
+    }
+    
+    .dataTables_wrapper .dataTables_info {
+        padding-top: 0.5em;
+    }
+    
+    @media (max-width: 767px) {
+        .filter-card .card-body .row > div {
+            margin-bottom: 15px;
+        }
+        
+        .dataTables_wrapper .dataTables_filter {
+            float: none;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .dataTables_wrapper .dataTables_length {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate {
+            text-align: center;
+        }
+    }
+</style>
 {% endblock %}

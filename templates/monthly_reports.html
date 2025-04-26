@@ -1,0 +1,779 @@
+{% extends 'base.html' %}
+
+{% block extra_head %}
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <style>
+        /* Custom color variables */
+        :root {
+            --primary-orange: #ff6b35;
+            --primary-orange-light: #ff8c61;
+            --primary-orange-dark: #e55a2b;
+            --secondary-blue: #3498db;
+            --secondary-teal: #2ecc71;
+            --secondary-purple: #9b59b6;
+            --text-dark: #2c3e50;
+            --text-light: #ecf0f1;
+            --bg-gray: #f8f9fa;
+            --border-color: #e9ecef;
+        }
+        
+        /* Stat card animations */
+        .stat-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.5s ease;
+        }
+        
+        .stat-card.animated {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .stat-card .card-body {
+            padding: 1.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Card color variations */
+        .orange-card {
+            border-left: 4px solid var(--primary-orange);
+        }
+        
+        .blue-card {
+            border-left: 4px solid var(--secondary-blue);
+        }
+        
+        .green-card {
+            border-left: 4px solid var(--secondary-teal);
+        }
+        
+        .purple-card {
+            border-left: 4px solid var(--secondary-purple);
+        }
+        
+        /* Badge styles */
+        .badge-scheduled {
+            background-color: var(--secondary-blue);
+            color: white;
+        }
+        
+        .badge-not-scheduled {
+            background-color: #6c757d;
+            color: white;
+        }
+        
+        .badge-completed {
+            background-color: var(--secondary-teal);
+            color: white;
+        }
+        
+        .badge-ongoing {
+            background-color: #ffc107;
+            color: #212529;
+        }
+        
+        .badge-escalated {
+            background-color: var(--primary-orange);
+            color: white;
+        }
+        
+        /* Section styling */
+        .section-title {
+            color: var(--text-dark);
+            border-bottom: 2px solid var(--primary-orange);
+            padding-bottom: 0.5rem;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        /* Table styling */
+        .table-row:hover {
+            background-color: rgba(0, 0, 0, 0.02);
+            cursor: pointer;
+        }
+        
+        #crossMonthTable {
+            width: 100% !important;
+            border-collapse: collapse;
+        }
+
+        #crossMonthTable th, 
+        #crossMonthTable td {
+            padding: 8px 12px;
+            border: 1px solid #dee2e6;
+        }
+
+        #crossMonthTable thead th {
+            position: sticky;
+            top: 0;
+            background: #f8f9fa;
+            z-index: 10;
+        }
+        
+        /* Header styling */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .section-badge {
+            background-color: var(--primary-orange);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        /* Stat card content */
+        .stat-icon {
+            margin-bottom: 0.75rem;
+            color: var(--primary);
+        }
+        
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: var(--text-dark);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+        }
+        
+        /* Month selector */
+        .month-selector {
+            border-left: 4px solid var(--primary);
+        }
+        
+        /* Toast notifications */
+        .toast-container {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            z-index: 1100;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .stat-card .card-body {
+                padding: 1rem;
+            }
+            
+            .stat-value {
+                font-size: 1.5rem;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<!-- Messages Display -->
+{% if messages %}
+<div class="alert-container">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-triangle{% elif message.tags == 'warning' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="section-title">Monthly Reports</h1>
+        <div class="actions-container">
+            <button type="button" class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#filterModal">
+                <i class="fas fa-filter me-1"></i> Filter
+            </button>
+            <a href="{% url 'student_data:export_hr_excel' %}" class="btn btn-primary" id="exportReportBtn">
+                <i class="fas fa-file-export me-1"></i> Export Report
+            </a>
+        </div>
+    </div>
+    
+    <!-- Month Selector -->
+    <div class="card month-selector mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <form method="get" id="monthForm">
+                        <div class="mb-3">
+                            <label for="monthSelect" class="form-label">Select Month</label>
+                            <select class="form-select" id="monthSelect" name="month">
+                                <option value="">All Months</option>
+                                {% for month in months %}
+                                <option value="{{ month|date:'Y-m' }}" 
+                                    {% if selected_month and selected_month|date:'Y-m' == month|date:'Y-m' %}selected
+                                    {% elif not selected_month and month|date:'Y-m' == current_month %}selected{% endif %}>
+                                    {{ month|date:'F Y' }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </form>
+                </div>
+                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                    <button type="submit" form="monthForm" class="btn btn-primary">
+                        <i class="fas fa-search me-1"></i> View Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card orange-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                    <div class="stat-value">{{ total_requirements|default:"0" }}</div>
+                    <div class="stat-label">Total Requirements</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card blue-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-calendar-check fa-2x"></i>
+                    </div>
+                    <div class="stat-value">{{ scheduled_companies|default:"0" }}</div>
+                    <div class="stat-label">Scheduled Companies</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card green-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <div class="stat-value">{{ all_rounds_completed|default:"0" }}</div>
+                    <div class="stat-label">Completed Rounds</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="card stat-card purple-card h-100">
+                <div class="card-body">
+                    <div class="stat-icon">
+                        <i class="fas fa-user-graduate fa-2x"></i>
+                    </div>
+                    <div class="stat-value">{{ placements|default:"0" }}</div>
+                    <div class="stat-label">Total Placements</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if selected_month or not request.GET.month %}
+    <!-- Company Status Table -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title section-title">
+                {% if selected_month %}{{ selected_month|date:'F Y' }}
+                {% else %}{{ current_month|date:'F Y' }}{% endif %} Requirements
+            </h2>
+            
+            <div class="table-responsive mt-3">
+                <table class="table table-hover" id="companyStatusTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Company</th>
+                            <th>Code</th>
+                            <th>Status</th>
+                            <th>Scheduled Date</th>
+                            <th>Result</th>
+                            <th>Students Appeared</th>
+                            <th>Students Selected</th>
+                            <th>Escalation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for company in company_status %}
+                        <tr class="table-row">
+                            <td>{{ company.company }}</td>
+                            <td>{{ company.company_code }}</td>
+                            <td>
+                                <span class="badge rounded-pill {% if company.status == 'Scheduled' %}badge-scheduled{% else %}badge-not-scheduled{% endif %}">
+                                    {{ company.status }}
+                                </span>
+                            </td>
+                            <td>{{ company.scheduled_date|date:"d M, Y"|default:"-" }}</td>
+                            <td>
+                                <span class="badge rounded-pill {% if company.result == 'Selected' %}badge-completed{% elif company.result == 'No Selects' %}badge-completed{% else %}badge-ongoing{% endif %}">
+                                    {{ company.result|default:"-" }}
+                                </span>
+                            </td>
+                            <td>{{ company.students_appeared|default:"-" }}</td>
+                            <td>{{ company.students_selected|default:"-" }}</td>
+                            <td>
+                                <span class="badge rounded-pill {% if company.escalation %}badge-escalated{% endif %}">
+                                    {{ company.escalation|default:"Not Escalated" }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if company.id %}
+                                    <a href="{% url 'student_data:requirement_detail' company.id %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                {% else %}
+                                    <span class="text-muted">No ID</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">No requirements for this month</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cross Month Requirements -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="section-header">
+                <h2 class="card-title section-title">Cross Month Requirements</h2>
+                <span class="section-badge">Different Month</span>
+            </div>
+            <p class="text-muted mb-3">Requirements posted in a different month than when they were scheduled</p>
+            <div class="table-responsive">
+                <table class="table table-hover" id="crossMonthTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Company</th>
+                            <th>Code</th>
+                            <th>Requirement Date</th>
+                            <th>Scheduled Date</th>
+                            <th>Status</th>
+                            <th>Result</th>
+                            <th>Escalation</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in cross_month_requirements %}
+                        <tr class="table-row">
+                            <td>{{ req.company_name|default:"-" }}</td>
+                            <td>{{ req.company_code|default:"-" }}</td>
+                            <td>{% if req.requirement_date %}{{ req.requirement_date|date:"d M, Y" }}{% else %}-{% endif %}</td>
+                            <td>{% if req.schedule_date %}{{ req.schedule_date|date:"d M, Y" }}{% else %}-{% endif %}</td>
+                            <td>
+                                {% with status=req.get_schedule_status_display %}
+                                <span class="badge rounded-pill {% if status and status == 'Scheduled' %}badge-scheduled{% else %}badge-not-scheduled{% endif %}">
+                                    {{ status|default:"-" }}
+                                </span>
+                                {% endwith %}
+                            </td>
+                            <td>
+                                {% if req.scheduled_details %}
+                                    <span class="badge rounded-pill 
+                                        {% if req.scheduled_details.result == 'selected' %}badge-completed
+                                        {% elif req.scheduled_details.result == 'no_selects' %}badge-completed
+                                        {% else %}badge-ongoing{% endif %}">
+                                        {% if req.scheduled_details.get_result_display %}
+                                            {{ req.scheduled_details.get_result_display|default:"No Update" }}
+                                        {% else %}
+                                            No Update
+                                        {% endif %}
+                                    </span>
+                                {% else %}
+                                    <span class="badge rounded-pill badge-ongoing">No Update</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge rounded-pill {% if req.escalation %}badge-escalated{% endif %}">
+                                    {% if req.escalation %}{{ req.escalation }}{% else %}Not Escalated{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                {% if req.id %}
+                                <a href="{% url 'student_data:requirement_detail' req.id %}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                {% else %}
+                                <span class="text-muted">No ID</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-4">No cross-month requirements</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Monthly Summary Table -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <h2 class="card-title section-title">Monthly Summary</h2>
+            
+            <div class="table-responsive mt-3">
+                <table class="table table-hover" id="monthlySummaryTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Month</th>
+                            <th>Total Requirements</th>
+                            <th>Scheduled</th>
+                            <th>Not Scheduled</th>
+                            <th>Completed Rounds</th>
+                            <th>Ongoing</th>
+                            <th>Placements</th>
+                            <th>Escalated</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for month in monthly_summary %}
+                        <tr>
+                            <td>{{ month.month|date:"F Y" }}</td>
+                            <td>{{ month.total }}</td>
+                            <td>{{ month.scheduled }}</td>
+                            <td>{{ month.not_scheduled }}</td>
+                            <td>{{ month.completed_rounds }}</td>
+                            <td>{{ month.ongoing }}</td>
+                            <td>{{ month.placed }}</td>
+                            <td>{{ month.escalated }}</td>
+                            <td>
+                                <a href="?month={{ month.month|date:'Y-m' }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-search"></i> View
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">No data available</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filter Reports</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="filterForm" class="filter-form">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="companyName" class="form-label">Company Name</label>
+                                <input type="text" class="form-control" id="companyName" placeholder="Enter company name">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="companyCode" class="form-label">Company Code</label>
+                                <input type="text" class="form-control" id="companyCode" placeholder="Enter company code">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="status" class="form-label">Status</label>
+                                <select class="form-select" id="status">
+                                    <option value="">All</option>
+                                    <option value="scheduled">Scheduled</option>
+                                    <option value="not_scheduled">Not Scheduled</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="result" class="form-label">Result</label>
+                                <select class="form-select" id="result">
+                                    <option value="">All</option>
+                                    <option value="selected">Selected</option>
+                                    <option value="no_selects">No Selects</option>
+                                    <option value="ongoing">Ongoing</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dateFrom" class="form-label">Date From</label>
+                                <input type="date" class="form-control" id="dateFrom">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="dateTo" class="form-label">Date To</label>
+                                <input type="date" class="form-control" id="dateTo">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="escalatedOnly">
+                            <label class="form-check-label" for="escalatedOnly">
+                                Show escalated cases only
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-outline-primary" id="resetFilterBtn">Reset</button>
+                <button type="button" class="btn btn-primary" id="applyFilterBtn">Apply Filter</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- DataTables JS -->
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+<script>
+    $(document).ready(function() {
+        // Animate stat cards on page load
+        $('.stat-card').each(function(i) {
+            var card = $(this);
+            setTimeout(function() {
+                card.addClass('animated');
+            }, i * 150);
+        });
+
+        // Initialize DataTables
+        const companyStatusTable = $('#companyStatusTable').DataTable({
+            responsive: true,
+            columnDefs: [
+                { orderable: false, targets: [8] }
+            ],
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search companies...",
+                lengthMenu: "Show _MENU_ entries per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ companies"
+            }
+        });
+        
+        const monthlySummaryTable = $('#monthlySummaryTable').DataTable({
+            responsive: true,
+            columnDefs: [
+                { orderable: false, targets: [8] }
+            ],
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search months...",
+                lengthMenu: "Show _MENU_ entries per page",
+                info: "Showing _START_ to _END_ of _TOTAL_ months"
+            }
+        });
+        
+        if ($('#crossMonthTable').length) {
+            $('#crossMonthTable').DataTable({
+                responsive: true,
+                columnDefs: [
+                    { orderable: false, targets: [7] }
+                ],
+                language: {
+                    search: "_INPUT_",
+                    searchPlaceholder: "Search requirements...",
+                    lengthMenu: "Show _MENU_ entries per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ requirements"
+                }
+            });
+        }
+        
+        // Month select change handler
+        $('#monthSelect').on('change', function() {
+            $('#monthForm').submit();
+        });
+        
+        // Auto-submit if current month is selected by default
+        if ($('#monthSelect').val() === '{{ current_month|date:"Y-m" }}' && !window.location.search.includes('month=')) {
+            $('#monthForm').submit();
+        }
+        
+        // Filter functionality
+        $('#applyFilterBtn').on('click', function() {
+            // Get filter values
+            const company = $('#companyName').val().toLowerCase();
+            const code = $('#companyCode').val().toLowerCase();
+            const status = $('#status').val();
+            const result = $('#result').val();
+            const dateFrom = $('#dateFrom').val();
+            const dateTo = $('#dateTo').val();
+            const escalatedOnly = $('#escalatedOnly').is(':checked');
+            
+            // Apply filters to all tables
+            [companyStatusTable, $('#crossMonthTable').DataTable()].forEach(table => {
+                if (!table || !table.rows) return;
+                
+                table.search('').columns().search('').draw();
+                
+                // Custom filtering function
+                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                    const rowData = table.row(dataIndex).nodes().to$().find('td');
+                    
+                    // Company name filter
+                    if (company && !data[0].toLowerCase().includes(company)) {
+                        return false;
+                    }
+                    
+                    // Company code filter
+                    if (code && !data[1].toLowerCase().includes(code)) {
+                        return false;
+                    }
+                    
+                    // Status filter
+                    if (status) {
+                        const statusCell = rowData.eq(2).find('.badge').text().trim().toLowerCase();
+                        const statusMatch = status === 'scheduled' ? statusCell === 'scheduled' : statusCell === 'not scheduled';
+                        if (!statusMatch) return false;
+                    }
+                    
+                    // Result filter
+                    if (result) {
+                        const resultCell = rowData.eq(4).find('.badge').text().trim().toLowerCase();
+                        const resultMatch = 
+                            (result === 'selected' && resultCell === 'selected') ||
+                            (result === 'no_selects' && resultCell === 'no selects') ||
+                            (result === 'ongoing' && resultCell === 'ongoing');
+                        if (!resultMatch) return false;
+                    }
+                    
+                    // Date filter
+                    if (dateFrom || dateTo) {
+                        const dateCell = rowData.eq(3).text().trim();
+                        const dateParts = dateCell.split(' ');
+                        if (dateParts.length >= 3) {
+                            const day = dateParts[0];
+                            const monthStr = dateParts[1].replace(',', '');
+                            const year = dateParts[2].replace(',', '');
+                            
+                            const months = {
+                                'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04',
+                                'May': '05', 'Jun': '06', 'Jul': '07', 'Aug': '08',
+                                'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12'
+                            };
+                            const month = months[monthStr];
+                            
+                            const rowDate = new Date(`${year}-${month}-${day}`);
+                            
+                            if (dateFrom && new Date(dateFrom) > rowDate) return false;
+                            if (dateTo && new Date(dateTo) < rowDate) return false;
+                        }
+                    }
+                    
+                    // Escalation filter
+                    if (escalatedOnly) {
+                        const escalationCell = rowData.eq(7).find('.badge').text().trim();
+                        if (escalationCell === 'Not Escalated') return false;
+                    }
+                    
+                    return true;
+                });
+                
+                table.draw();
+            });
+            
+            // Close the modal
+            $('#filterModal').modal('hide');
+            
+            // Show notification
+            showAlert('Filters applied successfully', 'success');
+        });
+        
+        // Reset filter button
+        $('#resetFilterBtn').on('click', function() {
+            $('#filterForm')[0].reset();
+            $('#status, #result').val('');
+            
+            $.fn.dataTable.ext.search.pop();
+            [companyStatusTable, $('#crossMonthTable').DataTable()].forEach(table => {
+                if (table && table.search) {
+                    table.search('').columns().search('').draw();
+                }
+            });
+            
+            showAlert('Filters reset', 'info');
+        });
+        
+        // Export report button handler
+        $('#exportReportBtn').on('click', function(e) {
+            if ($.fn.dataTable.ext.search.length > 0) {
+                e.preventDefault();
+                
+                const params = new URLSearchParams();
+                if ($('#companyName').val()) params.append('company', $('#companyName').val());
+                if ($('#companyCode').val()) params.append('code', $('#companyCode').val());
+                if ($('#status').val()) params.append('status', $('#status').val());
+                if ($('#result').val()) params.append('result', $('#result').val());
+                if ($('#dateFrom').val()) params.append('date_from', $('#dateFrom').val());
+                if ($('#dateTo').val()) params.append('date_to', $('#dateTo').val());
+                if ($('#escalatedOnly').is(':checked')) params.append('escalated_only', 'true');
+                
+                if ($('#monthSelect').val()) {
+                    params.append('month', $('#monthSelect').val());
+                }
+                
+                window.location.href = $(this).attr('href') + '?' + params.toString();
+            }
+        });
+        
+        // Show alert function
+        function showAlert(message, type) {
+            const alertHtml = `
+                <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : type === 'warning' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            `;
+            
+            $('.alert-container').append(alertHtml);
+            
+            setTimeout(() => {
+                $('.alert-container .alert').alert('close');
+            }, 5000);
+        }
+    });
+</script>
+{% endblock %}
