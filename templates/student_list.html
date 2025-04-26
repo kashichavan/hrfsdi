@@ -2,132 +2,83 @@
 {% load custom_filters %}
 
 {% block extra_head %}
-<!-- Modern Font Imports -->
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
 <style>
-    :root {
-        --primary-color: #ff7905;
-        --primary-dark: #e66a00;
-        --primary-light: #ff9c4d;
-        --danger: #dc3545;
-        --success: #28a745;
-        --info: #17a2b8;
-        --warning: #ffc107;
-        --purple: #6f42c1;
-        --text-primary: #333;
-        --text-secondary: #6c757d;
-        --border-radius: 10px;
-        --box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        --transition: all 0.3s ease;
-    }
-    
-    /* Global Typography */
+    /* Modern Font Styling */
     body {
         font-family: 'Inter', sans-serif;
-        color: var(--text-primary);
     }
-    
-    .card-title, .page-title {
+    h1, h2, h3, h4, h5, h6, .card-title, .page-title {
         font-family: 'Poppins', sans-serif;
         font-weight: 600;
-        letter-spacing: -0.02em;
-    }
-    
-    h4.page-title {
-        font-size: 1.75rem;
-        position: relative;
-        display: inline-block;
-    }
-    
-    h4.page-title:after {
-        content: '';
-        position: absolute;
-        left: 0;
-        bottom: -8px;
-        width: 40px;
-        height: 4px;
-        background: var(--primary-color);
-        border-radius: 2px;
-    }
-    
-    /* Cards with improved styling */
-    .card {
-        border-radius: var(--border-radius);
-        box-shadow: 0 2px 15px rgba(0, 0, 0, 0.05);
-        border: none;
-        overflow: hidden;
-        transition: var(--transition);
-    }
-    
-    .card:hover {
-        box-shadow: var(--box-shadow);
-        transform: translateY(-2px);
-    }
-    
-    .card-header {
-        background-color: #fff;
-        border-bottom: 1px solid rgba(0,0,0,0.05);
-        padding: 1.25rem 1.5rem;
     }
     
     /* Student Type Badges */
     .badge-type {
-        background-color: var(--primary-color);
+        background-color: #ff7905;
         color: white;
-        padding: 4px 12px;
+        padding: 3px 10px;
         border-radius: 50px;
         font-weight: 600;
         font-size: 0.75rem;
-        font-family: 'DM Sans', sans-serif;
-        box-shadow: 0 2px 5px rgba(255, 121, 5, 0.3);
+        box-shadow: 0 2px 5px rgba(78, 115, 223, 0.3);
         display: inline-flex;
         align-items: center;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.03em;
         position: relative;
         overflow: hidden;
-        transition: var(--transition);
+        transition: all 0.3s ease;
     }
     
     .badge-type:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(255, 121, 5, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(78, 115, 223, 0.4);
     }
-    
+
     /* Quick filter buttons */
     .quick-filter-btn {
-        transition: var(--transition);
-        margin-right: 8px;
-        margin-bottom: 8px;
+        transition: all 0.3s ease;
+        margin-right: 5px;
+        margin-bottom: 5px;
         border-radius: 8px;
         border-width: 2px;
         font-weight: 500;
-        font-family: 'DM Sans', sans-serif;
         white-space: nowrap;
-        padding: 8px 16px;
+        font-family: 'Poppins', sans-serif;
         position: relative;
         overflow: hidden;
     }
     
     .quick-filter-btn:hover {
         transform: translateY(-2px);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     }
     
-    .quick-filter-btn.active {
-        font-weight: 600;
+    .quick-filter-btn:active {
+        transform: translateY(0);
     }
     
-    .filter-count {
-        display: inline-block;
-        transition: var(--transition);
+    /* Ripple effect */
+    .ripple {
+        position: absolute;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        transform: scale(0);
+        animation: ripple 0.6s linear;
+        pointer-events: none;
     }
     
-    .quick-filter-btn:hover .filter-count {
-        transform: scale(1.1);
+    @keyframes ripple {
+        to {
+            transform: scale(4);
+            opacity: 0;
+        }
     }
     
     /* Enhanced Multi-Select Styling */
@@ -136,221 +87,180 @@
         padding: 5px;
         border-radius: 8px !important;
         border: 1px solid #dee2e6 !important;
-        font-family: 'Inter', sans-serif;
+        transition: all 0.2s ease;
+    }
+    
+    .select2-container--bootstrap-5 .select2-selection--multiple:focus-within {
+        border-color: #86b7fe !important;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25) !important;
     }
     
     .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-        background: var(--primary-color);
+        background: #ff7905;
         border: none;
         border-radius: 20px;
         color: white;
-        padding: 4px 12px;
-        margin-right: 6px;
-        margin-bottom: 6px;
+        padding: 2px 10px;
+        margin-right: 5px;
+        margin-bottom: 5px;
         font-size: 0.85rem;
-        font-family: 'DM Sans', sans-serif;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        animation: fadeIn 0.3s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
     }
     
     .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
-        color: rgba(255,255,255,0.8);
-        margin-right: 6px;
+        color: rgba(255,255,255,0.7);
+        margin-right: 5px;
         transition: all 0.2s ease;
     }
     
     .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove:hover {
         color: white;
-        background: rgba(0,0,0,0.1);
+        background: rgba(255,255,255,0.2);
         border-radius: 50%;
-    }
-    
-    .select2-dropdown {
-        border-radius: 8px !important;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-        border: 1px solid #eee !important;
-        overflow: hidden;
-    }
-    
-    .select2-dropdown-enhanced {
-        font-family: 'Inter', sans-serif;
-    }
-    
-    .select2-results__option {
-        padding: 8px 12px;
-        transition: all 0.2s ease;
-    }
-    
-    .select2-results__option--highlighted {
-        background-color: rgba(255, 121, 5, 0.1) !important;
-        color: var(--primary-color) !important;
-    }
-    
-    .select2-results__option--selected {
-        background-color: var(--primary-color) !important;
-        color: white !important;
     }
     
     /* Collapsible Filter Section */
     .filter-section {
         max-height: 0;
         overflow: hidden;
-        transition: max-height 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        transition: max-height 0.5s cubic-bezier(0, 1, 0, 1), padding 0.3s ease, opacity 0.3s ease;
         padding: 0 15px;
         opacity: 0;
     }
     
     .filter-section.expanded {
         max-height: 500px;
-        padding: 20px 15px;
+        padding: 15px;
         border-top: 1px solid #eee;
         opacity: 1;
+        transition: max-height 0.5s ease-in-out, padding 0.3s ease, opacity 0.5s ease;
     }
     
     /* Advanced filter toggle button animation */
-    .advanced-filter-btn {
-        position: relative;
-        overflow: hidden;
-    }
-    
     .advanced-filter-btn .toggle-icon {
-        transition: transform 0.3s ease;
+        transition: transform 0.4s ease;
     }
     
     .advanced-filter-btn.active .toggle-icon {
         transform: rotate(180deg);
     }
     
-    .advanced-filter-btn::after {
-        content: '';
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        top: 0;
-        left: -100%;
-        background: linear-gradient(90deg, rgba(0,0,0,0), rgba(255,255,255,0.1), rgba(0,0,0,0));
-        transition: left 0.5s ease;
-    }
-    
-    .advanced-filter-btn:hover::after {
-        left: 100%;
-    }
-    
-    /* Form controls styling */
-    .form-control, .form-select {
-        border-radius: 8px;
-        padding: 10px 15px;
-        font-family: 'Inter', sans-serif;
-        border-color: #e0e0e0;
-        transition: var(--transition);
-    }
-    
-    .form-control:focus, .form-select:focus {
-        box-shadow: 0 0 0 0.25rem rgba(255, 121, 5, 0.25);
-        border-color: var(--primary-color);
-    }
-    
-    label.form-label {
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-    
     /* Table styling */
-    #studentsTable {
-        font-family: 'Inter', sans-serif;
-        border-collapse: separate;
-        border-spacing: 0;
-        width: 100%;
-    }
-    
-    #studentsTable thead th {
-        font-weight: 600;
-        text-transform: uppercase;
-        font-size: 0.75rem;
-        letter-spacing: 0.5px;
-        color: var(--text-secondary);
-        border-bottom: 2px solid #e9ecef;
-        padding: 15px 12px;
-        background-color: #f8f9fa;
-    }
-    
     #studentsTable tbody tr {
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        border-bottom: 1px solid #f0f0f0;
+        transition: all 0.3s ease;
+        animation: fadeInRow 0.5s forwards;
+        opacity: 0;
     }
+    
+    @keyframes fadeInRow {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    #studentsTable tbody tr:nth-child(1) { animation-delay: 0.05s; }
+    #studentsTable tbody tr:nth-child(2) { animation-delay: 0.1s; }
+    #studentsTable tbody tr:nth-child(3) { animation-delay: 0.15s; }
+    #studentsTable tbody tr:nth-child(4) { animation-delay: 0.2s; }
+    #studentsTable tbody tr:nth-child(5) { animation-delay: 0.25s; }
     
     #studentsTable tbody tr:hover {
+        background-color: rgba(247, 250, 255, 0.8);
         transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        z-index: 1;
-        position: relative;
-        background-color: #fcfcfc;
-    }
-    
-    #studentsTable tbody td {
-        padding: 16px 12px;
-        vertical-align: middle;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.05);
     }
     
     /* Progress bar for requirements */
     .progress-thin {
         height: 8px;
         border-radius: 4px;
-        background-color: #ebedf2;
+        overflow: hidden;
+        background-color: #e9ecef;
+        box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+    
+    .progress-thin .progress-bar {
+        transition: width 1s ease;
+        position: relative;
         overflow: hidden;
     }
     
-    .progress-bar {
-        transition: width 1s cubic-bezier(0.65, 0, 0.35, 1);
+    .progress-thin .progress-bar::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        right: 0;
+        background-image: linear-gradient(
+            -45deg,
+            rgba(255, 255, 255, .2) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, .2) 50%,
+            rgba(255, 255, 255, .2) 75%,
+            transparent 75%,
+            transparent
+        );
+        background-size: 50px 50px;
+        animation: progressStripes 2s linear infinite;
+        opacity: 0.5;
+    }
+    
+    @keyframes progressStripes {
+        from { background-position: 0 0; }
+        to { background-position: 50px 0; }
+    }
+    
+    /* Modern card styling */
+    .card {
+        border-radius: 16px;
+        box-shadow: 0 6px 16px rgba(0,0,0,0.05);
+        border: none;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        transform: translateY(-3px);
+    }
+    
+    .card-header {
+        border-radius: 16px 16px 0 0 !important;
+        border-bottom: 1px solid rgba(0,0,0,0.05);
+        padding: 1rem 1.25rem;
+    }
+    
+    .card-footer {
+        border-top: 1px solid rgba(0,0,0,0.05);
+        background-color: #f8f9fa;
+        padding: 0.75rem 1.25rem;
     }
     
     /* Highlight row with 10 or more scheduled requirements */
     .highlight-requirements {
         background-color: rgba(220, 53, 69, 0.08) !important;
-        border-left: 4px solid var(--danger);
-        position: relative;
-        animation: pulseWarning 2s infinite;
-    }
-    
-    @keyframes pulseWarning {
-        0% {
-            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.2);
-        }
-        70% {
-            box-shadow: 0 0 0 10px rgba(220, 53, 69, 0);
-        }
-        100% {
-            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
-        }
+        border-left: 4px solid #dc3545;
+        font-weight: 500;
     }
     
     .highlight-requirements td {
-        padding-top: 18px !important;
-        padding-bottom: 18px !important;
+        padding-top: 15px !important;
+        padding-bottom: 15px !important;
+    }
+    
+    .highlight-requirements:hover {
+        background-color: rgba(220, 53, 69, 0.12) !important;
     }
     
     /* High requirement count text styling */
     .high-requirements-text {
-        color: var(--danger);
-        font-weight: 700;
-        position: relative;
-    }
-    
-    .high-requirements-text::after {
-        content: '!';
-        position: absolute;
-        top: -5px;
-        right: -10px;
-        background-color: var(--danger);
-        color: white;
-        width: 16px;
-        height: 16px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
+        color: #dc3545;
         font-weight: 700;
     }
     
@@ -358,30 +268,30 @@
     .filter-scroll-container {
         width: 100%;
         overflow-x: auto;
-        padding-bottom: 12px;
+        padding-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
-        scrollbar-color: var(--primary-color) #f0f0f0;
     }
     
     .filter-scroll-container::-webkit-scrollbar {
-        height: 6px;
+        height: 5px;
     }
     
     .filter-scroll-container::-webkit-scrollbar-track {
-        background: #f0f0f0;
-        border-radius: 3px;
+        background: #f1f1f1;
+        border-radius: 10px;
     }
     
     .filter-scroll-container::-webkit-scrollbar-thumb {
-        background-color: var(--primary-color);
-        border-radius: 3px;
+        background: #888;
+        border-radius: 10px;
     }
     
     .filter-buttons-container {
         display: flex;
         flex-wrap: nowrap;
         min-width: max-content;
-        padding: 4px;
+        padding: 5px 2px;
     }
     
     /* Search bar styling */
@@ -391,106 +301,76 @@
     
     .search-icon {
         position: absolute;
-        left: 15px;
+        left: 10px;
         top: 50%;
         transform: translateY(-50%);
-        color: var(--text-secondary);
-        transition: var(--transition);
+        color: #6c757d;
+        transition: all 0.3s ease;
     }
     
     .search-input {
-        padding-left: 45px;
+        padding-left: 35px;
         border-radius: 10px;
-        height: 48px;
-        font-size: 1rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        transition: var(--transition);
+        height: 45px;
+        transition: all 0.3s ease;
     }
     
     .search-input:focus {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+        border-color: #86b7fe;
     }
     
     .search-input:focus + .search-icon {
-        color: var(--primary-color);
+        color: #0d6efd;
     }
     
     /* Custom color for Purple button */
     .btn-outline-purple {
-        color: var(--purple);
-        border-color: var(--purple);
+        color: #6f42c1;
+        border-color: #6f42c1;
+        transition: all 0.3s ease;
     }
     
     .btn-outline-purple:hover, .bg-purple {
         color: #fff;
-        background-color: var(--purple);
-        border-color: var(--purple);
-    }
-
-    /* Action buttons */
-    .btn-action {
-        transition: all 0.2s ease;
-        border-radius: 8px;
-        padding: 6px 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        font-family: 'DM Sans', sans-serif;
-    }
-    
-    .btn-action:hover {
+        background-color: #6f42c1;
+        border-color: #6f42c1;
         transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
     }
-    
-    .btn-action i {
-        transition: transform 0.2s ease;
-    }
-    
-    .btn-action:hover i {
-        transform: scale(1.2);
-    }
-    
-    /* Fade in animation for table rows */
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(15px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-    
-    #studentsTable tbody tr {
-        animation: fadeIn 0.4s ease forwards;
-        opacity: 0;
-    }
-    
-    /* Delay the animation for each row */
-    #studentsTable tbody tr:nth-child(1) { animation-delay: 0.1s; }
-    #studentsTable tbody tr:nth-child(2) { animation-delay: 0.15s; }
-    #studentsTable tbody tr:nth-child(3) { animation-delay: 0.2s; }
-    #studentsTable tbody tr:nth-child(4) { animation-delay: 0.25s; }
-    #studentsTable tbody tr:nth-child(5) { animation-delay: 0.3s; }
-    #studentsTable tbody tr:nth-child(6) { animation-delay: 0.35s; }
-    #studentsTable tbody tr:nth-child(7) { animation-delay: 0.4s; }
-    #studentsTable tbody tr:nth-child(8) { animation-delay: 0.45s; }
-    #studentsTable tbody tr:nth-child(9) { animation-delay: 0.5s; }
-    #studentsTable tbody tr:nth-child(10) { animation-delay: 0.55s; }
 
-    /* Empty state styling */
-    .empty-state {
-        padding: 60px 0;
-        text-align: center;
-        background-color: #f8f9fa;
-        border-radius: var(--border-radius);
+    /* Custom color for Dark button (for Dropout) */
+    .btn-outline-dark {
+        color: #212529;
+        border-color: #212529;
+        transition: all 0.3s ease;
     }
     
-    .empty-state i {
-        font-size: 3.5rem;
-        color: #d0d0d0;
-        margin-bottom: 20px;
+    .btn-outline-dark:hover, .bg-dark {
+        color: #fff;
+        background-color: #212529;
+        border-color: #212529;
+        transform: translateY(-2px);
+    }
+    
+    /* Button enhancements */
+    .btn {
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn:active {
+        transform: translateY(0);
+    }
+    
+    /* Empty state animation */
+    .empty-state-icon {
         animation: float 3s ease-in-out infinite;
     }
     
@@ -500,195 +380,115 @@
         100% { transform: translateY(0px); }
     }
     
-    .empty-state h5 {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-        margin-bottom: 10px;
-        font-size: 1.4rem;
+    /* Student count animation */
+    .count-animation {
+        display: inline-block;
     }
     
-    .empty-state p {
-        color: var(--text-secondary);
-        margin-bottom: 20px;
-        max-width: 400px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-    
-    /* Pagination styling */
-    .pagination {
-        margin-bottom: 0;
-    }
-    
-    .page-link {
-        color: var(--text-primary);
-        border: none;
-        padding: 0.4rem 0.75rem;
-        margin: 0 3px;
+    /* Pagination enhancements */
+    .pagination .page-link {
         border-radius: 6px;
-        transition: var(--transition);
-    }
-    
-    .page-link:hover {
-        background-color: #f0f0f0;
-        color: var(--primary-color);
-        z-index: 1;
-    }
-    
-    .page-item.active .page-link {
-        background-color: var(--primary-color);
-        color: white;
-        box-shadow: 0 2px 5px rgba(255, 121, 5, 0.3);
-    }
-    
-    .page-item.disabled .page-link {
-        color: #d0d0d0;
-    }
-    
-    /* Export buttons styling */
-    .btn-group .btn {
-        border-radius: 6px !important;
         margin: 0 2px;
-        font-family: 'DM Sans', sans-serif;
-        font-weight: 500;
+        transition: all 0.2s ease;
     }
     
-    /* DataTable search box */
-    .dataTables_filter input {
-        border-radius: 8px;
-        padding: 8px 12px;
-        border: 1px solid #e0e0e0;
-        font-family: 'Inter', sans-serif;
-        transition: var(--transition);
+    .pagination .page-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        z-index: 10;
     }
     
-    .dataTables_filter input:focus {
-        box-shadow: 0 0 0 0.25rem rgba(255, 121, 5, 0.25);
-        border-color: var(--primary-color);
-        outline: none;
+    .pagination .page-item.active .page-link {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+        box-shadow: 0 2px 5px rgba(13, 110, 253, 0.3);
     }
     
-    /* Uppercase text for degree and stream */
-    .degree-uppercase, .stream-uppercase {
-        font-family: 'DM Sans', sans-serif;
-        font-weight: 500;
-        letter-spacing: 0.03em;
-    }
-    
-    /* Responsive adjustments */
+    /* Mobile optimizations */
     @media (max-width: 768px) {
-        .search-input {
-            height: 42px;
-            font-size: 0.95rem;
+        .card {
+            border-radius: 12px;
         }
         
         .quick-filter-btn {
-            padding: 6px 12px;
-            font-size: 0.85rem;
+            padding: 0.375rem 0.6rem;
+            font-size: 0.875rem;
         }
         
-        h4.page-title {
-            font-size: 1.5rem;
+        .page-title {
+            font-size: 1.25rem;
         }
         
-        #studentsTable thead th {
-            font-size: 0.7rem;
+        #studentsTable td, #studentsTable th {
+            padding: 0.5rem;
+            font-size: 0.875rem;
         }
         
-        #studentsTable tbody td {
-            padding: 12px 8px;
+        .filter-buttons-container {
+            padding-bottom: 5px;
         }
         
-        .btn-action {
-            padding: 4px 8px;
-            font-size: 0.75rem;
+        .search-input {
+            height: 40px;
         }
-    }
-    
-    /* Button hover effects */
-    .btn-primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-        transition: var(--transition);
-    }
-    
-    .btn-primary:hover {
-        background-color: var(--primary-dark);
-        border-color: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 8px rgba(255, 121, 5, 0.3);
-    }
-    
-    /* Tooltip styling */
-    .tooltip {
-        font-family: 'Inter', sans-serif;
-        font-size: 0.75rem;
-    }
-    
-    .tooltip-inner {
-        border-radius: 5px;
-        padding: 8px 12px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container animate__animated animate__fadeIn">
     <!-- Header and quick filters -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="page-title">Student Database</h4>
         <div class="d-flex align-items-center">
-            <span class="text-muted me-2">
-                <i class="fas fa-users me-1"></i>
-                <span id="totalStudents">{{ page_obj.paginator.count }}</span> Students Found
-            </span>
+            <span class="text-muted me-2"><span id="totalStudents" class="count-animation">{{ page_obj.paginator.count }}</span> Students Found</span>
         </div>
     </div>
 
     <!-- Filter and search card -->
-    <div class="card mb-4">
+    <div class="card mb-4 animate__animated animate__fadeInUp animate__faster">
         <div class="card-body">
             <!-- Quick Filter Buttons -->
             <div class="mb-4">
                 <div class="filter-scroll-container">
                     <div class="filter-buttons-container">
                         <!-- All Students -->
-                        <a href="{% url 'student_data:student_list' %}?sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-primary {% if not type_filter %}active{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-primary {% if not type_filter %}active{% endif %}">
                             <i class="fas fa-layer-group me-1"></i> All (<span class="filter-count">{{ type_counts.all|default:0 }}</span>)
                         </a>
                         
                         <!-- FSDI -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=fsdi&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-danger {% if type_filter == 'fsdi' %}active bg-danger text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=fsdi&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-danger {% if type_filter == 'fsdi' %}active bg-danger text-white{% endif %}">
                             <i class="fas fa-laptop-code me-1"></i> FSDI (<span class="filter-count">{{ type_counts.fsdi|default:0 }}</span>)
                         </a>
                         
                         <!-- Super100 -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=super100&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-success {% if type_filter == 'super100' %}active bg-success text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=super100&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-success {% if type_filter == 'super100' %}active bg-success text-white{% endif %}">
                             <i class="fas fa-trophy me-1"></i> Super100 (<span class="filter-count">{{ type_counts.super100|default:0 }}</span>)
                         </a>
                         
                         <!-- Tuition -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=tuition&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-warning {% if type_filter == 'tuition' %}active bg-warning text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=tuition&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-warning {% if type_filter == 'tuition' %}active bg-warning text-white{% endif %}">
                             <i class="fas fa-book-open me-1"></i> Tuition (<span class="filter-count">{{ type_counts.tuition|default:0 }}</span>)
                         </a>
                         
                         <!-- Legend -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=legend&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-info {% if type_filter == 'legend' %}active bg-info text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=legend&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-info {% if type_filter == 'legend' %}active bg-info text-white{% endif %}">
                             <i class="fas fa-fire me-1"></i> Legend (<span class="filter-count">{{ type_counts.legend|default:0 }}</span>)
                         </a>
                         
                         <!-- Placement Activity -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=placement%20activity&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-secondary {% if type_filter == 'placement activity' %}active bg-secondary text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=placement%20activity&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-secondary {% if type_filter == 'placement activity' %}active bg-secondary text-white{% endif %}">
                             <i class="fas fa-briefcase me-1"></i> Placement (<span class="filter-count">{{ type_counts.placement_activity|default:0 }}</span>)
                         </a>
                         
                         <!-- Early Placement -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=early%20placement&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-purple {% if type_filter == 'early placement' %}active bg-purple text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=early%20placement&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-purple {% if type_filter == 'early placement' %}active bg-purple text-white{% endif %}">
                             <i class="fas fa-bolt me-1"></i> Early Placement (<span class="filter-count">{{ type_counts.early_placement|default:0 }}</span>)
                         </a>
 
                         <!-- Dropout -->
-                        <a href="{% url 'student_data:student_list' %}?type_filter=dropout&sort=-scheduled_requirements" class="btn quick-filter-btn btn-outline-dark {% if type_filter == 'dropout' %}active bg-dark text-white{% endif %}">
+                        <a href="{% url 'student_data:student_list' %}?type_filter=dropout&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-dark {% if type_filter == 'dropout' %}active bg-dark text-white{% endif %}">
                             <i class="fas fa-user-slash me-1"></i> Dropout (<span class="filter-count">{{ type_counts.dropout|default:0 }}</span>)
                         </a>
                     </div>
@@ -700,13 +500,15 @@
                 {% if type_filter %}
                 <input type="hidden" name="type_filter" id="typeFilterInput" value="{{ type_filter }}">
                 {% endif %}
+                <input type="hidden" name="sort" value="scheduled_requirements">
+                <input type="hidden" name="order" value="desc">
                 
                 <div class="row align-items-center">
                     <div class="col-md-8">
                         <div class="search-container">
-                            <i class="fas fa-search search-icon"></i>
                             <input type="text" name="search" class="form-control search-input" 
                                    placeholder="Search by name, contact, degree..." value="{{ search_query }}">
+                            <i class="fas fa-search search-icon"></i>
                         </div>
                     </div>
                     <div class="col-md-4 d-flex justify-content-end">
@@ -785,7 +587,7 @@
                         </div>
 
                         <div class="col-12 text-end mt-3">
-                            <a href="{% url 'student_data:student_list' %}?sort=-scheduled_requirements" class="btn btn-outline-secondary me-2">
+                            <a href="{% url 'student_data:student_list' %}?sort=scheduled_requirements&order=desc" class="btn btn-outline-secondary me-2">
                                 <i class="fas fa-times me-1"></i> Clear All
                             </a>
                             <button type="submit" class="btn btn-primary">
@@ -799,24 +601,24 @@
     </div>
 
     <!-- Students Table section -->
-    <div class="card">
+    <div class="card animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h5 class="card-title m-0">Student List</h5>
             <div class="btn-group">
-                <button class="btn btn-sm btn-outline-secondary" id="exportExcel" data-bs-toggle="tooltip" title="Export to Excel">
+                <button class="btn btn-sm btn-outline-secondary" id="exportExcel">
                     <i class="fas fa-file-excel me-1"></i> Excel
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" id="exportPdf" data-bs-toggle="tooltip" title="Export to PDF">
+                <button class="btn btn-sm btn-outline-secondary" id="exportPdf">
                     <i class="fas fa-file-pdf me-1"></i> PDF
                 </button>
-                <button class="btn btn-sm btn-outline-secondary" id="exportPrint" data-bs-toggle="tooltip" title="Print List">
+                <button class="btn btn-sm btn-outline-secondary" id="exportPrint">
                     <i class="fas fa-print me-1"></i> Print
                 </button>
             </div>
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table id="studentsTable" class="table mb-0" style="width:100%">
+                <table id="studentsTable" class="table table-hover mb-0" style="width:100%">
                     <thead class="table-light">
                         <tr>
                             <th>Name</th>
@@ -830,31 +632,21 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for student in page_obj %}
+                        {% for student in page_obj|dictsortreversed:"scheduled_requirements" %}
                         <tr data-type="{{ student.type_of_data|lower }}" 
                             data-degree="{{ student.degree|lower}}"
                             data-stream="{{ student.stream|lower}}"
-                            data-yop="{{ student.yop }}"
+                            data-yop="{{ student.year_of_passing }}"
                             data-tenth="{{ student.tenth_percent }}"
                             data-twelfth="{{ student.twelfth_percent }}"
                             data-degree-percent="{{ student.degree_percent }}"
                             data-requirements="{{ student.scheduled_requirements }}"
                             class="{% if student.scheduled_requirements >= 10 %}highlight-requirements{% endif %}">
-                            <td>
-                                {{ student.display_name|default:student.name|title }}
-                            </td>
-                            <td>
-                                <a href="tel:{{ student.contact_number }}" class="text-decoration-none">
-                                    {{ student.contact_number }}
-                                </a>
-                            </td>
-                            <td class="degree-uppercase">{{ student.display_degree|default:student.degree|upper }}</td>
-                            <td class="stream-uppercase">{{ student.display_stream|default:student.stream|upper }}</td>
-                            <td>
-                                <span class="badge {% if student.degree_percent >= 80 %}bg-success{% elif student.degree_percent >= 60 %}bg-primary{% else %}bg-secondary{% endif %} rounded-pill">
-                                    {{ student.degree_percent }}%
-                                </span>
-                            </td>
+                            <td>{{ student.name|title }}</td>
+                            <td>{{ student.contact_number }}</td>
+                            <td class="degree-uppercase">{{ student.degree|upper }}</td>
+                            <td class="stream-uppercase">{{ student.stream|upper }}</td>
+                            <td>{{ student.degree_percent }}%</td>
                             <td>
                                 <span class="badge-type">
                                     {{ student.type_of_data|title }}
@@ -868,7 +660,8 @@
                                     </span>
                                     <div class="progress progress-thin flex-grow-1">
                                         <div class="progress-bar {% if student.scheduled_requirements >= 10 %}bg-danger{% else %}bg-primary{% endif %}" 
-                                             style="width: {% widthratio student.scheduled_requirements student.total_requirements 100 %}%;">
+                                             style="width: 0%;" 
+                                             data-width="{% widthratio student.scheduled_requirements student.total_requirements 100 %}">
                                         </div>
                                     </div>
                                 </div>
@@ -876,23 +669,23 @@
                             <td>
                                 <div class="d-flex">
                                     <a href="{% url 'student_data:student_detail' student.id %}" 
-                                       class="btn btn-sm btn-outline-primary me-2 btn-action" data-bs-toggle="tooltip" title="View Student Details">
+                                       class="btn btn-sm btn-outline-primary me-2">
                                         <i class="fas fa-eye"></i> View
                                     </a>
                                     <a href="{% url 'student_data:student_delete' student.id %}" 
-                                       class="btn btn-sm btn-outline-danger btn-action" data-bs-toggle="tooltip" title="Delete Student">
-                                        <i class="fas fa-trash"></i> Delete
+                                       class="btn btn-sm btn-outline-danger">
+                                        <i class="fas fa-trash"></i>
                                     </a>
                                 </div>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="8" class="text-center py-5 empty-state">
-                                <i class="fas fa-search fa-2x mb-3"></i>
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-search fa-2x text-muted mb-3 empty-state-icon"></i>
                                 <h5>No students found</h5>
                                 <p class="text-muted">Try adjusting your search or filter criteria</p>
-                                <a href="{% url 'student_data:student_list' %}?sort=-scheduled_requirements" class="btn btn-outline-primary mt-2">
+                                <a href="{% url 'student_data:student_list' %}?sort=scheduled_requirements&order=desc" class="btn btn-outline-primary mt-2">
                                     Reset Filters
                                 </a>
                             </td>
@@ -907,13 +700,13 @@
         {% if page_obj.has_other_pages %}
         <div class="card-footer bg-light d-flex justify-content-between align-items-center">
             <div>
-                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} entries
+                Showing <span class="fw-medium">{{ page_obj.start_index }}</span> to <span class="fw-medium">{{ page_obj.end_index }}</span> of <span class="fw-medium">{{ page_obj.paginator.count }}</span> entries
             </div>
             <nav aria-label="Page navigation">
                 <ul class="pagination pagination-sm mb-0">
                     {% if page_obj.has_previous %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Previous">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}&sort=scheduled_requirements&order=desc{% if type_filter %}&type_filter={{ type_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% for stream in stream_filters %}&stream={{ stream }}{% endfor %}{% if min_yop %}&min_yop={{ min_yop }}{% endif %}{% if max_yop %}&max_yop={{ max_yop }}{% endif %}{% if min_tenth %}&min_tenth={{ min_tenth }}{% endif %}{% if min_twelfth %}&min_twelfth={{ min_twelfth }}{% endif %}{% if min_degree %}&min_degree={{ min_degree }}{% endif %}" aria-label="Previous">
                             <span aria-hidden="true">&laquo;</span>
                         </a>
                     </li>
@@ -929,13 +722,13 @@
                         {% if page_obj.number == num %}
                         <li class="page-item active"><a class="page-link" href="#">{{ num }}</a></li>
                         {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                        <li class="page-item"><a class="page-link" href="?page={{ num }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ num }}</a></li>
+                        <li class="page-item"><a class="page-link" href="?page={{ num }}&sort=scheduled_requirements&order=desc{% if type_filter %}&type_filter={{ type_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% for stream in stream_filters %}&stream={{ stream }}{% endfor %}{% if min_yop %}&min_yop={{ min_yop }}{% endif %}{% if max_yop %}&max_yop={{ max_yop }}{% endif %}{% if min_tenth %}&min_tenth={{ min_tenth }}{% endif %}{% if min_twelfth %}&min_twelfth={{ min_twelfth }}{% endif %}{% if min_degree %}&min_degree={{ min_degree }}{% endif %}">{{ num }}</a></li>
                         {% endif %}
                     {% endfor %}
                     
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" aria-label="Next">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}&sort=scheduled_requirements&order=desc{% if type_filter %}&type_filter={{ type_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}{% if degree_filter %}&degree={{ degree_filter }}{% endif %}{% for stream in stream_filters %}&stream={{ stream }}{% endfor %}{% if min_yop %}&min_yop={{ min_yop }}{% endif %}{% if max_yop %}&max_yop={{ max_yop }}{% endif %}{% if min_tenth %}&min_tenth={{ min_tenth }}{% endif %}{% if min_twelfth %}&min_twelfth={{ min_twelfth }}{% endif %}{% if min_degree %}&min_degree={{ min_degree }}{% endif %}" aria-label="Next">
                             <span aria-hidden="true">&raquo;</span>
                         </a>
                     </li>
@@ -951,18 +744,30 @@
         </div>
         {% endif %}
     </div>
+
+    <!-- Back to top button -->
+    <button id="backToTop" class="btn btn-primary rounded-circle position-fixed" style="bottom: 20px; right: 20px; width: 45px; height: 45px; display: none; z-index: 1000;">
+        <i class="fas fa-arrow-up"></i>
+    </button>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.print.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.colVis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/countup.js/2.0.8/countUp.min.js"></script>
+
 <script>
 $(document).ready(function() {
-    // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl)
-    });
-
     // Initialize Select2 for multiple selection with enhanced styling
     $('#streamSelect').select2({
         theme: 'bootstrap-5',
@@ -973,15 +778,35 @@ $(document).ready(function() {
         tags: false,
         dropdownCssClass: 'select2-dropdown-enhanced'
     });
-
-    // Initialize DataTable with ONLY search functionality
+    
+    // Ripple effect for buttons
+    $(document).on('click', '.btn, .page-link', function(e) {
+        const x = e.clientX - e.target.getBoundingClientRect().left;
+        const y = e.clientY - e.target.getBoundingClientRect().top;
+        
+        const ripple = document.createElement('span');
+        ripple.classList.add('ripple');
+        ripple.style.top = `${y}px`;
+        ripple.style.left = `${x}px`;
+        
+        this.appendChild(ripple);
+        
+        setTimeout(() => {
+            ripple.remove();
+        }, 600);
+    });
+    
+    // Initialize DataTable with correct configuration
     var table = $('#studentsTable').DataTable({
         dom: '<"top"f>rt<"bottom"lip><"clear">',
         responsive: true,
-        paging: false, // Disabled - using Django pagination
-        ordering: false, // Disabled - using Django sorting
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+        order: [[6, 'desc']], // Sort by requirements column (7th column) descending
+        paging: false, // Disabled as we're using Django's pagination
+        ordering: true,
         searching: true,
-        info: false, // Disabled - using our own info display
+        info: false, // Disabled as we're showing our own custom info
         buttons: [
             {
                 extend: 'excel',
@@ -1014,15 +839,18 @@ $(document).ready(function() {
         language: {
             search: "",
             searchPlaceholder: "Search in table..."
-        }
+        },
+        columnDefs: [
+            { "orderable": false, "targets": 7 } // Disable sorting on Actions column
+        ]
     });
-
+    
     // Style the search box
     $('.dataTables_filter input')
         .addClass('form-control form-control-sm')
         .attr('placeholder', 'Search in table...')
         .css('width', '250px');
-
+    
     // Toggle advanced filters with animation
     $('#toggleAdvanced').click(function() {
         $('#advancedFilters').toggleClass('expanded');
@@ -1035,176 +863,189 @@ $(document).ready(function() {
             $(this).find('.toggle-text').html('Filters');
         }
     });
-
-    // Apply active style to quick filter buttons
-    $('.quick-filter-btn').each(function() {
-        if ($(this).hasClass('active')) {
-            $(this).css('box-shadow', '0 4px 10px rgba(0,0,0,0.15)');
-        }
-    });
-
-    // Animate count numbers
-    $('.filter-count').each(function() {
-        var $this = $(this);
-        var countTo = parseInt($this.text());
-        
-        $({ Counter: 0 }).animate({
-            Counter: countTo
-        }, {
-            duration: 1000,
-            easing: 'swing',
-            step: function() {
-                $this.text(Math.ceil(this.Counter));
-            }
-        });
-    });
-
+    
     // Export buttons handlers
     $('#exportExcel').click(function() {
         table.button('.buttons-excel').trigger();
     });
-
+    
     $('#exportPdf').click(function() {
         table.button('.buttons-pdf').trigger();
     });
-
+    
     $('#exportPrint').click(function() {
         table.button('.buttons-print').trigger();
     });
-
+    
     // Function to highlight rows with 10 or more requirements
     function highlightRequirements() {
         $('tr').each(function() {
-            var reqCount = parseInt($(this).data('requirements')) || 0;
+            var reqCount = parseInt($(this).data('requirements'));
             if (reqCount >= 10) {
                 $(this).addClass('highlight-requirements');
                 $(this).find('td:eq(6)').find('span:first').addClass('high-requirements-text');
-                $(this).find('td:eq(6)').find('.progress-bar').addClass('bg-danger').removeClass('bg-primary');
             } else {
                 $(this).removeClass('highlight-requirements');
                 $(this).find('td:eq(6)').find('span:first').removeClass('high-requirements-text');
-                $(this).find('td:eq(6)').find('.progress-bar').removeClass('bg-danger').addClass('bg-primary');
             }
         });
     }
-
+    
     // Run highlight function
     highlightRequirements();
-
+    
     // Global search from our custom search box
     $('input[name="search"]').on('keyup', function() {
         // When user types in our custom search box, update DataTable search
         table.search($(this).val()).draw();
     });
-
-    // Animate progress bars on scroll
-    function animateProgressBars() {
+    
+    // Animate progress bars
+    setTimeout(function() {
         $('.progress-bar').each(function() {
-            var $this = $(this);
-            var width = $this.css('width');
-            $this.css('width', '0%');
-            setTimeout(function() {
-                $this.css({
-                    'width': width,
-                    'transition': 'width 1s cubic-bezier(0.65, 0, 0.35, 1)'
-                });
-            }, 100);
+            var width = $(this).data('width');
+            $(this).css('width', width + '%');
         });
+    }, 300);
+    
+    // Student count animation
+    const totalStudents = parseInt($('#totalStudents').text());
+    const countUp = new CountUp('totalStudents', 0, totalStudents, 0, 1.5, {
+        useEasing: true,
+        useGrouping: true,
+        separator: ',',
+        decimal: '.'
+    });
+    
+    if (!countUp.error) {
+        countUp.start();
     }
-
-    // Run animation on page load
-    animateProgressBars();
-
-    // Make student rows clickable to go to detail view
-    $('#studentsTable tbody tr').css('cursor', 'pointer').click(function(e) {
-        // Only navigate if the click was not on an action button
-        if (!$(e.target).closest('.btn-action').length) {
-            var studentId = $(this).find('a[href*="student_detail"]').attr('href');
-            if (studentId) {
-                window.location.href = studentId;
-            }
+    
+    // Back to top button
+    $(window).scroll(function() {
+        if ($(this).scrollTop() > 300) {
+            $('#backToTop').fadeIn();
+        } else {
+            $('#backToTop').fadeOut();
         }
     });
-
-    // Add hover effect to table rows
-    $('#studentsTable tbody tr').hover(
-        function() {
-            $(this).css('background-color', 'rgba(255, 121, 5, 0.05)');
-        },
-        function() {
-            $(this).css('background-color', '');
+    
+    $('#backToTop').click(function() {
+        $('html, body').animate({scrollTop: 0}, 800);
+        return false;
+    });
+    
+    // Mobile optimization - detect swipe gestures for pagination
+    let touchstartX = 0;
+    let touchendX = 0;
+    
+    document.addEventListener('touchstart', e => {
+        touchstartX = e.changedTouches[0].screenX;
+    });
+    
+    document.addEventListener('touchend', e => {
+        touchendX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+    
+    function handleSwipe() {
+        const threshold = 50;
+        
+        if (touchendX < touchstartX - threshold) {
+            // Swipe left - next page
+            if ($('.pagination .page-item:last-child').prev().find('.page-link').attr('href')) {
+                window.location.href = $('.pagination .page-item:last-child').prev().find('.page-link').attr('href');
+            }
         }
-    );
-
-    // Add ripple effect to buttons
-    function createRipple(event) {
-        const button = event.currentTarget;
         
-        const circle = document.createElement("span");
-        const diameter = Math.max(button.clientWidth, button.clientHeight);
-        const radius = diameter / 2;
+        if (touchendX > touchstartX + threshold) {
+            // Swipe right - previous page
+            if ($('.pagination .page-item:first-child').next().find('.page-link').attr('href')) {
+                window.location.href = $('.pagination .page-item:first-child').next().find('.page-link').attr('href');
+            }
+        }
+    }
+    
+    // Enhanced hover states for table rows
+    $('#studentsTable tbody').on('mouseenter', 'tr', function() {
+        $(this).addClass('table-hover-state');
+    }).on('mouseleave', 'tr', function() {
+        $(this).removeClass('table-hover-state');
+    });
+    
+    // Add tooltips to the badge types
+    $('.badge-type').each(function() {
+        const type = $(this).text().trim();
+        let description = '';
         
-        circle.style.width = circle.style.height = `${diameter}px`;
-        circle.style.left = `${event.clientX - button.offsetLeft - radius}px`;
-        circle.style.top = `${event.clientY - button.offsetTop - radius}px`;
-        circle.classList.add("ripple");
-        
-        const ripple = button.getElementsByClassName("ripple")[0];
-        
-        if (ripple) {
-            ripple.remove();
+        switch(type.toLowerCase()) {
+            case 'fsdi':
+                description = 'Full Stack Developer Intensive';
+                break;
+            case 'super100':
+                description = 'Top 100 Performing Students';
+                break;
+            case 'tuition':
+                description = 'Regular Tuition Program';
+                break;
+            case 'legend':
+                description = 'Advanced Performance Program';
+                break;
+            case 'placement activity':
+                description = 'Active Placement Program';
+                break;
+            case 'early placement':
+                description = 'Early Career Placement';
+                break;
+            case 'dropout':
+                description = 'Discontinued Program';
+                break;
+            default:
+                description = type;
         }
         
-        button.appendChild(circle);
-    }
-
-    // Add ripple style
-    $('<style>')
-        .prop('type', 'text/css')
-        .html(`
-            .btn {
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .ripple {
-                position: absolute;
-                border-radius: 50%;
-                background-color: rgba(255, 255, 255, 0.7);
-                transform: scale(0);
-                animation: ripple 0.6s linear;
-                pointer-events: none;
-            }
-            
-            @keyframes ripple {
-                to {
-                    transform: scale(4);
-                    opacity: 0;
-                }
-            }
-        `).appendTo('head');
-
-    // Add click event for ripple
-    const buttons = document.getElementsByClassName("btn");
-    for (const button of buttons) {
-        button.addEventListener("click", createRipple);
-    }
-
-    // Check if advanced filters should be expanded on page load
-    const urlParams = new URLSearchParams(window.location.search);
-    const hasAdvancedFilters = 
-        urlParams.has('degree') || 
-        urlParams.has('stream') || 
-        urlParams.has('min_yop') || 
-        urlParams.has('max_yop') ||
-        urlParams.has('min_tenth') ||
-        urlParams.has('min_twelfth') ||
-        urlParams.has('min_degree');
-
-    if (hasAdvancedFilters) {
-        $('#advancedFilters').addClass('expanded');
-        $('#toggleAdvanced').addClass('active');
-        $('#toggleAdvanced').find('.toggle-text').html('Hide Filters');
+        $(this).attr('title', description);
+        $(this).attr('data-bs-toggle', 'tooltip');
+        $(this).attr('data-bs-placement', 'top');
+    });
+    
+    // Initialize Bootstrap tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Add responsive touch features for filters on mobile
+    if (window.innerWidth <= 768) {
+        const filterContainer = document.querySelector('.filter-scroll-container');
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+        
+        filterContainer.addEventListener('mousedown', (e) => {
+            isDown = true;
+            filterContainer.classList.add('active');
+            startX = e.pageX - filterContainer.offsetLeft;
+            scrollLeft = filterContainer.scrollLeft;
+        });
+        
+        filterContainer.addEventListener('mouseleave', () => {
+            isDown = false;
+            filterContainer.classList.remove('active');
+        });
+        
+        filterContainer.addEventListener('mouseup', () => {
+            isDown = false;
+            filterContainer.classList.remove('active');
+        });
+        
+        filterContainer.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - filterContainer.offsetLeft;
+            const walk = (x - startX) * 2;
+            filterContainer.scrollLeft = scrollLeft - walk;
+        });
     }
 });
 </script>

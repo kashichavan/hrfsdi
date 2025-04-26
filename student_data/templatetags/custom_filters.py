@@ -109,3 +109,10 @@ def replace(value, arg):
     """
     old, new = arg.split(',')
     return value.replace(old, new)
+
+@register.simple_tag(takes_context=True)
+def url_replace(context, **kwargs):
+    query = context['request'].GET.copy()
+    for k, v in kwargs.items():
+        query[k] = v
+    return query.urlencode()
