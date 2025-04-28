@@ -96,6 +96,6 @@ urlpatterns = [
      path('requirement/<int:pk>/export/', views.export_requirement_students_excel, name='export_requirement_students_excel'),
       path('placed-outside/', views.students_placed_outside, name='placed_outside'),
      path('monthly-reports/download-excel/', views.ExportHRReportExcelView.as_view(), name='export_hr_excel'),
-      path('update-escalation/', views.update_escalation, name='update_escalation'),
-
+      path('update-escalation/<int:pk>/', views.update_escalation, name='update_escalation'),
+       path('mark_as_scheduled/', views.mark_as_scheduled, name='mark_as_scheduled'),
 ]

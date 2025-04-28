@@ -624,6 +624,8 @@ def add_requirement(request):
         'title': 'Add New Requirement'
     })
 
+from django.utils.http import url_has_allowed_host_and_scheme
+
 @login_required
 def requirement_detail(request, pk):
     requirement = get_object_or_404(Requirement, pk=pk)
@@ -635,6 +637,11 @@ def requirement_detail(request, pk):
     pending_students = requirement_students.filter(status='pending').count()
     on_hold_students = requirement_students.filter(status='on_hold').count()
     
+    # Get previous page URL
+    previous_url = request.META.get('HTTP_REFERER')  
+    if previous_url and not url_has_allowed_host_and_scheme(previous_url, allowed_hosts={request.get_host()}):
+        previous_url = None
+
     context = {
         'requirement': requirement,
         'requirement_students': requirement_students,
@@ -643,11 +650,10 @@ def requirement_detail(request, pk):
         'rejected_students': rejected_students,
         'pending_students': pending_students,
         'on_hold_students': on_hold_students,
+        'previous_url': previous_url,  # add to context
     }
     
     return render(request, 'requirement_detail.html', context)
-
-
 import io
 import pandas as pd
 from django.http import HttpResponse
@@ -2238,12 +2244,17 @@ from django.utils.timezone import now
 from django.http import HttpResponse
 import datetime
 import openpyxl
+from .models import Requirement, RequirementStudent
 
 class MonthlyReportsView(TemplateView):
     template_name = 'monthly_reports.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        current_month = now().date().replace(day=1)
+        context['current_month'] = current_month
+
+        # Get all months with requirements for dropdown
         months = Requirement.objects.exclude(schedule_date__isnull=True).dates('schedule_date', 'month', order='DESC')
         context['months'] = months
         context['monthly_summary'] = self.get_monthly_summary_data()
@@ -2253,7 +2264,13 @@ class MonthlyReportsView(TemplateView):
             try:
                 month_date = datetime.datetime.strptime(selected_month, '%Y-%m').date()
                 context['selected_month'] = month_date
-                context.update(self.get_month_details(month_date))
+                month_details = self.get_month_details(month_date)
+                context.update(month_details)
+                
+                # Add not scheduled and pending requirements to context
+                context['not_scheduled_list'] = month_details.get('not_scheduled_list', [])
+                context['pending_requirements'] = month_details.get('pending_requirements', [])
+                
                 cross_reqs = self.get_cross_month_requirements(month_date)
                 context['cross_month_requirements'] = [
                     {
@@ -2271,29 +2288,26 @@ class MonthlyReportsView(TemplateView):
             except ValueError:
                 pass
         else:
+            # Show current month by default
+            context.update(self.get_month_details(current_month))
             context['cross_month_requirements'] = []
 
         return context
 
     def get_monthly_summary_data(self):
-        months = Requirement.objects.exclude(schedule_date__isnull=True).annotate(
-            month=TruncMonth('schedule_date')
+        months = Requirement.objects.annotate(
+            month=TruncMonth('requirement_date')
         ).values('month').annotate(
             total=Count('id'),
-            scheduled=Count('id', filter=Q(
-                schedule_date__year=F('requirement_date__year'),
-                schedule_date__month=F('requirement_date__month')
-            )),
-            not_scheduled=Count('id', filter=~Q(
-                schedule_date__year=F('requirement_date__year'),
-                schedule_date__month=F('requirement_date__month')
-            )),
+            scheduled=Count('id', filter=Q(schedule_date__isnull=False)),
+            not_scheduled=Count('id', filter=Q(schedule_date__isnull=True)),
             escalated=Count('id', filter=Q(escalation__isnull=False) & ~Q(escalation='')),
+            pending=Count('id', filter=Q(schedule_date__isnull=False) & Q(scheduled_details__result__isnull=True)),
         ).order_by('-month')
 
-        # Get completed rounds separately
-        completed_reqs = Requirement.objects.exclude(schedule_date__isnull=True).annotate(
-            month=TruncMonth('schedule_date')
+        # Completed Rounds
+        completed_reqs = Requirement.objects.annotate(
+            month=TruncMonth('requirement_date')
         ).values('month').annotate(
             completed_rounds=Count('id', filter=Q(
                 Q(scheduled_details__result__in=['selected', 'no_selects']) |
@@ -2302,12 +2316,11 @@ class MonthlyReportsView(TemplateView):
         )
         completed_dict = {item['month']: item['completed_rounds'] for item in completed_reqs}
 
-        # Get placements separately
+        # Placements
         placement_counts = RequirementStudent.objects.filter(
-            status='selected',
-            requirement__schedule_date__isnull=False
+            status='selected'
         ).annotate(
-            month=TruncMonth('requirement__schedule_date')
+            month=TruncMonth('requirement__requirement_date')
         ).values('month').annotate(
             placed=Count('student', distinct=True)
         )
@@ -2315,57 +2328,87 @@ class MonthlyReportsView(TemplateView):
 
         summaries = []
         for m in months:
-            m['placed'] = placement_dict.get(m['month'], 0)
             m['completed_rounds'] = completed_dict.get(m['month'], 0)
+            m['placed'] = placement_dict.get(m['month'], 0)
             summaries.append(m)
 
         return summaries
 
     def get_month_details(self, month_date):
         details = {}
-        requirements = Requirement.objects.filter(
-            schedule_date__year=month_date.year,
-            schedule_date__month=month_date.month
+
+        # Requirements posted in that month
+        month_reqs = Requirement.objects.filter(
+            requirement_date__year=month_date.year,
+            requirement_date__month=month_date.month
         ).select_related('scheduled_details')
 
-        total_reqs = requirements.count()
-        scheduled_companies = requirements.filter(
-            schedule_date__year=F('requirement_date__year'),
-            schedule_date__month=F('requirement_date__month')
-        ).count()
+        total_reqs = month_reqs.count()
+        scheduled_reqs = month_reqs.filter(schedule_date__isnull=False)
+        not_scheduled_reqs = month_reqs.filter(schedule_date__isnull=True)
+        escalated_reqs = month_reqs.exclude(escalation__isnull=True).exclude(escalation='')
 
-        all_rounds_completed = requirements.filter(
+        # Metrics
+        scheduled_companies = scheduled_reqs.count()
+        not_scheduled_companies = not_scheduled_reqs.count()
+        escalated_companies = escalated_reqs.count()
+
+        # Pending requirements (scheduled but no result updated)
+        pending_reqs = scheduled_reqs.filter(scheduled_details__result__isnull=True)
+        pending_companies = pending_reqs.count()
+
+        # Completed rounds
+        all_rounds_completed = scheduled_reqs.filter(
             Q(scheduled_details__result__in=['selected', 'no_selects']) |
             Q(requirementstudent__status='selected')
         ).distinct().count()
 
-        ongoing_companies = requirements.filter(
-            scheduled_details__result__isnull=True
-        ).count()
-
-        escalated_companies = requirements.exclude(
-            escalation__isnull=True
-        ).exclude(
-            escalation=''
-        )
-
+        # Placements
         placements = RequirementStudent.objects.filter(
             status='selected',
-            requirement__schedule_date__year=month_date.year,
-            requirement__schedule_date__month=month_date.month
+            requirement__requirement_date__year=month_date.year,
+            requirement__requirement_date__month=month_date.month
         ).values('student').distinct().count()
+
+        # Prepare not scheduled list
+        not_scheduled_list = []
+        for req in not_scheduled_reqs:
+            not_scheduled_list.append({
+                'id': req.id,
+                'company_name': req.company_name,
+                'company_code': req.company_code,
+                'requirement_date': req.requirement_date,
+                'escalation': req.escalation or '',
+                'schedule_status': req.schedule_status
+            })
+
+        # Prepare pending requirements list
+        pending_requirements = []
+        for req in pending_reqs:
+            scheduled = getattr(req, 'scheduled_details', None)
+            pending_requirements.append({
+                'id': req.id,
+                'company_name': req.company_name,
+                'company_code': req.company_code,
+                'schedule_date': req.schedule_date,
+                'scheduled_details': scheduled,
+            })
 
         details.update({
             'total_requirements': total_reqs,
             'scheduled_companies': scheduled_companies,
-            'all_rounds_completed': all_rounds_completed,
-            'ongoing_companies': ongoing_companies,
+            'not_scheduled_companies': not_scheduled_companies,
+            'pending_companies': pending_companies,
             'escalated_companies': escalated_companies,
+            'all_rounds_completed': all_rounds_completed,
             'placements': placements,
             'company_status': [],
+            'not_scheduled_list': not_scheduled_list,
+            'pending_requirements': pending_requirements,
         })
 
-        for req in requirements:
+        # Company-wise status
+        for req in scheduled_reqs:
             scheduled = getattr(req, 'scheduled_details', None)
             details['company_status'].append({
                 'id': req.id,
@@ -2397,6 +2440,36 @@ class MonthlyReportsView(TemplateView):
             )
         )
         return qs
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+from .models import Requirement, ScheduledRequirement
+from django.utils import timezone
+
+def mark_as_scheduled(request, requirement_id):
+    requirement = get_object_or_404(Requirement, id=requirement_id)
+
+    if request.method == 'POST':
+        result_status = request.POST.get('result_status')  # Get the result status from the form
+        
+        # Update the requirement
+        requirement.is_scheduled = True
+        requirement.schedule_status = 'scheduled'
+        requirement.schedule_date = timezone.now().date()
+        requirement.result_status = result_status  # Save the selected result status
+        requirement.save()
+
+        # Create or update ScheduledRequirement
+        ScheduledRequirement.objects.get_or_create(
+            requirement=requirement,
+            defaults={'scheduled_date': requirement.schedule_date}
+        )
+        
+        return redirect('student_data:monthly_reports')
+
+    # If GET request, show a form to pick result status
+    return render(request, 'mark_as_scheduled.html', {'requirement': requirement})
+
 
 
 # Excel export view
@@ -2437,32 +2510,24 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
   # Import your actual model
 
-def update_escalation(request):
+def update_escalation(request, pk):
     if request.method == 'POST':
-        try:
-            requirement_id = request.POST.get('id')
-            escalation_status = request.POST.get('escalation')
-            
-            # Handle "Other" reason
-            if escalation_status == 'Other':
-                escalation_status = request.POST.get('other_reason', '').strip()
-                if not escalation_status:
-                    messages.error(request, 'Please specify the escalation reason')
-                    return redirect(request.META.get('HTTP_REFERER', '/'))
-            
-            # Get and update the requirement
-            requirement = Requirement.objects.get(id=requirement_id)
-            requirement.escalation = escalation_status
-            requirement.save()
-            
-            messages.success(request, 'Escalation status updated successfully!')
-            
-        except Requirement.DoesNotExist:
-            messages.error(request, 'Requirement not found')
-        except Exception as e:
-            messages.error(request, f'Error updating escalation: {str(e)}')
+        # Get the requirement object
+        requirement = get_object_or_404(Requirement, pk=pk)
+        
+        # Get form data
+        escalation_reason = request.POST.get('reason')
+        escalation_priority = request.POST.get('priority')
+        
+        # Update the requirement with escalation info
+        requirement.escalation = f"{escalation_priority}: {escalation_reason}"
+        requirement.save()
+        
+        messages.success(request, f"Escalation raised for {requirement.company_name}")
+        return redirect('student_data:monthly_reports')  # Adjust to your actual redirect URL
     
-    return redirect(request.META.get('HTTP_REFERER', '/'))
+    # If not POST, redirect back
+    return redirect('student_data:monthly_reports')
 
 from django.views.generic.edit import UpdateView
 from django.urls import reverse_lazy

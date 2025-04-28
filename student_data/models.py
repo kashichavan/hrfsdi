@@ -4,6 +4,7 @@ from django.utils import timezone
 from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from datetime import timedelta
+from django.db import transaction
 
 class Requirement(models.Model):
     SCHEDULE_STATUS_CHOICES = [
@@ -76,7 +77,7 @@ class Student(models.Model):
         return self.name
     
     def save(self, *args, **kwargs):
-        # 🧹 Clean fields before saving
+        # Clean fields before saving
         if self.name:
             self.name = self.name.title()  # Proper case
         if self.degree:
@@ -93,7 +94,7 @@ class Student(models.Model):
         self.save(update_fields=['total_requirements', 'scheduled_requirements'])
 
     def update_placement_status(self):
-        new_status = self.requirementstudent_set.filter(status='selected').exists()
+        new_status = self.requirementstudent_set.filter(status='selected').exists() or hasattr(self, 'placed_outside')
         if self.is_placed != new_status:
             self.is_placed = new_status
             self.save(update_fields=['is_placed'])
@@ -191,6 +192,23 @@ class ScheduledRequirement(models.Model):
         ordering = ['-scheduled_date']
 
 
+class GotPlacedOutside(models.Model):
+    student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='placed_outside')
+    company_name = models.CharField(max_length=100, blank=True, null=True)
+    package = models.CharField(max_length=50, blank=True, null=True)
+    role = models.CharField(max_length=100, blank=True, null=True)
+    placed_date = models.DateField(default=timezone.now)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Set is_placed = True on the student
+        self.student.is_placed = True
+        self.student.save()
+
+    def __str__(self):
+        return f"{self.student.name} placed at {self.company_name}"
+
+
 # Signal Handlers
 @receiver(pre_save, sender=Requirement)
 def track_schedule_status_change(sender, instance, **kwargs):
@@ -207,62 +225,75 @@ def handle_scheduled_requirement(sender, instance, created, **kwargs):
     try:
         if instance.is_scheduled:
             # Get or create scheduled details if they don't exist
-            scheduled_details, created = ScheduledRequirement.objects.get_or_create(
+            ScheduledRequirement.objects.get_or_create(
                 requirement=instance,
                 defaults={'scheduled_date': instance.schedule_date or timezone.now().date()}
             )
-            
-            # Update scheduled date if it changed
-            if not created and instance.schedule_date != scheduled_details.scheduled_date:
-                scheduled_details.scheduled_date = instance.schedule_date
-                scheduled_details.save()
         else:
-            # Try to delete scheduled details if they exist
-            try:
-                if hasattr(instance, 'scheduled_details'):
-                    instance.scheduled_details.delete()
-            except (ScheduledRequirement.DoesNotExist, AttributeError, ValueError):
-                # Handle cases where the object doesn't exist or is invalid
-                pass
+            # Schedule cleanup for after transaction completes
+            transaction.on_commit(
+                lambda: cleanup_scheduled_requirement(instance)
+            )
     except Exception as e:
         # Log the error if needed
         print(f"Error handling scheduled requirement: {str(e)}")
+
+def cleanup_scheduled_requirement(requirement):
+    """Clean up scheduled requirement after transaction completes"""
+    try:
+        if hasattr(requirement, 'scheduled_details'):
+            requirement.scheduled_details.delete()
+    except (ScheduledRequirement.DoesNotExist, AttributeError, ValueError):
+        pass
 
 @receiver(post_save, sender=Requirement)
 def update_student_counts_on_schedule_change(sender, instance, created, **kwargs):
     if not created and hasattr(instance, '_old_status'):
         if instance._old_status != instance.schedule_status:
-            instance.update_student_counts()
+            transaction.on_commit(instance.update_student_counts)
         if hasattr(instance, '_old_is_scheduled') and instance._old_is_scheduled != instance.is_scheduled:
-            instance.update_student_counts()
+            transaction.on_commit(instance.update_student_counts)
 
 @receiver(post_save, sender=RequirementStudent)
 def handle_requirement_student_save(sender, instance, created, **kwargs):
-    # Update both student counts and placement status
-    instance.student.update_requirement_counts()
-    instance.student.update_placement_status()
+    # Schedule updates for after transaction completes
+    transaction.on_commit(instance.student.update_requirement_counts)
+    transaction.on_commit(instance.student.update_placement_status)
 
 @receiver(post_delete, sender=RequirementStudent)
 def handle_requirement_student_delete(sender, instance, **kwargs):
-    # Update both student counts and placement status
-    instance.student.update_requirement_counts()
-    instance.student.update_placement_status()
+    # Schedule updates for after transaction completes
+    transaction.on_commit(instance.student.update_requirement_counts)
+    transaction.on_commit(instance.student.update_placement_status)
 
-from django.db import models
-from django.utils import timezone
+@receiver(pre_save, sender=ScheduledRequirement)
+def track_result_change(sender, instance, **kwargs):
+    if instance.pk:
+        try:
+            old_instance = ScheduledRequirement.objects.get(pk=instance.pk)
+            instance._old_result = old_instance.result
+        except ScheduledRequirement.DoesNotExist:
+            pass
 
-class GotPlacedOutside(models.Model):
-    student = models.OneToOneField(Student, on_delete=models.CASCADE, related_name='placed_outside')
-    company_name = models.CharField(max_length=100,blank=True, null=True)
-    package = models.CharField(max_length=50, blank=True, null=True)
-    role = models.CharField(max_length=100, blank=True, null=True)
-    placed_date = models.DateField(default=timezone.now)
+@receiver(post_save, sender=ScheduledRequirement)
+def update_requirement_status_from_result(sender, instance, created, **kwargs):
+    if not created and hasattr(instance, '_old_result') and instance._old_result != instance.result:
+        def update_status():
+            requirement = Requirement.objects.get(pk=instance.requirement_id)
+            if instance.result in ['selected', 'no_selects', 'partial_scheduled']:
+                requirement.schedule_status = 'completed'
+            elif instance.result in ['cancelled', 'postponed']:
+                requirement.schedule_status = 'cancelled'
+            requirement.save()
+        
+        transaction.on_commit(update_status)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        # Set is_placed = True on the student
-        self.student.is_placed = True
-        self.student.save()
-
-    def __str__(self):
-        return f"{self.student.name} placed at {self.company_name}"
+@receiver(post_delete, sender=ScheduledRequirement)
+def handle_scheduled_requirement_delete(sender, instance, **kwargs):
+    def cleanup_requirement():
+        requirement = Requirement.objects.get(pk=instance.requirement_id)
+        requirement.is_scheduled = False
+        requirement.schedule_status = 'not_scheduled'
+        requirement.save()
+    
+    transaction.on_commit(cleanup_requirement)
