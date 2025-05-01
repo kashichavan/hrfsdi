@@ -1,6 +1,43 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import Requirement, Student, RequirementStudent, ScheduledRequirement
+from django.utils import timezone
+from .models import (
+    Student, Subject, StudentSubjectRating, 
+    Requirement, RequirementStudent,
+    ScheduledRequirement, GotPlacedOutside
+)
+from .forms import *
+
+@admin.register(Subject)
+class SubjectAdmin(admin.ModelAdmin):
+    list_display = ('name', 'get_name_display', 'is_active', 'created_at')
+    list_filter = ('is_active',)
+    search_fields = ('name',)
+    ordering = ('name',)
+    actions = ['activate_subjects', 'deactivate_subjects']
+
+    def activate_subjects(self, request, queryset):
+        queryset.update(is_active=True)
+    activate_subjects.short_description = "Activate selected subjects"
+
+    def deactivate_subjects(self, request, queryset):
+        queryset.update(is_active=False)
+    deactivate_subjects.short_description = "Deactivate selected subjects"
+
+
+class StudentSubjectRatingInline(admin.TabularInline):
+    model = StudentSubjectRating
+    extra = 1
+    fields = ('subject', 'rating', 'remarks', 'evaluated_by', 'evaluated_at')
+    readonly_fields = ('evaluated_at',)
+    autocomplete_fields = ('subject',)
+
+from .models import *
+class RequirementSubjectInline(admin.TabularInline):
+    model = RequirementSubject
+    extra = 1
+    autocomplete_fields = ['subject']  # Allow autocomplete for subjects
+    fk_name = 'requirement'  # Link to the Requirement model
 
 class RequirementStudentInline(admin.TabularInline):
     model = RequirementStudent
