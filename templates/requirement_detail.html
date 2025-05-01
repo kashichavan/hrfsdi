@@ -647,6 +647,37 @@ body, p, table, .btn, .form-control {
         font-size: 1.5rem;
     }
 }
+/* Skill badge styling */
+.skill-badge {
+        background: linear-gradient(145deg, rgba(255, 119, 0, 0.1), rgba(255, 158, 64, 0.15));
+        border: 1px solid rgba(255, 119, 0, 0.2);
+        transition: all 0.3s ease;
+    }
+    
+    .skill-badge:hover {
+        background: linear-gradient(145deg, rgba(255, 119, 0, 0.15), rgba(255, 158, 64, 0.25));
+        transform: translateY(-2px);
+        box-shadow: 0 3px 6px rgba(255, 119, 0, 0.1);
+    }
+    
+    /* Progress bar animation */
+    .progress-bar {
+        transition: width 1s ease;
+        background-size: 150% 150%;
+        animation: gradientAnimation 2s ease infinite;
+    }
+    
+    @keyframes gradientAnimation {
+        0% {
+            background-position: 0% 50%;
+        }
+        50% {
+            background-position: 100% 50%;
+        }
+        100% {
+            background-position: 0% 50%;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -789,6 +820,106 @@ body, p, table, .btn, .form-control {
             </div>
         </div>
     </div>
+ 
+    
+<!-- Academic Percentages & Skills Card -->
+<div class="card fade-in" style="animation-delay: 0.2s">
+    <div class="card-header">
+        <div class="d-flex align-items-center">
+            <span class="card-icon"><i class="fas fa-graduation-cap"></i></span>
+            Academic Requirements & Skills
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <!-- Academic Percentages Section -->
+            <div class="col-md-6">
+                <h5 class="mb-3 fw-semibold"><i class="fas fa-percent text-primary me-2"></i>Academic Percentages</h5>
+                <table class="info-table">
+                    {% if academic_percentages.10th is not None %}
+                    <tr>
+                        <th>10th Standard</th>
+                        <td>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ academic_percentages.10th }}%; background: var(--primary-gradient);" 
+                                     aria-valuenow="{{ academic_percentages.10th }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="badge bg-primary mt-1">{{ academic_percentages.10th }}%</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% if academic_percentages.12th is not None %}
+                    <tr>
+                        <th>12th Standard</th>
+                        <td>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ academic_percentages.12th }}%; background: var(--primary-gradient);" 
+                                     aria-valuenow="{{ academic_percentages.12th }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="badge bg-primary mt-1">{{ academic_percentages.12th }}%</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% if academic_percentages.degree is not None %}
+                    <tr>
+                        <th>Degree</th>
+                        <td>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ academic_percentages.degree }}%; background: var(--primary-gradient);" 
+                                     aria-valuenow="{{ academic_percentages.degree }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="badge bg-primary mt-1">{{ academic_percentages.degree }}%</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% if academic_percentages.masters is not None %}
+                    <tr>
+                        <th>Masters</th>
+                        <td>
+                            <div class="progress" style="height: 8px;">
+                                <div class="progress-bar" role="progressbar" style="width: {{ academic_percentages.masters }}%; background: var(--primary-gradient);" 
+                                     aria-valuenow="{{ academic_percentages.masters }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <span class="badge bg-primary mt-1">{{ academic_percentages.masters }}%</span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    
+                    {% if not academic_percentages.10th and not academic_percentages.12th and not academic_percentages.degree and not academic_percentages.masters %}
+                    <tr>
+                        <td colspan="2" class="text-center text-muted py-3">No academic percentage requirements specified</td>
+                    </tr>
+                    {% endif %}
+                </table>
+            </div>
+            
+            <!-- Skills Section -->
+            <div class="col-md-6">
+                <h5 class="mb-3 fw-semibold"><i class="fas fa-tools text-primary me-2"></i>Required Skills</h5>
+                <!-- Subjects Section (if you have subjects) -->
+                {% if requirement_subjects %}
+
+                <div class="d-flex flex-wrap gap-2">
+                    {% for req_subject in requirement_subjects %}
+                        <span class="company-badge">
+                            <i class="fas fa-book-open me-1"></i>
+                            {% if req_subject.custom_name %}
+                                {{ req_subject.custom_name }}
+                            {% else %}
+                                {{ req_subject.subject.name }}
+                            {% endif %}
+                        </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 
     <!-- Students Table Card -->
     <div class="card fade-in" style="animation-delay: 0.3s">
@@ -1265,6 +1396,24 @@ document.getElementById('driveResultForm').addEventListener('submit', function(e
             dom: '<"top"lf>rt<"bottom"ip>'
         });
     }
+    const skillBadges = document.querySelectorAll('.skill-badge');
+        gsap.from(skillBadges, {
+            opacity: 0,
+            y: 10,
+            stagger: 0.05,
+            duration: 0.4,
+            ease: "power2.out",
+            delay: 0.5
+        });
+        
+        // Animation for progress bars
+        gsap.from(".progress-bar", {
+            width: 0,
+            duration: 1,
+            ease: "power2.out",
+            delay: 0.7,
+            stagger: 0.1
+        });
 });
 </script>
 {% endblock %}

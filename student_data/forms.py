@@ -1,5 +1,5 @@
 from django import forms
-from .models import Requirement
+from .models import *
 
 
 class BaseRequirementForm(forms.ModelForm):
@@ -10,6 +10,35 @@ class BaseRequirementForm(forms.ModelForm):
         widget=forms.RadioSelect,
         label="Is Scheduled"
     )
+    subjects = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.filter(is_active=True),
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label="Subjects",
+    )
+    percentage_10th = forms.FloatField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '10th Percentage'})
+    )
+    percentage_12th = forms.FloatField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': '12th Percentage'})
+    )
+    percentage_degree = forms.FloatField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Degree Percentage'})
+    )
+    percentage_master = forms.FloatField(
+        required=False,
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Master\'s Percentage'})
+    )
+    
+    other_subject_name = forms.CharField(
+        required=False,
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Specify other subject'}),
+        label="Other Subject Name"
+    )
+    
 
     class Meta:
         model = Requirement
@@ -20,6 +49,9 @@ class BaseRequirementForm(forms.ModelForm):
             'is_scheduled',
             'schedule_date',
             'description',
+            'subjects',
+            'other_subject_name',
+            'percentage_10th', 'percentage_12th', 'percentage_degree', 'percentage_master',
         ]
         widgets = {
             'company_name': forms.TextInput(attrs={'class': 'form-control'}),
@@ -33,12 +65,16 @@ class BaseRequirementForm(forms.ModelForm):
         cleaned_data = super().clean()
         is_scheduled = cleaned_data.get('is_scheduled')
         schedule_date = cleaned_data.get('schedule_date')
+        subjects = cleaned_data.get('subjects')
+        other_subject_name = cleaned_data.get('other_subject_name')
 
         if is_scheduled and not schedule_date:
             self.add_error('schedule_date', 'Schedule date is required when the requirement is scheduled.')
 
-        return cleaned_data
+        if subjects and Subject.objects.filter(name='other').first() in subjects and not other_subject_name:
+            self.add_error('other_subject_name', 'Please specify the other subject name.')
 
+        return cleaned_data
 
 class RequirementForm(BaseRequirementForm):
     student_file = forms.FileField(
@@ -53,6 +89,11 @@ class RequirementForm(BaseRequirementForm):
         widget=forms.TextInput(attrs={'class': 'form-control'})
     )
 
+
+
+class SubjectPercentageForm(forms.Form):
+    subject = forms.ModelChoiceField(queryset=Subject.objects.all())
+    percentage = forms.IntegerField(min_value=1, max_value=100, initial=100)
 
 class RequirementEditForm(BaseRequirementForm):
     pass
@@ -118,3 +159,71 @@ class BulkOutsidePlacementForm(forms.Form):
         validators=[FileExtensionValidator(allowed_extensions=['xlsx', 'xls'])],
         help_text="Upload Excel file with columns: mobile_number, company_name, package, role, placed_date"
     )
+    
+    
+from django import forms
+from django.forms import inlineformset_factory
+from .models import StudentSubjectRating
+
+class StudentSubjectRatingForm(forms.ModelForm):
+    class Meta:
+        model = StudentSubjectRating
+        fields = ['subject', 'rating', 'remarks', 'evaluated_by']
+        widgets = {
+            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'rating': forms.Select(attrs={'class': 'form-control'}),
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
+            'evaluated_by': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show active subjects
+        self.fields['subject'].queryset = Subject.objects.filter(is_active=True)
+        
+        # Set initial evaluated_by to current user if empty
+        if not self.initial.get('evaluated_by') and hasattr(self, 'request'):
+            self.initial['evaluated_by'] = self.request.user.get_full_name()
+
+# Create formset factory
+StudentSubjectRatingFormSet = inlineformset_factory(
+    parent_model=Student,
+    model=StudentSubjectRating,
+    form=StudentSubjectRatingForm,
+    extra=0,
+    can_delete=True
+)
+
+
+# forms.py
+from django import forms
+from django.core.validators import FileExtensionValidator
+
+class BulkStudentRatingUploadForm(forms.Form):
+    file = forms.FileField(
+        label='Upload Excel/CSV File',
+        validators=[FileExtensionValidator(allowed_extensions=['xlsx', 'csv'])],
+        help_text="File format: MobileNo, Subject1, Subject1_Rating, Subject2, Subject2_Rating, ... (2-5 subjects)"
+    )
+    
+from django import forms
+from .models import StudentSubjectRating
+
+class StudentSubjectRatingForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.student = kwargs.pop('student', None)
+        super().__init__(*args, **kwargs)
+        if self.student:
+            rated_subjects = StudentSubjectRating.objects.filter(
+                student=self.student
+            ).values_list('subject', flat=True)
+            self.fields['subject'].queryset = Subject.objects.exclude(
+                id__in=rated_subjects
+            )
+
+    class Meta:
+        model = StudentSubjectRating
+        fields = ['subject', 'rating', 'remarks']
+        widgets = {
+            'remarks': forms.Textarea(attrs={'rows': 3}),
+        }

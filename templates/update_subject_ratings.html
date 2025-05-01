@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h2>Update Subject Ratings for {{ student.name }}</h2>
+    
+    <form method="post">
+        {% csrf_token %}
+        
+        {{ formset.management_form }}
+        
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Rating</th>
+                    <th>Remarks</th>
+                    <th>Evaluated By</th>
+                    <th>Delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for form in formset %}
+                <tr>
+                    <td>
+                        {{ form.id }}
+                        {{ form.subject }}
+                        {% if form.subject.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.subject.errors }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ form.rating }}
+                        {% if form.rating.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.rating.errors }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ form.remarks }}
+                        {% if form.remarks.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.remarks.errors }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {{ form.evaluated_by }}
+                        {% if form.evaluated_by.errors %}
+                            <div class="alert alert-danger">
+                                {{ form.evaluated_by.errors }}
+                            </div>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if form.instance.pk %}
+                            {{ form.DELETE }}
+                        {% else %}
+                            <span class="text-muted">New</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <div class="form-group">
+            <button type="submit" class="btn btn-primary">Save Ratings</button>
+            <a href="{% url 'student_data:student_detail' student.id %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

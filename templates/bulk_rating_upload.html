@@ -1,0 +1,80 @@
+<!-- templates/bulk_rating_upload.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Bulk Student Rating Upload</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5>Upload Instructions</h5>
+        </div>
+        <div class="card-body">
+            <p>Please upload an Excel/CSV file with the following format:</p>
+            <ul>
+                <li>First column: Student Mobile Number</li>
+                <li>Subsequent columns: Pairs of Subject and Rating (e.g., Subject1, Subject1_Rating, Subject2, Subject2_Rating, etc.)</li>
+                <li>Minimum 2 subjects, maximum 5 subjects per student</li>
+            </ul>
+            <p>Example:</p>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>MobileNo</th>
+                        <th>Subject1</th>
+                        <th>Subject1_Rating</th>
+                        <th>Subject2</th>
+                        <th>Subject2_Rating</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>9876543210</td>
+                        <td>core_java</td>
+                        <td>good</td>
+                        <td>sql</td>
+                        <td>excellent</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Available subjects: 
+                {% for subject in subjects %}
+                <span class="badge bg-secondary">{{ subject.name }} ({{ subject.get_name_display }})</span>
+                {% endfor %}
+            </p>
+            <p>Available ratings: 
+                {% for rating in rating_choices %}
+                <span class="badge bg-info">{{ rating.0 }} ({{ rating.1 }})</span>
+                {% endfor %}
+            </p>
+            <a href="{% url 'student_data:download_rating_template' %}" class="btn btn-sm btn-outline-success ms-2">
+                Download Excel Template
+            </a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h5>Upload File</h5>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="btn btn-primary">Upload</button>
+            </form>
+        </div>
+    </div>
+
+    {% if messages %}
+    <div class="mt-4">
+        {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

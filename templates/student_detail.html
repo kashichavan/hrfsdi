@@ -13,217 +13,183 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.156.1/three.min.js"></script>
 
 <style>
-<table class="requirements-table">
-    <thead>
-        <tr>
-            <th>Company Name</th>
-            <th>Scheduled Date</th>
-            <th>Requirement Date</th>
-            <th>Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for req in student_requirements %}
-        <tr>
-            <td>{{ req.requirement.company_name }}</td>
-            <td>
-                {% if req.requirement.is_scheduled and req.requirement.schedule_date %}
-                    {{ req.requirement.schedule_date|date:"d M Y" }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </td>
-            <td>{{ req.requirement.requirement_date|date:"d M Y" }}</td>
-            <td>
-                <span class="table-status {% if req.requirement.is_scheduled %}status-scheduled{% else %}status-pending{% endif %}">
-                    <i class="fas {% if req.requirement.is_scheduled %}fa-check-circle{% else %}fa-clock{% endif %}"></i>
-                    {% if req.requirement.is_scheduled %}Scheduled{% else %}Pending{% endif %}
-                </span>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+    /* Improved curved table with orange and white theme */
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
 
-<style>
-/* Improved curved table with orange and white theme */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap');
-
-.requirements-table {
-    width: 95%;
-    max-width: 1200px;
-    margin: 40px auto;
-    border-collapse: separate;
-    border-spacing: 0;
-    font-family: 'Montserrat', sans-serif;
-    color: white;
-    font-size: 16px;
-    background: black;
-    border-radius: 20px;
-    overflow: hidden;
-    box-shadow: 0 0 50px rgba(255, 120, 0, 0.2),
-                inset 0 0 20px rgba(255, 120, 0, 0.1);
-    position: relative;
-}
-
-/* Glass morphism effect for the table */
-.requirements-table::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(255, 120, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
-    border-radius: 20px;
-    pointer-events: none;
-}
-
-/* Header styling */
-.requirements-table thead {
-    background: linear-gradient(to right, #000000, #1a0d00, #000000);
-    position: relative;
-}
-
-.requirements-table thead::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 10%;
-    right: 10%;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, #ff7800, transparent);
-}
-
-.requirements-table th {
-    padding: 20px 25px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 18px;
-    color: #ff7800;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border: none;
-    position: relative;
-}
-
-/* Table body styling */
-
-/* Table body styling with extra smooth curves */
-.requirements-table tbody tr {
-    background: transparent;
-    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    position: relative;
-    transform-origin: center;
-    margin-bottom: 15px;
-    height: 70px;
-    border: none;
-}
-
-.requirements-table tbody tr:nth-child(odd) {
-    background: linear-gradient(to right, rgba(20, 10, 0, 0.8), rgba(40, 20, 0, 0.6), rgba(20, 10, 0, 0.8));
-}
-
-.requirements-table tbody tr:nth-child(even) {
-    background: linear-gradient(to right, rgba(10, 5, 0, 0.9), rgba(30, 15, 0, 0.7), rgba(10, 5, 0, 0.9));
-}
-
-/* Cell styling */
-.requirements-table td {
-    padding: 18px 20px;
-    font-weight: 500;
-    position: relative;
-    border-bottom: 1px solid rgba(255, 120, 0, 0.05);
-}
-
-/* First and last cells in a row - for curved effect */
-.requirements-table tbody tr td:first-child {
-    border-top-left-radius: 12px;
-    border-bottom-left-radius: 12px;
-    border-left: 3px solid rgba(255, 120, 0, 0.3);
-    padding-left: 25px;
-}
-
-.requirements-table tbody tr td:last-child {
-    border-top-right-radius: 12px;
-    border-bottom-right-radius: 12px;
-    border-right: 3px solid rgba(255, 120, 0, 0.3);
-    padding-right: 25px;
-}
-
-/* Hover effect for rows */
-.requirements-table tbody tr:hover {
-    transform: translateY(-2px) scale(1.01);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(to right, rgba(40, 20, 0, 0.9), rgba(60, 30, 0, 0.7), rgba(40, 20, 0, 0.9));
-    z-index: 10;
-}
-
-.requirements-table tbody tr:hover td {
-    color: #ffffff;
-    text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
-}
-
-/* Status styles */
-.table-status {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    padding: 8px 16px;
-    border-radius: 30px;
-    font-weight: 600;
-    font-size: 14px;
-    letter-spacing: 0.5px;
-    width: fit-content;
-    min-width: 120px;
-    text-align: center;
-}
-
-.status-scheduled {
-    background: linear-gradient(135deg, rgba(255, 120, 0, 0.2), rgba(255, 160, 0, 0.3));
-    border: 2px solid rgba(255, 120, 0, 0.6);
-    color: #ff9d45;
-    box-shadow: 0 0 15px rgba(255, 120, 0, 0.4);
-}
-
-.status-pending {
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.2));
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    color: #ffffff;
-    box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-}
-
-/* Icon styles */
-.table-status i {
-    font-size: 16px;
-}
-
-.status-scheduled i {
-    color: #ff7800;
-}
-
-/* Responsive adjustments */
-@media (max-width: 768px) {
     .requirements-table {
-        width: 98%;
-        font-size: 14px;
-    }
-    
-    .requirements-table th {
+        width: 95%;
+        max-width: 1200px;
+        margin: 40px auto;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-family: 'Montserrat', sans-serif;
+        color: white;
         font-size: 16px;
-        padding: 15px;
+        background: black;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 0 50px rgba(255, 120, 0, 0.2),
+                    inset 0 0 20px rgba(255, 120, 0, 0.1);
+        position: relative;
     }
-    
+
+    /* Glass morphism effect for the table */
+    .requirements-table::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 120, 0, 0.1) 0%, rgba(0, 0, 0, 0) 100%);
+        border-radius: 20px;
+        pointer-events: none;
+    }
+
+    /* Header styling */
+    .requirements-table thead {
+        background: linear-gradient(to right, #000000, #1a0d00, #000000);
+        position: relative;
+    }
+
+    .requirements-table thead::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 10%;
+        right: 10%;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #ff7800, transparent);
+    }
+
+    .requirements-table th {
+        padding: 20px 25px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 18px;
+        color: #ff7800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        border: none;
+        position: relative;
+    }
+
+    /* Table body styling */
+    .requirements-table tbody tr {
+        background: transparent;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+        transform-origin: center;
+        margin-bottom: 15px;
+        height: 70px;
+        border: none;
+    }
+
+    .requirements-table tbody tr:nth-child(odd) {
+        background: linear-gradient(to right, rgba(20, 10, 0, 0.8), rgba(40, 20, 0, 0.6), rgba(20, 10, 0, 0.8));
+    }
+
+    .requirements-table tbody tr:nth-child(even) {
+        background: linear-gradient(to right, rgba(10, 5, 0, 0.9), rgba(30, 15, 0, 0.7), rgba(10, 5, 0, 0.9));
+    }
+
+    /* Cell styling */
     .requirements-table td {
-        padding: 12px 15px;
+        padding: 18px 20px;
+        font-weight: 500;
+        position: relative;
+        border-bottom: 1px solid rgba(255, 120, 0, 0.05);
     }
-    
+
+    /* First and last cells in a row - for curved effect */
+    .requirements-table tbody tr td:first-child {
+        border-top-left-radius: 12px;
+        border-bottom-left-radius: 12px;
+        border-left: 3px solid rgba(255, 120, 0, 0.3);
+        padding-left: 25px;
+    }
+
+    .requirements-table tbody tr td:last-child {
+        border-top-right-radius: 12px;
+        border-bottom-right-radius: 12px;
+        border-right: 3px solid rgba(255, 120, 0, 0.3);
+        padding-right: 25px;
+    }
+
+    /* Hover effect for rows */
+    .requirements-table tbody tr:hover {
+        transform: translateY(-2px) scale(1.01);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        background: linear-gradient(to right, rgba(40, 20, 0, 0.9), rgba(60, 30, 0, 0.7), rgba(40, 20, 0, 0.9));
+        z-index: 10;
+    }
+
+    .requirements-table tbody tr:hover td {
+        color: #ffffff;
+        text-shadow: 0 0 3px rgba(255, 255, 255, 0.3);
+    }
+
+    /* Status styles */
     .table-status {
-        padding: 6px 12px;
-        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 8px 16px;
+        border-radius: 30px;
+        font-weight: 600;
+        font-size: 14px;
+        letter-spacing: 0.5px;
+        width: fit-content;
+        min-width: 120px;
+        text-align: center;
     }
-}
+
+    .status-scheduled {
+        background: linear-gradient(135deg, rgba(255, 120, 0, 0.2), rgba(255, 160, 0, 0.3));
+        border: 2px solid rgba(255, 120, 0, 0.6);
+        color: #ff9d45;
+        box-shadow: 0 0 15px rgba(255, 120, 0, 0.4);
+    }
+
+    .status-pending {
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(200, 200, 200, 0.2));
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+    }
+
+    /* Icon styles */
+    .table-status i {
+        font-size: 16px;
+    }
+
+    .status-scheduled i {
+        color: #ff7800;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .requirements-table {
+            width: 98%;
+            font-size: 14px;
+        }
+        
+        .requirements-table th {
+            font-size: 16px;
+            padding: 15px;
+        }
+        
+        .requirements-table td {
+            padding: 12px 15px;
+        }
+        
+        .table-status {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+    }
+
     :root {
         --primary: #f97316; /* Main orange */
         --primary-light: #fb923c; /* Lighter orange */
@@ -614,6 +580,157 @@
         font-size: 1.1rem;
     }
 
+    /* Status classes */
+    .status-completed { background: #4CAF50; }
+    .status-cancelled { background: #f44336; }
+    .status-pending { background: #ff9800; }
+    .table-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        color: white;
+        font-size: 0.9em;
+    }
+
+    /* Feedback content styling */
+    .feedback-content {
+        max-width: 200px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .feedback-content:hover {
+        white-space: normal;
+        overflow: visible;
+        background: rgba(0, 0, 0, 0.7);
+        padding: 8px;
+        border-radius: 8px;
+        position: relative;
+        z-index: 100;
+    }
+
+    /* Delete Button Styling - Matches Orange Theme */
+    .btn-delete-student {
+        background: linear-gradient(135deg, rgba(255, 87, 34, 0.9), rgba(230, 74, 25, 0.9));
+        border: none;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        display: flex;
+        align-items: center;
+    }
+
+    .btn-delete-student:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+        background: linear-gradient(135deg, rgba(255, 87, 34, 1), rgba(230, 74, 25, 1));
+        color: white;
+    }
+
+    .btn-delete-student:active {
+        transform: translateY(0);
+    }
+
+    /* Subjects Section Styling */
+    .subjects-section {
+        background: var(--card-bg);
+        border-radius: 24px;
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        border: 1px solid rgba(249, 115, 22, 0.1);
+    }
+
+    .subjects-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1.5rem;
+    }
+
+    .subjects-title {
+        font-family: 'Poppins', sans-serif;
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: var(--text-light);
+    }
+
+    .subjects-title i {
+        color: var(--primary);
+    }
+
+    .btn-add-subject {
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.5rem 1.25rem;
+        border-radius: 8px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-add-subject:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .subjects-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .subject-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 12px;
+        padding: 1.25rem;
+        transition: all 0.3s ease;
+        border-left: 3px solid var(--primary);
+    }
+
+    .subject-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .subject-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 0.5rem;
+        color: var(--text-light);
+    }
+
+    .subject-rating {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .subject-rating i {
+        color: var(--primary);
+    }
+
+    .rating-value {
+        font-weight: 700;
+        color: var(--primary);
+    }
+
     @media (max-width: 768px) {
         .student-dashboard {
             padding: 1rem;
@@ -663,17 +780,93 @@
         .status-wrapper {
             align-items: center;
         }
+
+        .subjects-grid {
+            grid-template-columns: 1fr 1fr;
+        }
     }
-.status-completed { background: #4CAF50; }
-.status-cancelled { background: #f44336; }
-.status-pending { background: #ff9800; }
-.table-status {
-    padding: 4px 12px;
-    border-radius: 20px;
+
+    @media (max-width: 480px) {
+        .subjects-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    /* Subjects Table Styles */
+.subjects-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-family: 'Montserrat', sans-serif;
     color: white;
-    font-size: 0.9em;
+    font-size: 16px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(255, 120, 0, 0.1);
 }
-.feedback-content {
+
+.subjects-table th {
+    padding: 15px 20px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.subjects-table td {
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(255, 120, 0, 0.1);
+}
+
+.subjects-table tr:last-child td {
+    border-bottom: none;
+}
+
+.subjects-table tr:hover td {
+    background: rgba(255, 120, 0, 0.05);
+}
+
+/* Rating Badges */
+.rating-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.rating-excellent {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.rating-good {
+    background: rgba(101, 163, 13, 0.15);
+    color: #65a30d;
+    border: 1px solid rgba(101, 163, 13, 0.3);
+}
+
+.rating-average {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+}
+
+.rating-bad {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Remarks content */
+.remarks-content {
     max-width: 200px;
     white-space: nowrap;
     overflow: hidden;
@@ -682,7 +875,7 @@
     transition: all 0.3s ease;
 }
 
-.feedback-content:hover {
+.remarks-content:hover {
     white-space: normal;
     overflow: visible;
     background: rgba(0, 0, 0, 0.7);
@@ -691,34 +884,6 @@
     position: relative;
     z-index: 100;
 }
-
-    /* Delete Button Styling - Matches Orange Theme */
-.btn-delete-student {
-    background: linear-gradient(135deg, rgba(255, 87, 34, 0.9), rgba(230, 74, 25, 0.9));
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    box-shadow: 0 4px 15px rgba(255, 87, 34, 0.3);
-    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-    display: flex;
-    align-items: center;
-}
-
-.btn-delete-student:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
-    background: linear-gradient(135deg, rgba(255, 87, 34, 1), rgba(230, 74, 25, 1));
-    color: white;
-}
-
-.btn-delete-student:active {
-    transform: translateY(0);
-}
 </style>
 {% endblock %}
 
@@ -726,7 +891,7 @@
 <div id="canvas-background"></div>
 
 <div class="student-dashboard">
-    <!-- Enhanced Profile Header -->
+    <!-- Action Buttons -->
     <div class="d-flex justify-content-end mb-4">
         <form method="POST" action="{% url 'student_data:student_delete' student.id %}" class="delete-form">
             {% csrf_token %}
@@ -738,12 +903,12 @@
             <i class="fas fa-edit me-2"></i> Update Profile
         </a>
     </div>
-
     
+    <!-- Profile Header -->
     <div class="profile-header">
         <div class="student-name" id="student-name">{{ student.name }}</div>
         
-        <!-- Improved Student Info Grid with Fixed Year of Passing -->
+        <!-- Student Info Grid -->
         <div class="student-info-grid">
             <div class="student-info-card">
                 <div class="info-label">Degree</div>
@@ -776,7 +941,65 @@
         </div>
     </div>
 
-    <!-- New Requirements Summary Section -->
+    <!-- Subjects Section -->
+    <!-- Subjects Section -->
+<div class="subjects-section">
+    <div class="subjects-header">
+        <h2 class="subjects-title">
+            <i class="fas fa-book-open"></i>
+            Subjects & Ratings
+        </h2>
+        <a href="{% url 'student_data:add_subject_rating' student.id %}" class="btn btn-add-subject">
+            <i class="fas fa-plus"></i> Add/Edit Subjects
+        </a>
+    </div>
+    
+    {% if subject_ratings %}
+    <div class="table-responsive">
+        <table class="subjects-table">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Rating</th>
+                    <th>Remarks</th>
+                    <th>Evaluated By</th>
+                    <th>Last Updated</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rating in subject_ratings %}
+                <tr>
+                    <td>{{ rating.subject.name }}</td>
+                    <td>
+                        <span class="rating-badge rating-{{ rating.rating }}">
+                            <i class="fas 
+                                {% if rating.rating == 'excellent' %}fa-star
+                                {% elif rating.rating == 'good' %}fa-star-half-alt
+                                {% else %}fa-star{% endif %}"></i>
+                            {{ rating.get_rating_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <div class="remarks-content" title="{{ rating.remarks|default:'No remarks' }}">
+                            {{ rating.remarks|default:"-"|truncatechars:30 }}
+                        </div>
+                    </td>
+                    <td>{{ rating.evaluated_by|default:"-" }}</td>
+                    <td>{{ rating.updated_at|date:"d M Y" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <i class="fas fa-book"></i>
+        <p>No subject ratings added yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+    <!-- Requirements Summary Section -->
     <div class="requirements-summary">
         <div class="requirement-stat-card">
             <div class="req-stat-value">
@@ -822,7 +1045,7 @@
         </div>
     </div>
 
-    <!-- Enhanced Requirements List Section -->
+    <!-- Requirements List Section -->
     <div class="requirements-section">
         <div class="requirements-header">
             <h2 class="requirements-title">
@@ -842,7 +1065,6 @@
                     <th>Schedule Status</th>
                     <th>Application Status</th>
                     <th>Reason</th>
-                      <!-- New Column -->
                 </tr>
             </thead>
             <tbody>
@@ -894,12 +1116,24 @@
 </div>
 
 <script>
-
+    // Add this to your existing GSAP animations
+gsap.from(".subjects-table tr", {
+    opacity: 0,
+    y: 20,
+    duration: 0.5,
+    stagger: 0.05,
+    ease: "power2.out",
+    scrollTrigger: {
+        trigger: ".subjects-section",
+        start: "top 80%"
+    }
+});
 function confirmDelete() {
     if (confirm('Are you sure you want to permanently delete {{ student.name }}? This action cannot be undone.')) {
         document.querySelector('.delete-form').submit();
     }
 }
+
 document.addEventListener('DOMContentLoaded', function () {
     // GSAP Setup with faster animations
     gsap.registerPlugin(ScrollTrigger);
@@ -909,16 +1143,18 @@ document.addEventListener('DOMContentLoaded', function () {
     gsap.from(studentName, {
         opacity: 0,
         y: 20,
-        duration: 0.7, // Faster animation (was 1.2)
+        duration: 0.7,
         ease: "power2.out"
     });
-     // Table reveal animation
-     gsap.from(".requirements-table", {
+    
+    // Table reveal animation
+    gsap.from(".requirements-table", {
         opacity: 0,
         y: 30,
         duration: 1.2,
         ease: "power3.out"
     });
+    
     // Table header animation with light sweep
     gsap.from(".requirements-table thead", {
         opacity: 0,
@@ -927,14 +1163,13 @@ document.addEventListener('DOMContentLoaded', function () {
         ease: "power2.out"
     });
     
-    
     // Animate the profile header content faster
     gsap.from(".student-info-card", {
         opacity: 0,
         y: 15,
-        duration: 0.5, // Faster animation (was 0.8)
-        stagger: 0.1, // Quicker stagger (was 0.15)
-        delay: 0.2, // Shorter delay (was 0.3)
+        duration: 0.5,
+        stagger: 0.1,
+        delay: 0.2,
         ease: "power2.out"
     });
     
@@ -942,12 +1177,25 @@ document.addEventListener('DOMContentLoaded', function () {
     gsap.from(".requirement-stat-card", {
         opacity: 0,
         y: 20,
-        duration: 0.5, // Faster animation (was 0.8)
-        stagger: 0.1, // Quicker stagger (was 0.2)
-        ease: "back.out(1.5)", // Slightly less bounce for speed
+        duration: 0.5,
+        stagger: 0.1,
+        ease: "back.out(1.5)",
         scrollTrigger: {
             trigger: ".requirements-summary",
-            start: "top 90%" // Start animation sooner
+            start: "top 90%"
+        }
+    });
+    
+    // Animate subject cards
+    gsap.from(".subject-card", {
+        opacity: 0,
+        y: 20,
+        duration: 0.6,
+        stagger: 0.1,
+        ease: "power2.out",
+        scrollTrigger: {
+            trigger: ".subjects-section",
+            start: "top 85%"
         }
     });
     
@@ -955,14 +1203,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const statCards = document.querySelectorAll('.stat-card');
     statCards.forEach((card, index) => {
         gsap.from(card, {
-            y: 40, // Less distance (was 60)
+            y: 40,
             opacity: 0,
-            duration: 0.5, // Faster animation (was 0.8)
-            delay: index * 0.1, // Quicker delay (was 0.15)
-            ease: "power2.out", // Simpler ease
+            duration: 0.5,
+            delay: index * 0.1,
+            ease: "power2.out",
             scrollTrigger: {
                 trigger: card,
-                start: "top 90%" // Start animation sooner
+                start: "top 90%"
             }
         });
     });
@@ -975,43 +1223,17 @@ document.addEventListener('DOMContentLoaded', function () {
             { textContent: "0%" },
             {
                 textContent: statValue.textContent,
-                duration: 1.2, // Faster animation (was 2)
-                ease: "power1.out", // Simpler ease for faster feel
+                duration: 1.2,
+                ease: "power1.out",
                 scrollTrigger: {
                     trigger: statValue,
-                    start: "top 90%" // Start animation sooner
+                    start: "top 90%"
                 },
                 onUpdate: function() {
                     statValue.textContent = parseFloat(this.targets()[0].textContent).toFixed(1) + "%";
                 }
             }
         );
-    });
-    const headerSweep = document.createElement('div');
-    headerSweep.classList.add('header-sweep');
-    headerSweep.style.cssText = `
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 50%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 120, 0, 0.2), rgba(255, 255, 255, 0.3), rgba(255, 120, 0, 0.2), transparent);
-        transform: skewX(-20deg);
-        pointer-events: none;
-    `;
-    
-    
-    // Animate requirement cards with faster staggered effect
-    gsap.from(".requirement-card", {
-        x: -20, // Less distance (was -30)
-        opacity: 0,
-        duration: 0.4, // Faster animation (was 0.7)
-        stagger: 0.08, // Quicker stagger (was 0.15)
-        ease: "power2.out",
-        scrollTrigger: {
-            trigger: ".requirements-section",
-            start: "top 85%" // Start animation sooner
-        }
     });
     
     // Three.js background with orange particles
@@ -1043,7 +1265,7 @@ document.addEventListener('DOMContentLoaded', function () {
     
     // Brighter orange color for particles
     const particleMaterial = new THREE.PointsMaterial({
-        color: 0xff8533, // Brighter orange for better visibility
+        color: 0xff8533,
         size: 0.12,
         transparent: true,
         opacity: 0.9,

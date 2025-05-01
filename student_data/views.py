@@ -237,6 +237,8 @@ def download_excel_template(request):
     return response
 
 
+
+
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count
@@ -440,8 +442,6 @@ def student_list(request):
     return render(request, 'student_list.html', context)
 
 
-
-
 @login_required
 def student_detail(request, student_id):
     student = get_object_or_404(
@@ -462,11 +462,21 @@ def student_detail(request, student_id):
         .order_by('-requirement__created_at')
     )
 
+    # Get subject ratings for the student
+    subject_ratings = (
+        StudentSubjectRating.objects
+        .filter(student=student)
+        .select_related('subject')
+        .order_by('subject__name')
+    )
+
     context = {
         'student': student,
         'student_requirements': student_requirements,
+        'subject_ratings': subject_ratings,
         'total_requirements': student.total_requirements_count,
         'scheduled_requirements': student.scheduled_requirements_count,
+        'pending_requirements_count': student.total_requirements_count - student.scheduled_requirements_count,
         'js_data': {
             'name': student.name,
             'degree': student.degree,
@@ -529,131 +539,181 @@ def requirement_list(request):
     
     return render(request, 'requirement_list.html', context)
 
+
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.db import transaction
 from .forms import RequirementForm
-from .models import Student, RequirementStudent
+from .models import Student, RequirementStudent, RequirementSubject, Subject
 import pandas as pd
 
 @login_required
+@transaction.atomic
 def add_requirement(request):
     if request.method == 'POST':
         form = RequirementForm(request.POST, request.FILES)
         if form.is_valid():
-            requirement = form.save(commit=False)
+            try:
+                # Save main requirement object
+                requirement = form.save(commit=False)
+                requirement.created_by = request.user
+                requirement.schedule_status = 'scheduled' if requirement.is_scheduled else 'not_scheduled'
+                requirement.save()
+                form.save_m2m()  # Save many-to-many relationships
 
-            # ✅ Automatically update schedule_status based on is_scheduled
-            if requirement.is_scheduled:
-                requirement.schedule_status = 'scheduled'
-            else:
-                requirement.schedule_status = 'not_scheduled'
-
-            requirement.save()
-
-            if 'student_file' in request.FILES:
-                try:
-                    excel_file = request.FILES['student_file']
-                    df = pd.read_excel(excel_file)
-                    
-                    mobile_column = form.cleaned_data.get('mobile_column', 'mobile')
-                    total_students = 0
-                    added_students = 0
-                    not_found_students = 0
-                    
-                    for index, row in df.iterrows():
-                        if mobile_column not in row:
-                            messages.error(request, f"Column '{mobile_column}' not found in the Excel file.")
-                            break
-                            
-                        mobile = str(row[mobile_column]).strip()
-                        if not mobile or mobile == 'nan':
-                            continue
-                            
-                        total_students += 1
-                        
-                        try:
-                            mobile = ''.join(filter(str.isdigit, mobile))
-                            
-                            if len(mobile) < 10:
-                                not_found_students += 1
-                                continue
-                                
-                            if len(mobile) > 10:
-                                mobile = mobile[-10:]
-                                
-                            student = Student.objects.get(contact_number__endswith=mobile)
-                            
-                            if not RequirementStudent.objects.filter(requirement=requirement, student=student).exists():
-                                RequirementStudent.objects.create(
-                                    requirement=requirement,
-                                    student=student
-                                )
-                                added_students += 1
-                                
-                        except Student.DoesNotExist:
-                            not_found_students += 1
-                            continue
-                        except Student.MultipleObjectsReturned:
-                            students = Student.objects.filter(contact_number__endswith=mobile)
-                            for student in students:
-                                if not RequirementStudent.objects.filter(requirement=requirement, student=student).exists():
-                                    RequirementStudent.objects.create(
-                                        requirement=requirement,
-                                        student=student
-                                    )
-                                    added_students += 1
-                    
-                    messages.success(request, 
-                        f'Requirement created successfully! '
-                        f'Added {added_students} students out of {total_students} from the file. '
-                        f'{not_found_students} students were not found in the database.'
-                    )
-                    
-                except Exception as e:
-                    messages.error(request, f'Error processing Excel file: {str(e)}')
-                    return redirect('student_data:requirement_detail', requirement.id)
-            else:
-                messages.success(request, 'Requirement created successfully! No students were added.')
+                # Handle subjects and other subject name
+                subjects = form.cleaned_data['subjects']
+                other_subject_name = form.cleaned_data.get('other_subject_name')
                 
-            return redirect('student_data:requirement_detail', requirement.id)
+                # Create RequirementSubject entries
+                for subject in subjects:
+                    RequirementSubject.objects.create(requirement=requirement, subject=subject)
+                
+                # Handle "Other" subject
+                other_subject = Subject.objects.filter(name__iexact='other').first()
+                if other_subject and other_subject in subjects and other_subject_name:
+                    requirement.other_subject_name = other_subject_name
+                    requirement.save()
+
+                # Process student Excel file
+                if 'student_file' in request.FILES:
+                    return handle_excel_upload(request, requirement, form)
+                
+                messages.success(request, 'Requirement created successfully!')
+                return redirect('student_data:requirement_detail', requirement.id)
+
+            except Exception as e:
+                messages.error(request, f'Error creating requirement: {str(e)}')
+        else:
+            messages.error(request, 'Please correct the errors below.')
     else:
         form = RequirementForm()
-    
+
     return render(request, 'add_requirement.html', {
         'form': form,
         'title': 'Add New Requirement'
     })
 
-from django.utils.http import url_has_allowed_host_and_scheme
+def handle_excel_upload(request, requirement, form):
+    """Helper function to process student Excel file"""
+    try:
+        excel_file = request.FILES['student_file']
+        df = pd.read_excel(excel_file)
+        mobile_column = form.cleaned_data.get('mobile_column', 'mobile').strip()
+        
+        if mobile_column not in df.columns:
+            messages.error(request, f"Column '{mobile_column}' not found in the Excel file.")
+            return redirect('student_data:add_requirement')
 
-@login_required
+        processing_results = {
+            'total': 0,
+            'added': 0,
+            'existing': 0,
+            'invalid': 0
+        }
+
+        for index, row in df.iterrows():
+            processing_results['total'] += 1
+            mobile = str(row[mobile_column]).strip()
+            
+            # Validate mobile number
+            if not mobile or mobile.lower() == 'nan':
+                processing_results['invalid'] += 1
+                continue
+            
+            # Clean mobile number
+            clean_mobile = ''.join(filter(str.isdigit, mobile))
+            if len(clean_mobile) < 10:
+                processing_results['invalid'] += 1
+                continue
+            clean_mobile = clean_mobile[-10:]  # Take last 10 digits
+
+            # Find matching students
+            students = Student.objects.filter(contact_number__endswith=clean_mobile)
+            if not students.exists():
+                processing_results['invalid'] += 1
+                continue
+                
+            # Add valid students
+            for student in students:
+                _, created = RequirementStudent.objects.get_or_create(
+                    requirement=requirement,
+                    student=student
+                )
+                if created:
+                    processing_results['added'] += 1
+                else:
+                    processing_results['existing'] += 1
+
+        # Build result message
+        msg_parts = [
+            f"Processed {processing_results['total']} students:",
+            f"Added {processing_results['added']} new entries",
+            f"Skipped {processing_results['existing']} duplicates",
+            f"{processing_results['invalid']} invalid entries"
+        ]
+        messages.success(request, ' '.join(msg_parts))
+        
+        return redirect('student_data:requirement_detail', requirement.id)
+
+    except Exception as e:
+        requirement.delete()  # Rollback if error occurs
+        messages.error(request, f'Error processing Excel file: {str(e)}')
+        return redirect('student_data:add_requirement')
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.shortcuts import get_object_or_404, render
+from .models import Requirement, RequirementStudent, RequirementSubject
+
 def requirement_detail(request, pk):
-    requirement = get_object_or_404(Requirement, pk=pk)
-    requirement_students = RequirementStudent.objects.filter(requirement=requirement).select_related('student')
+    requirement = get_object_or_404(
+        Requirement.objects.select_related('scheduled_details')
+        .prefetch_related('subjects', 'students'),
+        pk=pk
+    )
     
+    # Get all requirement-student relationships
+    requirement_students = RequirementStudent.objects.filter(
+        requirement=requirement
+    ).select_related('student')
+    
+    # Get academic percentages from the requirement
+    academic_percentages = {
+        '10th': requirement.percentage_10th,
+        '12th': requirement.percentage_12th,
+        'degree': requirement.percentage_degree,
+        'masters': requirement.percentage_master
+    }
+    
+    # Get subjects with their optional custom names
+    requirement_subjects = RequirementSubject.objects.filter(
+        requirement=requirement
+    ).select_related('subject')
+    
+    # Student statistics
     total_students = requirement_students.count()
-    selected_students = requirement_students.filter(status='selected').count()
-    rejected_students = requirement_students.filter(status='rejected').count()
-    pending_students = requirement_students.filter(status='pending').count()
-    on_hold_students = requirement_students.filter(status='on_hold').count()
-    
-    # Get previous page URL
-    previous_url = request.META.get('HTTP_REFERER')  
-    if previous_url and not url_has_allowed_host_and_scheme(previous_url, allowed_hosts={request.get_host()}):
-        previous_url = None
+    status_counts = {
+        'selected': requirement_students.filter(status='selected').count(),
+        'rejected': requirement_students.filter(status='rejected').count(),
+        'pending': requirement_students.filter(status='pending').count(),
+        'on_hold': requirement_students.filter(status='on_hold').count(),
+    }
 
     context = {
         'requirement': requirement,
         'requirement_students': requirement_students,
+        'academic_percentages': academic_percentages,
+        'requirement_subjects': requirement_subjects,
         'total_students': total_students,
-        'selected_students': selected_students,
-        'rejected_students': rejected_students,
-        'pending_students': pending_students,
-        'on_hold_students': on_hold_students,
-        'previous_url': previous_url,  # add to context
+        'selected_students': status_counts['selected'],
+        'rejected_students': status_counts['rejected'],
+        'pending_students': status_counts['pending'],
+        'on_hold_students': status_counts['on_hold'],
+        'previous_url': request.META.get('HTTP_REFERER'),
     }
     
     return render(request, 'requirement_detail.html', context)
+
 import io
 import pandas as pd
 from django.http import HttpResponse
@@ -739,29 +799,47 @@ def update_student_feedback(request, requirement_id):
         
         return redirect('student_data:requirement_detail',pk=requirement_id)
 
+from django.db import transaction
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect, render
+
 @login_required
+@transaction.atomic
 def requirement_edit(request, pk):
     requirement = get_object_or_404(Requirement, pk=pk)
     
+    if not request.user.has_perm('student_data.change_requirement'):
+        messages.error(request, 'You do not have permission to edit requirements.')
+        return redirect('student_data:requirement_list')
+
     if request.method == 'POST':
         form = RequirementEditForm(request.POST, instance=requirement)
         if form.is_valid():
-            requirement = form.save(commit=False)
+            try:
+                requirement = form.save(commit=False)
+                requirement.schedule_status = 'scheduled' if requirement.is_scheduled else 'not_scheduled'
+                requirement.modified_by = request.user
+                requirement.save()
 
-            # ✅ Update schedule_status if scheduled
-            if requirement.is_scheduled:
-                requirement.schedule_status = 'scheduled'
-            else:
-                requirement.schedule_status = 'not_scheduled'
+                # Update students in bulk
+                students = list(requirement.students.all())
+                for student in students:
+                    student.update_requirement_counts()
+                
+                # Bulk update without updating all fields
+                Student.objects.bulk_update(
+                    students,
+                    ['scheduled_count', 'not_scheduled_count', 'modified_at'],
+                    batch_size=100
+                )
 
-            requirement.save()
+                messages.success(request, 'Requirement updated successfully!')
+                return redirect('student_data:requirement_detail', pk=requirement.id)
 
-            # ✅ Update scheduled counts for each student
-            for student in requirement.students.all():
-                student.update_requirement_counts()
-
-            messages.success(request, 'Requirement updated successfully!')
-            return redirect('student_data:requirement_detail', pk=requirement.id)
+            except Exception as e:
+                messages.error(request, f'Error updating requirement: {str(e)}')
+                # Consider logging the error here
     else:
         form = RequirementEditForm(instance=requirement)
     
@@ -770,7 +848,6 @@ def requirement_edit(request, pk):
         'requirement': requirement,
         'title': 'Edit Requirement'
     })
-
 @login_required
 def requirement_students(request, pk):
     requirement = get_object_or_404(Requirement, pk=pk)
@@ -1103,6 +1180,21 @@ def add_students_to_requirement(request, requirement_id):
 
     # Get all students who are NOT assigned to this requirement AND are not placed
     students = Student.objects.exclude(id__in=assigned_students_ids).filter(is_placed=False)
+    # Start with unassigned, unplaced students
+    students = Student.objects.exclude(id__in=assigned_students_ids).filter(is_placed=False)
+
+    from django.db.models import OuterRef, Subquery, Exists
+
+# Apply percentage criteria (ignore master's)
+    if requirement.percentage_10th is not None:
+        students = students.filter(tenth_percent__gte=requirement.percentage_10th)
+
+    if requirement.percentage_12th is not None:
+        students = students.filter(twelfth_percent__gte=requirement.percentage_12th)
+
+    if requirement.percentage_degree is not None:
+        students = students.filter(degree_percent__gte=requirement.percentage_degree)
+
     
     # Check if any students available
     if not students.exists():
@@ -2711,3 +2803,339 @@ def students_placed_outside(request):
     }
 
     return render(request, 'students_placed_outside.html', context)
+
+
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.generic import View
+from django.contrib import messages
+from django.urls import reverse
+from .models import Student, Subject, StudentSubjectRating
+from .forms import StudentSubjectRatingFormSet
+
+class StudentSubjectRatingsUpdateView(View):
+    template_name = 'students/update_subject_ratings.html'
+    
+    def get(self, request, student_id):
+        student = get_object_or_404(Student, pk=student_id)
+        existing_ratings = student.subject_ratings.select_related('subject')
+        
+        # Initialize formset with existing data
+        formset = StudentSubjectRatingFormSet(
+            queryset=existing_ratings,
+            prefix='ratings'
+        )
+        
+        # Add forms for subjects that don't have ratings yet
+        existing_subject_ids = existing_ratings.values_list('subject_id', flat=True)
+        missing_subjects = Subject.objects.filter(is_active=True).exclude(id__in=existing_subject_ids)
+        
+        for subject in missing_subjects:
+            formset.extra += 1
+            formset.forms.append(formset.empty_form)
+            formset.forms[-1].initial = {
+                'subject': subject,
+                'student': student
+            }
+        
+        context = {
+            'student': student,
+            'formset': formset,
+        }
+        return render(request, self.template_name, context)
+    
+    def post(self, request, student_id):
+        student = get_object_or_404(Student, pk=student_id)
+        formset = StudentSubjectRatingFormSet(
+            request.POST,
+            prefix='ratings'
+        )
+        
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+            
+            for instance in instances:
+                instance.student = student
+                instance.save()
+            
+            # Delete any ratings that were marked for deletion
+            for obj in formset.deleted_objects:
+                obj.delete()
+            
+            # Update student's overall technical rating
+            student.save()
+            
+            messages.success(request, 'Subject ratings updated successfully!')
+            return redirect(reverse('student-detail', kwargs={'pk': student_id}))
+        
+        context = {
+            'student': student,
+            'formset': formset,
+        }
+        return render(request, self.template_name, context)
+    
+#import pandas as pd
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.views.generic import View
+from .models import Student, Subject, StudentSubjectRating
+from .forms import BulkStudentRatingUploadForm
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+from openpyxl.worksheet.datavalidation import DataValidation
+
+class BulkStudentRatingUploadView(View):
+    template_name = 'bulk_rating_upload.html'
+    form_class = BulkStudentRatingUploadForm
+    
+    def get(self, request):
+        subjects = Subject.objects.filter(is_active=True)
+        rating_choices = StudentSubjectRating.RATING_CHOICES
+        return render(request, self.template_name, {
+            'form': self.form_class(),
+            'subjects': subjects,
+            'rating_choices': rating_choices
+        })
+    
+    def post(self, request):
+        form = self.form_class(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
+    
+        try:
+            file = request.FILES['file']
+            if file.name.endswith('.csv'):
+                df = pd.read_csv(file)
+            else:
+                df = pd.read_excel(file)
+        
+        # Convert all data to strings and strip whitespace
+            df = df.applymap(lambda x: str(x).strip() if pd.notna(x) else '')
+        
+        # Process each row
+            success_count = 0
+            error_count = 0
+            errors = []
+            valid_subjects = set(Subject.objects.filter(is_active=True).values_list('name', flat=True))
+            valid_ratings = set(dict(StudentSubjectRating.RATING_CHOICES).keys())
+        
+            for index, row in df.iterrows():
+                row_num = index + 2  # Excel rows start at 1, header is row 1
+                try:
+                    mobile_no = row[0]
+                    if not mobile_no:
+                        errors.append(f"Row {row_num}: Mobile number is required")
+                        error_count += 1
+                        continue
+                
+                # Get student
+                    student = Student.objects.filter(contact_number=mobile_no).first()
+                    if not student:
+                        errors.append(f"Row {row_num}: Student with mobile {mobile_no} not found")
+                        error_count += 1
+                        continue
+                
+                # Process subject-rating pairs
+                    subjects_processed = 0
+                    subject_rating_pairs = []
+                
+                    for i in range(1, min(len(row), 10), 2):  # Max 5 subjects (columns 1-9)
+                        if i+1 >= len(row):
+                            break
+                        
+                        subject_name = row[i]
+                        rating = row[i+1].lower() if pd.notna(row[i+1]) else ''
+                    
+                    # Skip empty pairs
+                        if not subject_name and not rating:
+                            continue
+                        
+                    # Validate subject
+                        if not subject_name:
+                            errors.append(f"Row {row_num}: Subject name is missing for pair {i//2 + 1}")
+                            continue
+                        
+                        if subject_name not in valid_subjects:
+                            errors.append(f"Row {row_num}: Subject '{subject_name}' not found. Valid subjects are: {', '.join(valid_subjects)}")
+                            continue
+                        
+                    # Validate rating
+                        if not rating:
+                            errors.append(f"Row {row_num}: Rating is missing for subject '{subject_name}'")
+                            continue
+                        
+                        if rating not in valid_ratings:
+                            errors.append(f"Row {row_num}: Invalid rating '{rating}' for subject '{subject_name}'. Valid ratings are: {', '.join(valid_ratings)}")
+                            continue
+                        
+                        subject_rating_pairs.append((subject_name, rating))
+                        subjects_processed += 1
+                
+                # Validate minimum subjects
+                    if subjects_processed < 2:
+                        errors.append(f"Row {row_num}: Minimum 2 subjects required, found {subjects_processed}")
+                        error_count += 1
+                        continue
+                
+                # Save all valid pairs for this student
+                    for subject_name, rating in subject_rating_pairs:
+                        subject = Subject.objects.get(name=subject_name)
+                        StudentSubjectRating.objects.update_or_create(
+                            student=student,
+                        subject=subject,
+                        defaults={'rating': rating}
+                    )
+                
+                    success_count += 1
+                    
+                except Exception as e:
+                    errors.append(f"Row {row_num}: Error processing - {str(e)}")
+                    error_count += 1
+        
+        # Prepare result message
+            msg = f"Successfully processed {success_count} students"
+            if error_count > 0:
+                msg += f", with {error_count} errors"
+        
+            messages.success(request, msg)
+            if errors:
+                messages.error(request, "Errors encountered during processing:")
+                for error in errors[:10]:  # Show first 10 errors to avoid flooding
+                    messages.error(request, error)
+                if len(errors) > 10:
+                    messages.warning(request, f"... and {len(errors)-10} more errors not shown")
+        
+            return redirect('student_data:bulk_rating_upload')
+        
+        except Exception as e:
+            messages.error(request, f"Error processing file: {str(e)}")
+            return render(request, self.template_name, {'form': form})
+class DownloadRatingTemplateView(View):
+    def get(self, request):
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Student Ratings Template"
+        
+        # Header row
+        headers = ["MobileNo (Required)", "Subject1 (Required)", "Subject1_Rating (Required)", 
+                  "Subject2 (Required)", "Subject2_Rating (Required)",
+                  "Subject3 (Optional)", "Subject3_Rating (Optional)",
+                  "Subject4 (Optional)", "Subject4_Rating (Optional)",
+                  "Subject5 (Optional)", "Subject5_Rating (Optional)"]
+        ws.append(headers)
+        
+        # Style and instructions
+        bold_font = Font(bold=True)
+        for col_num in range(1, len(headers) + 1):
+            ws.cell(row=1, column=col_num).font = bold_font
+            column_letter = get_column_letter(col_num)
+            ws.column_dimensions[column_letter].width = 20
+        
+        # Add instructions sheet
+        ws_instructions = wb.create_sheet("Instructions")
+        ws_instructions.append(["INSTRUCTIONS:"])
+        ws_instructions.append(["1. Fill in student mobile numbers in first column"])
+        ws_instructions.append(["2. For each student, provide at least 2 subject-rating pairs"])
+        ws_instructions.append(["3. Use the dropdowns to select valid subjects and ratings"])
+        ws_instructions.append(["", ""])
+        ws_instructions.append(["VALID SUBJECTS:", ", ".join([s.name for s in Subject.objects.filter(is_active=True)])])
+        ws_instructions.append(["VALID RATINGS:", ", ".join([r[0] for r in StudentSubjectRating.RATING_CHOICES])])
+        
+        # Add sample data
+        sample_data = [
+            "9876543210",        # MobileNo
+            "core_java",        # Subject1
+            "good",             # Rating1
+            "sql",              # Subject2
+            "excellent",        # Rating2
+            "communication",    # Subject3 (optional)
+            "average",         # Rating3 (optional)
+            "",                 # Subject4 (optional)
+            "",                 # Rating4 (optional)
+            "",                 # Subject5 (optional)
+            ""                  # Rating5 (optional)
+        ]
+        ws.append(sample_data)
+        # Get active subjects and rating choices
+        subjects = Subject.objects.filter(is_active=True)
+        subject_names = [subj.name for subj in subjects]
+        subject_choices = ",".join(subject_names)
+        rating_choices = ",".join([choice[0] for choice in StudentSubjectRating.RATING_CHOICES])
+        
+        # Apply data validation
+        for i in range(2, 12, 2):  # Subject columns (2,4,6,8,10)
+            # Subject validation
+            dv = DataValidation(
+                type="list", 
+                formula1=f'"{subject_choices}"', 
+                allow_blank=(i > 6)  # Only required for first 3 subjects
+            )
+            ws.add_data_validation(dv)
+            dv.add(f"{get_column_letter(i)}2:{get_column_letter(i)}1048576")
+            
+            # Rating validation (next column)
+            if i < 10:  # Only up to Subject4_Rating
+                dv = DataValidation(
+                    type="list", 
+                    formula1=f'"{rating_choices}"', 
+                    allow_blank=(i > 6)  # Only required for first 3 ratings
+                )
+                ws.add_data_validation(dv)
+                dv.add(f"{get_column_letter(i+1)}2:{get_column_letter(i+1)}1048576")
+        
+        # Create response
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        )
+        response['Content-Disposition'] = 'attachment; filename=student_ratings_template.xlsx'
+        wb.save(response)
+        return response
+
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from .models import Student, StudentSubjectRating
+from .forms import StudentSubjectRatingForm
+
+def add_subject_rating(request, pk):
+    student = get_object_or_404(Student, pk=pk)
+    rating_instance = None
+
+    if request.method == 'POST':
+        form = StudentSubjectRatingForm(request.POST)
+
+        if form.is_valid():
+            subject = form.cleaned_data['subject']
+
+            # Try to get an existing rating for this subject & student
+            rating_instance = StudentSubjectRating.objects.filter(
+                student=student,
+                subject=subject
+            ).first()
+
+            if rating_instance:
+                form = StudentSubjectRatingForm(request.POST, instance=rating_instance)
+
+            if form.is_valid():
+                rating = form.save(commit=False)
+                rating.student = student
+
+                # Only set evaluated_by for new ratings
+                if not rating_instance:
+                    rating.evaluated_by = request.user.get_full_name()
+
+                rating.save()
+
+                action = 'updated' if rating_instance else 'added'
+                messages.success(request, f'Subject rating {action} successfully!')
+                return redirect('student_data:student_detail', student_id=student.id)
+    else:
+        form = StudentSubjectRatingForm()
+
+    context = {
+        'form': form,
+        'student': student,
+        'is_edit': False  # Not needed unless you're dynamically changing UI
+    }
+    return render(request, 'add_subject_rating.html', context)

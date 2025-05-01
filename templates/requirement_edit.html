@@ -1,289 +1,690 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Edit Requirement - {{ requirement.company_name }}{% endblock %}
+{% block title %}{{ title }} | Student Management System{% endblock %}
 
-{% block extra_css %}
+{% block extra_head %}
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
 <style>
-    .edit-requirement-container {
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
+    /* All CSS styles from previous template */
+    .requirement-form-container {
+        font-family: 'Inter', sans-serif;
+        background-color: #f5f7fa;
     }
 
-    .requirement-edit-card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    .font-space-grotesk {
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+    }
+
+    .main-card {
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        overflow: hidden;
+        transition: all 0.3s ease;
+        border: none;
+    }
+
+    .main-card:hover {
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header-gradient {
+        border-radius: 12px 12px 0 0 !important;
+        background: linear-gradient(135deg, #ff6b00 0%, #ff9a56 100%) !important;
+        padding: 1.25rem 1.5rem;
+        color: white;
     }
 
     .form-section {
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        padding: 20px;
-        margin-bottom: 20px;
+        border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        margin-bottom: 1.5rem;
     }
 
-    .form-section-header {
+    .form-section:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .section-header {
+        background-color: rgba(0, 0, 0, 0.02);
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
         display: flex;
         align-items: center;
-        margin-bottom: 20px;
-        border-bottom: 1px solid #e9ecef;
-        padding-bottom: 10px;
     }
 
-    .form-section-header i {
-        margin-right: 10px;
-        color: #0d6efd;
+    .section-header i {
+        color: #ff6b00;
+        margin-right: 0.5rem;
     }
 
-    .required-field::after {
-        content: '*';
-        color: #dc3545;
-        margin-left: 5px;
+    .section-body {
+        padding: 1.5rem;
     }
 
-    .schedule-date-container {
-        transition: all 0.3s ease;
+    .form-floating-custom > .form-control,
+    .form-floating-custom > .form-select {
+        height: calc(3.5rem + 2px);
+        padding: 1rem 0.75rem;
+        border-radius: 8px;
     }
 
-    .validation-error {
-        color: #dc3545;
-        font-size: 0.8rem;
+    .form-floating-custom > label {
+        padding: 1rem 0.75rem;
+    }
+
+    .form-control-custom:focus, 
+    .form-select-custom:focus {
+        box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+        border-color: #ff6b00;
+    }
+
+    .toggle-switch-container {
+        background-color: #f0f0f0;
+        border-radius: 50px;
+        padding: 4px;
+        display: inline-flex;
         margin-top: 5px;
     }
 
-    .description-counter {
-        font-size: 0.8rem;
-        color: #6c757d;
-        text-align: right;
+    .toggle-option {
+        margin: 0;
+        position: relative;
+        z-index: 1;
     }
 
-    .btn-schedule-toggle {
-        background-color: white;
-        color: #f97316;
-        border: 1px solid #f97316;
-        font-weight: 500;
+    .toggle-option input {
+        display: none;
+    }
+
+    .toggle-option label {
+        padding: 8px 16px;
+        border-radius: 50px;
+        cursor: pointer;
         transition: all 0.2s ease;
-        flex: 1;
+        margin: 0;
+    }
+
+    .toggle-option input:checked + label {
+        background-color: white;
+        color: #ff6b00;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+
+    .checkbox-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 10px;
+    }
+
+    .checkbox-item {
+        position: relative;
+        flex: 0 0 calc(33.333% - 15px);
+        min-width: 200px;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .checkbox-label:hover {
+        background-color: #e9ecef;
+    }
+
+    .checkbox-item input[type="checkbox"]:checked + .checkbox-label {
+        background-color: rgba(255, 107, 0, 0.1);
+        border-color: #ff6b00;
+        color: #ff6b00;
+    }
+
+    .checkbox-item input[type="checkbox"]:checked + .checkbox-label::before {
+        content: "✓";
+        margin-right: 8px;
+        font-weight: bold;
+    }
+
+    .file-upload-container {
+        border: 2px dashed #dee2e6;
+        border-radius: 12px;
+        padding: 2rem;
         text-align: center;
+        transition: all 0.2s ease;
+        cursor: pointer;
     }
 
-    .btn-schedule-toggle:hover {
-        background-color: rgba(249, 115, 22, 0.1);
-        color: #f97316;
+    .file-upload-container:hover,
+    .file-upload-container.dragover {
+        border-color: #ff6b00;
+        background-color: rgba(255, 107, 0, 0.05);
     }
 
-    .btn-schedule-toggle.active {
-        background-color: #f97316;
+    .file-upload-area {
+        position: relative;
+    }
+
+    .file-upload-area input[type="file"] {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        top: 0;
+        left: 0;
+        cursor: pointer;
+    }
+
+    .file-name-display {
+        margin-top: 10px;
+        font-weight: 500;
+        color: #ff6b00;
+    }
+
+    .action-buttons-custom {
+        padding-top: 1rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .btn-custom-primary {
+        background: linear-gradient(135deg, #ff6b00 0%, #ff9a56 100%);
+        border: none;
+        border-radius: 50px;
+        padding: 10px 24px;
+        transition: all 0.2s ease;
         color: white;
-        border-color: #f97316;
     }
 
-    .btn-group-toggle .btn:first-child {
-        border-top-left-radius: 4px;
-        border-bottom-left-radius: 4px;
-        border-right: none;
+    .btn-custom-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+        color: white;
     }
 
-    .btn-group-toggle .btn:last-child {
-        border-top-right-radius: 4px;
-        border-bottom-right-radius: 4px;
-        border-left: none;
+    #otherSubjectContainer {
+        margin-top: 15px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px dashed #dee2e6;
+    }
+
+    @media (max-width: 768px) {
+        .action-buttons-custom {
+            flex-direction: column-reverse;
+            gap: 1rem;
+        }
+        
+        .action-buttons-custom .btn {
+            width: 100%;
+        }
+        
+        .checkbox-item {
+            flex: 0 0 100%;
+        }
+    }
+
+    .academic-criteria-section .section-header {
+        background-color: rgba(255, 107, 0, 0.05);
+        border-color: rgba(255, 107, 0, 0.15);
+    }
+
+    .percentage-input-group {
+        position: relative;
+    }
+
+    .percentage-symbol {
+        position: absolute;
+        right: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+        font-weight: 500;
+        pointer-events: none;
+        z-index: 4;
+    }
+
+    .form-floating-custom .form-control {
+        padding-right: 2.5rem;
+        border: 1px solid #dee2e6;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-floating-custom .form-control:focus {
+        border-color: #ff6b00;
+        box-shadow: 0 0 0 0.25rem rgba(255, 107, 0, 0.25);
+    }
+
+    .form-floating-custom label {
+        color: #6c757d;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .form-floating-custom .form-control:not(:placeholder-shown) ~ label,
+    .form-floating-custom .form-control:focus ~ label {
+        color: #ff6b00;
+        transform: scale(0.85) translateY(-0.9rem) translateX(0.15rem);
+    }
+
+    .invalid-feedback {
+        font-size: 0.875rem;
+        color: #dc3545;
+        padding-left: 0.5rem;
+    }
+
+    .form-control.is-invalid {
+        border-color: #dc3545;
+        padding-right: calc(1.5em + 1.5rem);
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.375rem) center;
+        background-size: calc(0.75em + 0.75rem) calc(0.75em + 0.75rem);
+    }
+
+    @media (max-width: 768px) {
+        .academic-criteria-section .col-md-3 {
+            margin-bottom: 1rem;
+        }
+        
+        .percentage-symbol {
+            right: 1.5rem;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container edit-requirement-container">
-    <div class="card requirement-edit-card">
-        <div class="card-header bg-primary text-white">
-            <h2 class="mb-0">
-                <i class="fas fa-edit me-2"></i>Edit Requirement
-            </h2>
-        </div>
-        <div class="card-body">
-            <form method="post" id="editRequirementForm">
-                {% csrf_token %}
-
-                <!-- Company Info -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="fas fa-building"></i>
-                        <h4 class="mb-0">Company Details</h4>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="id_company_name" class="form-label required-field">Company Name</label>
-                            <input type="text" name="company_name" id="id_company_name" class="form-control"
-                                value="{{ form.company_name.value }}" required maxlength="255">
-                            {% if form.company_name.errors %}
-                                <div class="validation-error">{{ form.company_name.errors }}</div>
-                            {% endif %}
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="id_company_code" class="form-label required-field">Company Code</label>
-                            <input type="text" name="company_code" id="id_company_code" class="form-control"
-                                value="{{ form.company_code.value }}" required maxlength="50">
-                            {% if form.company_code.errors %}
-                                <div class="validation-error">{{ form.company_code.errors }}</div>
-                            {% endif %}
-                        </div>
-                    </div>
+<div class="container-fluid py-4 requirement-form-container">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-lg main-card">
+                <div class="card-header card-header-gradient">
+                    <h4 class="mb-0 font-space-grotesk">{{ title }}</h4>
                 </div>
-
-                <!-- Requirement Details -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="fas fa-calendar-alt"></i>
-                        <h4 class="mb-0">Requirement Details</h4>
-                    </div>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="id_requirement_date" class="form-label required-field">Requirement Date</label>
-                            <input type="date" name="requirement_date" id="id_requirement_date" class="form-control"
-                                value="{{ form.requirement_date.value|date:'Y-m-d' }}" required>
-                            {% if form.requirement_date.errors %}
-                                <div class="validation-error">{{ form.requirement_date.errors }}</div>
-                            {% endif %}
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Scheduled Requirement</label>
-                            <div class="btn-group btn-group-toggle w-100" data-toggle="buttons">
-                                <label class="btn btn-schedule-toggle {% if not form.is_scheduled.value %}active{% endif %}">
-                                    <input type="radio" name="is_scheduled" value="0" autocomplete="off"
-                                        {% if not form.is_scheduled.value %}checked{% endif %}> No
-                                </label>
-                                <label class="btn btn-schedule-toggle {% if form.is_scheduled.value %}active{% endif %}">
-                                    <input type="radio" name="is_scheduled" value="1" autocomplete="off"
-                                        {% if form.is_scheduled.value %}checked{% endif %}> Yes
-                                </label>
+                <div class="card-body p-4">
+                    <form method="post" enctype="multipart/form-data" class="needs-validation" novalidate id="requirementForm">
+                        {% csrf_token %}
+                        
+                        <!-- Company Information -->
+                        <div class="form-section mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-building me-2"></i>
+                                <h5 class="font-space-grotesk">Company Information</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-custom mb-3">
+                                            {{ form.company_name }}
+                                            <label for="{{ form.company_name.id_for_label }}">{{ form.company_name.label }}</label>
+                                            {% if form.company_name.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.company_name.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-floating form-floating-custom mb-3">
+                                            {{ form.company_code }}
+                                            <label for="{{ form.company_code.id_for_label }}">{{ form.company_code.label }}</label>
+                                            {% if form.company_code.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.company_code.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row schedule-date-container" id="scheduleDateContainer"
-                        style="display: {{ form.is_scheduled.value|yesno:'block,none' }};">
-                        <div class="col-md-6 mb-3">
-                            <label for="id_schedule_date" class="form-label required-field">Schedule Date</label>
-                            <input type="date" name="schedule_date" id="id_schedule_date" class="form-control"
-                                value="{{ form.schedule_date.value|date:'Y-m-d'|default:'' }}">
-                            {% if form.schedule_date.errors %}
-                                <div class="validation-error">{{ form.schedule_date.errors }}</div>
-                            {% endif %}
+                        <!-- Schedule Information -->
+                        <div class="form-section mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-calendar-alt me-2"></i>
+                                <h5 class="font-space-grotesk">Schedule Information</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-floating form-floating-custom mb-3">
+                                            {{ form.requirement_date }}
+                                            <label for="{{ form.requirement_date.id_for_label }}">{{ form.requirement_date.label }}</label>
+                                            {% if form.requirement_date.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.requirement_date.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label class="form-label mb-2">{{ form.is_scheduled.label }}</label>
+                                        <div class="toggle-switch-container">
+                                            {% for choice in form.is_scheduled %}
+                                                <div class="form-check form-check-inline toggle-option">
+                                                    {{ choice.tag }}
+                                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                                        {{ choice.choice_label }}
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4" id="scheduleDateField">
+                                        <div class="form-floating form-floating-custom mb-3">
+                                            {{ form.schedule_date }}
+                                            <label for="{{ form.schedule_date.id_for_label }}">{{ form.schedule_date.label }}</label>
+                                            {% if form.schedule_date.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.schedule_date.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Description -->
-                <div class="form-section">
-                    <div class="form-section-header">
-                        <i class="fas fa-align-left"></i>
-                        <h4 class="mb-0">Additional Description</h4>
-                    </div>
-                    <div class="mb-3">
-                        <label for="id_description" class="form-label">Description</label>
-                        <textarea name="description" id="id_description" class="form-control" rows="4"
-                            maxlength="500">{{ form.description.value|default:'' }}</textarea>
-                        <div class="description-counter" id="descriptionCounter">0 / 500 characters</div>
-                    </div>
-                </div>
+                        <!-- Description -->
+                        <div class="form-section mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-align-left me-2"></i>
+                                <h5 class="font-space-grotesk">Description</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="form-floating form-floating-custom mb-3">
+                                    {{ form.description }}
+                                    <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                                    {% if form.description.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ form.description.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
 
-                <!-- Buttons -->
-                <div class="d-flex justify-content-end">
-                    <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="btn btn-secondary me-2">
-                        <i class="fas fa-times"></i> Cancel
-                    </a>
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i> Update Requirement
-                    </button>
+                        <!-- Subjects -->
+                        <div class="form-section mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-book me-2"></i>
+                                <h5 class="font-space-grotesk">Subjects</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-12">
+                                        <label class="form-label mb-2">{{ form.subjects.label }}</label>
+                                        <div class="checkbox-container">
+                                            {% for checkbox in form.subjects %}
+                                                <div class="checkbox-item">
+                                                    {{ checkbox.tag }}
+                                                    <label class="checkbox-label" for="{{ checkbox.id_for_label }}">
+                                                        {{ checkbox.choice_label }}
+                                                    </label>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                        {% if form.subjects.errors %}
+                                            <div class="invalid-feedback d-block">
+                                                {{ form.subjects.errors.0 }}
+                                            </div>
+                                        {% endif %}
+                                        <div id="otherSubjectContainer" class="mt-3" style="display: none;">
+                                            <div class="form-floating form-floating-custom">
+                                                {{ form.other_subject_name }}
+                                                <label for="{{ form.other_subject_name.id_for_label }}">{{ form.other_subject_name.label }}</label>
+                                                {% if form.other_subject_name.errors %}
+                                                    <div class="invalid-feedback d-block">
+                                                        {{ form.other_subject_name.errors.0 }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Academic Criteria -->
+                        <div class="form-section mb-4 academic-criteria-section">
+                            <div class="section-header">
+                                <i class="fas fa-graduation-cap me-2" style="color: #ff6b00;"></i>
+                                <h5 class="font-space-grotesk">Academic Criteria</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="row g-3">
+                                    <div class="col-md-3">
+                                        <div class="form-floating form-floating-custom percentage-input-group">
+                                            {{ form.percentage_10th }}
+                                            <label for="{{ form.percentage_10th.id_for_label }}">10th Percentage</label>
+                                            <span class="percentage-symbol">%</span>
+                                            {% if form.percentage_10th.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.percentage_10th.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-floating form-floating-custom percentage-input-group">
+                                            {{ form.percentage_12th }}
+                                            <label for="{{ form.percentage_12th.id_for_label }}">12th Percentage</label>
+                                            <span class="percentage-symbol">%</span>
+                                            {% if form.percentage_12th.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.percentage_12th.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-floating form-floating-custom percentage-input-group">
+                                            {{ form.percentage_degree }}
+                                            <label for="{{ form.percentage_degree.id_for_label }}">Degree Percentage</label>
+                                            <span class="percentage-symbol">%</span>
+                                            {% if form.percentage_degree.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.percentage_degree.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-floating form-floating-custom percentage-input-group">
+                                            {{ form.percentage_master }}
+                                            <label for="{{ form.percentage_master.id_for_label }}">Master's Percentage</label>
+                                            <span class="percentage-symbol">%</span>
+                                            {% if form.percentage_master.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.percentage_master.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Student Upload -->
+                        {% if form.student_file %}
+                        <div class="form-section mb-4">
+                            <div class="section-header">
+                                <i class="fas fa-file-excel me-2"></i>
+                                <h5 class="font-space-grotesk">Update Student List</h5>
+                            </div>
+                            <div class="section-body">
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle me-2"></i>
+                                            Current file: {{ requirement.student_file.name|default:"No file uploaded" }}
+                                        </div>
+                                        <div class="file-upload-container" id="fileUploadContainer">
+                                            <div class="file-upload-area">
+                                                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                                                <p>Drag & drop Excel file here or</p>
+                                                <button type="button" class="btn btn-outline-primary">
+                                                    Browse Files
+                                                </button>
+                                                {{ form.student_file }}
+                                                <p class="file-name-display mt-2" id="fileNameDisplay"></p>
+                                            </div>
+                                            <small class="text-muted d-block mt-2">{{ form.student_file.help_text }}</small>
+                                            {% if form.student_file.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.student_file.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <div class="form-floating form-floating-custom mb-3">
+                                            {{ form.mobile_column }}
+                                            <label for="{{ form.mobile_column.id_for_label }}">{{ form.mobile_column.label }}</label>
+                                            {% if form.mobile_column.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ form.mobile_column.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="d-flex justify-content-between mt-4 action-buttons-custom">
+                            <a href="{% url 'student_data:requirement_detail' pk=requirement.id %}" class="btn btn-secondary btn-custom-primary">
+                                <i class="fas fa-times me-1"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-custom-primary">
+                                <i class="fas fa-save me-1"></i> Update Requirement
+                            </button>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.9.1/gsap.min.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const scheduleRadios = document.querySelectorAll('input[name="is_scheduled"]');
-        const scheduleDateContainer = document.getElementById('scheduleDateContainer');
-        const scheduleDateInput = document.getElementById('id_schedule_date');
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation
+    gsap.from(".form-section", {
+        duration: 0.5,
+        y: 20,
+        opacity: 0,
+        stagger: 0.1,
+        ease: "power2.out"
+    });
 
-        // Toggle scheduleDate display based on radio button
-        scheduleRadios.forEach(radio => {
-            radio.addEventListener('change', function () {
-                if (this.value === '1') {
-                    scheduleDateContainer.style.display = 'block';
-                    scheduleDateInput.required = true;
-                } else {
-                    scheduleDateContainer.style.display = 'none';
-                    scheduleDateInput.required = false;
-                    scheduleDateInput.value = '';
-                }
-            });
-        });
+    // Schedule Date Toggle
+    const isScheduledRadios = document.querySelectorAll('input[name="is_scheduled"]');
+    const scheduleDateField = document.getElementById('scheduleDateField');
 
-        // Description character counter
-        const descriptionTextarea = document.getElementById('id_description');
-        const descriptionCounter = document.getElementById('descriptionCounter');
+    function toggleScheduleDate() {
+        const isScheduled = document.querySelector('input[name="is_scheduled"]:checked')?.value === '1';
+        scheduleDateField.style.display = isScheduled ? 'block' : 'none';
+        document.getElementById('id_schedule_date').required = isScheduled;
+    }
 
-        const updateCharCount = () => {
-            const currentLength = descriptionTextarea.value.length;
-            descriptionCounter.textContent = `${currentLength} / 500 characters`;
-        };
+    isScheduledRadios.forEach(radio => radio.addEventListener('change', toggleScheduleDate));
+    toggleScheduleDate();
 
-        descriptionTextarea.addEventListener('input', function () {
-            if (this.value.length > 500) {
-                this.value = this.value.substring(0, 500);
-            }
-            updateCharCount();
-        });
+    // Other Subject Toggle
+    const otherCheckbox = document.querySelector('input[value="other"]');
+    const otherSubjectContainer = document.getElementById('otherSubjectContainer');
+    const otherSubjectInput = document.getElementById('id_other_subject_name');
 
-        updateCharCount();
+    function toggleOtherSubject() {
+        const show = otherCheckbox?.checked;
+        otherSubjectContainer.style.display = show ? 'block' : 'none';
+        if (otherSubjectInput) otherSubjectInput.required = show;
+    }
 
-        // Form validation
-        const form = document.getElementById('editRequirementForm');
-        form.addEventListener('submit', function (event) {
-            let isValid = true;
+    document.querySelectorAll('input[name="subjects"]').forEach(checkbox => {
+        checkbox.addEventListener('change', toggleOtherSubject);
+    });
+    toggleOtherSubject();
 
-            const companyName = document.getElementById('id_company_name');
-            const companyCode = document.getElementById('id_company_code');
-            const requirementDate = document.getElementById('id_requirement_date');
-
-            if (!companyName.value.trim()) {
-                companyName.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                companyName.classList.remove('is-invalid');
-            }
-
-            if (!companyCode.value.trim()) {
-                companyCode.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                companyCode.classList.remove('is-invalid');
-            }
-
-            if (!requirementDate.value) {
-                requirementDate.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                requirementDate.classList.remove('is-invalid');
-            }
-
-            const isScheduled = [...scheduleRadios].find(r => r.checked)?.value === '1';
-            if (isScheduled && !scheduleDateInput.value) {
-                scheduleDateInput.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                scheduleDateInput.classList.remove('is-invalid');
-            }
-
-            if (!isValid) {
-                event.preventDefault();
-            }
+    // Percentage Validation
+    document.querySelectorAll('input[id^="id_percentage_"]').forEach(field => {
+        field.addEventListener('input', function() {
+            const value = parseFloat(this.value);
+            this.setCustomValidity(value >= 0 && value <= 100 ? '' : 'Percentage must be between 0 and 100');
         });
     });
+
+    // File Upload
+    const fileInput = document.getElementById('id_student_file');
+    const fileNameDisplay = document.getElementById('fileNameDisplay');
+    const fileUploadContainer = document.getElementById('fileUploadContainer');
+
+    if (fileInput) {
+        fileInput.addEventListener('change', function() {
+            fileNameDisplay.textContent = this.files[0]?.name || '';
+        });
+
+        ['dragenter', 'dragover'].forEach(e => fileUploadContainer.addEventListener(e, highlight));
+        ['dragleave', 'drop'].forEach(e => fileUploadContainer.addEventListener(e, unhighlight));
+
+        function highlight(e) {
+            e.preventDefault();
+            fileUploadContainer.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            e.preventDefault();
+            fileUploadContainer.classList.remove('dragover');
+            if (e.dataTransfer?.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                fileInput.dispatchEvent(new Event('change'));
+            }
+        }
+
+        fileUploadContainer.addEventListener('click', () => fileInput.click());
+    }
+
+    // Form Validation
+    document.getElementById('requirementForm').addEventListener('submit', function(e) {
+        if (!this.checkValidity()) {
+            e.preventDefault();
+            document.querySelectorAll(':invalid').forEach(input => {
+                gsap.fromTo(input, { x: -10 }, { x: 0, duration: 0.3, ease: "elastic.out(1, 0.3)" });
+            });
+            document.querySelector(':invalid')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        this.classList.add('was-validated');
+    });
+
+    // Initialize current state
+    document.querySelector('input[name="is_scheduled"][value="{{ requirement.is_scheduled|yesno:"1,0" }}"]').checked = true;
+    if (document.querySelector('input[value="other"]:checked')) {
+        otherSubjectContainer.style.display = 'block';
+    }
+});
 </script>
 {% endblock %}

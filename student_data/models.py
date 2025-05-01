@@ -6,6 +6,60 @@ from django.dispatch import receiver
 from datetime import timedelta
 from django.db import transaction
 
+class Subject(models.Model):
+        """Model to represent fixed subjects that students will be rated on"""
+        SUBJECT_CHOICES = [
+            ('core_java', 'Core Java'),
+            ('advanced_java', 'Advanced Java'),
+            ('web_technology', 'Web Technology'),
+            ('sql', 'SQL'),
+            ('ds_algo', 'Data Structures & Algorithms'),
+            ('python', 'Python'),
+            ('communication', 'Communication Skills'),
+            ('reactjs','ReactJS'),
+            ('other',"Other")
+        ]
+        
+        name = models.CharField(max_length=50, choices=SUBJECT_CHOICES, unique=True)
+        description = models.TextField(blank=True, null=True)
+        is_active = models.BooleanField(default=True)
+        created_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+
+        class Meta:
+            ordering = ['name']
+            verbose_name = 'Subject'
+            verbose_name_plural = 'Subjects'
+
+        def __str__(self):
+            return self.get_name_display()
+
+class StudentSubjectRating(models.Model):
+        """Model to store subject-wise ratings for each student"""
+        RATING_CHOICES = [
+            ('excellent', 'Excellent'),
+            ('good', 'Good'),
+            ('average', 'Average'),
+            ('bad', 'Bad'),
+        ]
+        
+        student = models.ForeignKey('Student', on_delete=models.CASCADE, related_name='subject_ratings')
+        subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+        rating = models.CharField(max_length=20, choices=RATING_CHOICES)
+        remarks = models.TextField(blank=True, null=True)
+        evaluated_by = models.CharField(max_length=100, blank=True, null=True)
+        evaluated_at = models.DateTimeField(auto_now_add=True)
+        updated_at = models.DateTimeField(auto_now=True)
+
+        class Meta:
+            unique_together = ['student', 'subject']
+            verbose_name = 'Student Subject Rating'
+            verbose_name_plural = 'Student Subject Ratings'
+            ordering = ['student__name', 'subject__name']
+
+        def __str__(self):
+            return f"{self.student.name} - {self.subject.get_name_display()}: {self.get_rating_display()}"
+
 class Requirement(models.Model):
     SCHEDULE_STATUS_CHOICES = [
         ('not_scheduled', 'Not Scheduled'),
@@ -19,6 +73,7 @@ class Requirement(models.Model):
     requirement_date = models.DateField(null=True, blank=True)
     is_scheduled = models.BooleanField(default=False)
     schedule_date = models.DateField(null=True, blank=True)
+    schedule_time = models.TimeField(null=True, blank=True)
     description = models.TextField(blank=True)
     schedule_status = models.CharField(
         max_length=20, 
@@ -27,11 +82,20 @@ class Requirement(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    students = models.ManyToManyField('Student', through='RequirementStudent')
-    schedule_time = models.TimeField(null=True, blank=True)
 
+    # Escalation info
     escalation = models.TextField(blank=True, null=True, help_text="Details about the escalation raised")
     escalation_raised_at = models.DateTimeField(null=True, blank=True)
+
+    # Many-to-many relationships
+    students = models.ManyToManyField('Student', through='RequirementStudent')
+    subjects = models.ManyToManyField('Subject', through='RequirementSubject')
+
+    # New percentage fields
+    percentage_10th = models.FloatField(null=True, blank=True, verbose_name="10th Percentage Criteria")
+    percentage_12th = models.FloatField(null=True, blank=True, verbose_name="12th Percentage Criteria")
+    percentage_degree = models.FloatField(null=True, blank=True, verbose_name="Degree Percentage Criteria")
+    percentage_master = models.FloatField(null=True, blank=True, verbose_name="Master's Percentage Criteria")
 
     def __str__(self):
         return self.company_name
@@ -43,6 +107,20 @@ class Requirement(models.Model):
     @property
     def is_scheduled_today(self):
         return self.schedule_date == timezone.now().date()
+
+
+
+# models.py
+class RequirementSubject(models.Model):
+    requirement = models.ForeignKey('Requirement', on_delete=models.CASCADE)
+    subject = models.ForeignKey('Subject', on_delete=models.CASCADE)
+    other_subject_name = models.CharField(max_length=100, blank=True, null=True)
+    
+
+    def __str__(self):
+        if self.subject.name == 'other':
+            return f"{self.requirement.company_code} - Other: {self.other_subject_name}"
+        return f"{self.requirement.company_code} - {self.subject.get_name_display()}"
 
 
 class Student(models.Model):
@@ -65,26 +143,109 @@ class Student(models.Model):
     total_requirements = models.IntegerField(default=0)
     scheduled_requirements = models.IntegerField(default=0)
     is_placed = models.BooleanField(default=False, verbose_name="Placed Status")
+    
+    # Dropout fields
+    is_dropout = models.BooleanField(
+        default=False,
+        verbose_name="Dropout Status",
+        help_text="Whether the student has dropped out or not"
+    )
+    dropout_date = models.DateField(
+        null=True,
+        blank=True,
+        verbose_name="Dropout Date",
+        help_text="Date when the student dropped out"
+    )
+    dropout_reason = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name="Reason for Dropout",
+        help_text="Explanation for why the student dropped out"
+    )
+    
+    # Overall technical rating
+    OVERALL_RATING_CHOICES = [
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('average', 'Average'),
+        ('bad', 'Bad'),
+    ]
+    overall_technical_rating = models.CharField(
+        max_length=20, 
+        choices=OVERALL_RATING_CHOICES, 
+        blank=True, 
+        null=True,
+        help_text="Overall technical rating based on subject ratings"
+    )
 
     class Meta:
         indexes = [
             models.Index(fields=['name']),
             models.Index(fields=['gender']),
             models.Index(fields=['degree']),
+            models.Index(fields=['is_dropout']),
         ]
 
     def __str__(self):
         return self.name
     
     def save(self, *args, **kwargs):
-        # Clean fields before saving
+    # Clean fields before saving
         if self.name:
             self.name = self.name.title()  # Proper case
         if self.degree:
             self.degree = self.degree.upper()  # All caps
         if self.stream:
             self.stream = self.stream.upper()  # All caps
+
+    # Set dropout date if is_dropout is True and date isn't set
+        if self.is_dropout and not self.dropout_date:
+            self.dropout_date = timezone.now().date()
+
+    # Clear dropout date if is_dropout is False
+        if not self.is_dropout:
+            self.dropout_date = None
+            self.dropout_reason = None
+
+    # Save the instance first to ensure it has a primary key
         super().save(*args, **kwargs)
+
+    # Now it's safe to call this (after pk is available)
+        self.update_overall_technical_rating()
+    
+    # Save again only if rating was changed
+        Student.objects.filter(pk=self.pk).update(overall_technical_rating=self.overall_technical_rating)
+
+
+    def update_overall_technical_rating(self):
+        """Calculate overall technical rating based on subject ratings"""
+        ratings = self.subject_ratings.all()
+        if not ratings.exists():
+            self.overall_technical_rating = None
+            return
+        
+        # Count each rating type
+        rating_counts = {
+            'excellent': 0,
+            'good': 0,
+            'average': 0,
+            'bad': 0
+        }
+        
+        for rating in ratings:
+            rating_counts[rating.rating] += 1
+        
+        total_ratings = len(ratings)
+        
+        # Determine overall rating based on majority
+        if rating_counts['excellent'] / total_ratings >= 0.75:
+            self.overall_technical_rating = 'excellent'
+        elif rating_counts['good'] / total_ratings >= 0.5:
+            self.overall_technical_rating = 'good'
+        elif rating_counts['bad'] / total_ratings >= 0.5:
+            self.overall_technical_rating = 'bad'
+        else:
+            self.overall_technical_rating = 'average'
 
     def update_requirement_counts(self):
         self.total_requirements = self.requirementstudent_set.count()
@@ -94,11 +255,22 @@ class Student(models.Model):
         self.save(update_fields=['total_requirements', 'scheduled_requirements'])
 
     def update_placement_status(self):
+        # Don't update placement status if student is a dropout
+        if self.is_dropout:
+            return
+            
         new_status = self.requirementstudent_set.filter(status='selected').exists() or hasattr(self, 'placed_outside')
         if self.is_placed != new_status:
             self.is_placed = new_status
             self.save(update_fields=['is_placed'])
 
+    def get_subject_rating(self, subject_name):
+        """Helper method to get a student's rating for a specific subject"""
+        try:
+            rating = self.subject_ratings.get(subject__name=subject_name)
+            return rating.get_rating_display()
+        except StudentSubjectRating.DoesNotExist:
+            return "Not Rated"
 
 class RequirementStudent(models.Model):
     STATUS_CHOICES = [
@@ -297,3 +469,9 @@ def handle_scheduled_requirement_delete(sender, instance, **kwargs):
         requirement.save()
     
     transaction.on_commit(cleanup_requirement)
+
+@receiver(post_save, sender=StudentSubjectRating)
+@receiver(post_delete, sender=StudentSubjectRating)
+def update_student_overall_rating(sender, instance, **kwargs):
+    """Update the student's overall technical rating when subject ratings change"""
+    transaction.on_commit(instance.student.save)

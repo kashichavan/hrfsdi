@@ -94,8 +94,17 @@ urlpatterns = [
      path('got-placed-outside/add/', views.add_got_placed_student, name='add_got_placed_outside'),
      path('bulk-outside-placement/', views.BulkOutsidePlacementView.as_view(), name='bulk_outside_placement'),
      path('requirement/<int:pk>/export/', views.export_requirement_students_excel, name='export_requirement_students_excel'),
-      path('placed-outside/', views.students_placed_outside, name='placed_outside'),
+     path('placed-outside/', views.students_placed_outside, name='placed_outside'),
      path('monthly-reports/download-excel/', views.ExportHRReportExcelView.as_view(), name='export_hr_excel'),
-      path('update-escalation/<int:pk>/', views.update_escalation, name='update_escalation'),
-       path('mark_as_scheduled/', views.mark_as_scheduled, name='mark_as_scheduled'),
+     path('update-escalation/<int:pk>/', views.update_escalation, name='update_escalation'),
+     path('mark_as_scheduled/', views.mark_as_scheduled, name='mark_as_scheduled'),
+       
+     path('students/<int:student_id>/update-subject-ratings/', 
+         views.StudentSubjectRatingsUpdateView.as_view(), 
+         name='update-student-subject-ratings'),
+        
+     path('bulk-rating-upload/', views.BulkStudentRatingUploadView.as_view(), name='bulk_rating_upload'),
+      path('download-rating-template/', views.DownloadRatingTemplateView.as_view(), name='download_rating_template'),
+     path('students/<int:pk>/add-rating/', views.add_subject_rating, name='add_subject_rating'),
+path('student/<int:pk>/subject-rating/<int:rating_id>/', views.add_subject_rating, name='add_subject_rating'),
 ]
