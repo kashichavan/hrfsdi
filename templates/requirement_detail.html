@@ -25,7 +25,16 @@ h1, h2, h3, h4, h5, .company-header h1, .card-header {
 body, p, table, .btn, .form-control {
     font-family: 'Inter', sans-serif !important;
 }
+.modal {
+    z-index: 1055; /* higher than Bootstrap defaults if necessary */
+}
 
+.table-responsive {
+    overflow: visible !important;
+}
+.dropdown-menu {
+    z-index: 1055 !important;
+}
 /* Company header styles - enhanced with gradients */
 .company-header {
     background: var(--white-gradient);
@@ -1161,232 +1170,163 @@ body, p, table, .btn, .form-control {
 {% block extra_js %}
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    // GSAP animations for page elements
-    const timeline = gsap.timeline();
-    
-    timeline.from(".company-header", {
-        opacity: 0,
-        y: -20,
-        duration: 0.5,
-        ease: "power3.out"
-    });
-    
-    timeline.from(".card", {
-        opacity: 0,
-        y: 20,
-        duration: 0.5,
-        stagger: 0.1,
-        ease: "power3.out"
-    }, "-=0.3");
-    
-    // Table row animations
+    // --- GSAP Animations ---
+    gsap.timeline()
+        .from(".company-header", { opacity: 0, y: -20, duration: 0.5, ease: "power3.out" })
+        .from(".card", { opacity: 0, y: 20, duration: 0.5, stagger: 0.1, ease: "power3.out" }, "-=0.3");
+
     const tableRows = document.querySelectorAll(".table-row");
     gsap.set(tableRows, { opacity: 0, y: 15 });
-
-    tableRows.forEach((row, index) => {
+    tableRows.forEach((row, i) => {
         gsap.to(row, {
             opacity: 1,
             y: 0,
             duration: 0.4,
-            delay: index * 0.05,
+            delay: i * 0.05,
             ease: "power2.out"
         });
     });
-    // Drive Result Modal Logic
-const driveResultModal = new bootstrap.Modal(document.getElementById('driveResultModal'));
-const resultStatusSelect = document.getElementById('resultStatus');
-const selectedStudentsContainer = document.getElementById('selectedStudentsContainer');
 
-// Show/hide selected students based on result status
-function toggleStudentSelection() {
-    if (resultStatusSelect.value === 'selected') {
-        selectedStudentsContainer.style.display = 'block';
-    } else {
-        selectedStudentsContainer.style.display = 'none';
+    // --- Move Modals to <body> to avoid clipping ---
+    ['driveResultModal', 'removeStudentModal', 'feedbackModal', 'scheduleDateModal'].forEach(id => {
+        const modalEl = document.getElementById(id);
+        if (modalEl) document.body.appendChild(modalEl);
+    });
+
+    // --- Result Modal Logic ---
+    const driveResultModal = new bootstrap.Modal(document.getElementById('driveResultModal'));
+    const resultStatusSelect = document.getElementById('resultStatus');
+    const selectedStudentsContainer = document.getElementById('selectedStudentsContainer');
+
+    function toggleStudentSelection() {
+        selectedStudentsContainer.style.display = (resultStatusSelect.value === 'selected') ? 'block' : 'none';
     }
-}
 
-// Initialize visibility
-toggleStudentSelection();
-resultStatusSelect.addEventListener('change', toggleStudentSelection);
+    toggleStudentSelection();
+    resultStatusSelect.addEventListener('change', toggleStudentSelection);
 
-// Enhance UX on form submit (disable button, show spinner)
-document.getElementById('driveResultForm').addEventListener('submit', function(e) {
-    const resultStatus = resultStatusSelect.value;
+    document.getElementById('driveResultForm')?.addEventListener('submit', function (e) {
+        const resultStatus = resultStatusSelect.value;
+        const selectedStudents = document.getElementById('selectedStudents')?.selectedOptions || [];
 
-    // Validate selected students
-    if (resultStatus === 'selected') {
-        const selectedStudents = document.getElementById('selectedStudents').selectedOptions;
-        if (selectedStudents.length === 0) {
-            e.preventDefault(); // prevent submission
+        if (resultStatus === 'selected' && selectedStudents.length === 0) {
+            e.preventDefault();
             showToast('Please select at least one student who was selected', 'warning');
             return;
         }
-    }
 
-    // Disable button + show spinner
-    const submitBtn = this.querySelector('button[type="submit"]');
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
-    submitBtn.disabled = true;
-});
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Processing...';
+        submitBtn.disabled = true;
+    });
 
-
-    // Remove student modal logic
-    const removeBtns = document.querySelectorAll(".remove-student-btn");
+    // --- Remove Student Modal ---
     const removeModal = new bootstrap.Modal(document.getElementById('removeStudentModal'));
-    const removeForm = document.getElementById('removeStudentForm');
     const modalStudentName = document.getElementById("modalStudentName");
+    const removeForm = document.getElementById('removeStudentForm');
 
-    removeBtns.forEach(btn => {
+    document.querySelectorAll(".remove-student-btn").forEach(btn => {
         btn.addEventListener("click", () => {
-            const studentName = btn.getAttribute("data-student-name");
-            const removeUrl = btn.getAttribute("data-remove-url");
-            modalStudentName.textContent = studentName;
-            removeForm.action = removeUrl;
+            modalStudentName.textContent = btn.dataset.studentName;
+            removeForm.action = btn.dataset.removeUrl;
             removeModal.show();
         });
     });
 
-    // Feedback modal logic
+    // --- Feedback Modal ---
     const feedbackModal = new bootstrap.Modal(document.getElementById('feedbackModal'));
-    const feedbackForm = document.getElementById('feedbackForm');
     const feedbackStudentId = document.getElementById('feedbackStudentId');
     const feedbackText = document.getElementById('feedbackText');
-    
-    document.querySelectorAll('[data-bs-target="#feedbackModal"]').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const studentId = this.getAttribute('data-student-id');
-            const currentFeedback = this.getAttribute('data-current-feedback');
-            
-            feedbackStudentId.value = studentId;
-            feedbackText.value = currentFeedback;
-        });
-    });
-    
-    // Initialize schedule date modal
-    window.scheduleDateModal = new bootstrap.Modal(document.getElementById('scheduleDateModal'));
 
-    // Custom styling for status selects
-    document.querySelectorAll('.status-select').forEach(select => {
-        styleStatusSelect(select);
-        
-        // Update styling when value changes
-        select.addEventListener('change', function() {
-            styleStatusSelect(this);
+    document.querySelectorAll('[data-bs-target="#feedbackModal"]').forEach(btn => {
+        btn.addEventListener('click', function () {
+            feedbackStudentId.value = this.dataset.studentId;
+            feedbackText.value = this.dataset.currentFeedback || '';
         });
     });
-    
-    // Style the feedback views with animations
-    const feedbackViews = document.querySelectorAll('.feedback-view');
-    feedbackViews.forEach(view => {
-        view.addEventListener('mouseenter', () => {
-            gsap.to(view, {
-                backgroundColor: "#fff0e0",
-                borderLeftWidth: "5px",
-                duration: 0.3
-            });
-        });
-        
-        view.addEventListener('mouseleave', () => {
-            gsap.to(view, {
-                backgroundColor: "#fff8f2",
-                borderLeftWidth: "3px",
-                duration: 0.3
-            });
-        });
-    });
-    
-    // Function to update schedule status
-    window.updateScheduleStatus = function(value) {
+
+    // --- Schedule Modal ---
+    const scheduleStatusForm = document.getElementById('scheduleStatusForm');
+    const scheduleDateModal = new bootstrap.Modal(document.getElementById('scheduleDateModal'));
+    const scheduleForm = document.getElementById('scheduleDateForm');
+
+    window.updateScheduleStatus = function (value) {
+        const statusInput = scheduleStatusForm.querySelector('[name="status"]');
+        statusInput.value = value;
         if (value === 'scheduled') {
-            window.scheduleDateModal.show();
+            scheduleDateModal.show();
         } else {
-            document.getElementById('scheduleStatusForm').submit();
+            scheduleStatusForm.submit();
         }
     };
-    
-    // Function to style status select elements
+
+    if (scheduleForm) {
+        scheduleForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const dateInput = this.querySelector('[name="schedule_date"]');
+
+            if (!dateInput.value) {
+                showToast('Please select a valid schedule date', 'warning');
+                return;
+            }
+
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'schedule_date';
+            hiddenInput.value = dateInput.value;
+            scheduleStatusForm.appendChild(hiddenInput);
+            scheduleStatusForm.submit();
+        });
+    }
+
+    // --- Status Styling ---
     function styleStatusSelect(select) {
-        const value = select.value;
-        let color = "#6c757d"; // Default gray
-        
-        // Remove all existing classes
+        let color = "#6c757d"; // default
         select.className = 'form-select status-select';
-        
-        // Add appropriate color class based on status
-        switch(value) {
+
+        switch (select.value) {
             case 'pending':
-                color = "#ffc107"; // Warning yellow
+                color = "#ffc107";
                 select.classList.add('status-pending-student');
                 break;
             case 'selected':
-                color = "#28a745"; // Success green
+                color = "#28a745";
                 select.classList.add('status-completed-student');
                 break;
             case 'rejected':
-                color = "#dc3545"; // Danger red
+                color = "#dc3545";
                 select.classList.add('status-rejected-student');
                 break;
         }
-        
+
         select.style.borderLeft = `4px solid ${color}`;
-        select.style.backgroundColor = `${color}10`; // Very light version of the color
+        select.style.backgroundColor = `${color}10`;
     }
 
-    // Update the scheduleStatusForm submission
-    window.updateScheduleStatus = function(value) {
-        const form = document.getElementById('scheduleStatusForm');
-        const statusInput = form.querySelector('[name="status"]');
-        statusInput.value = value;
-        
-        if (value === 'scheduled') {
-            window.scheduleDateModal.show();
-        } else {
-            // For pending status, we don't need a date
-            form.submit();
-        }
-    };
+    document.querySelectorAll('.status-select').forEach(select => {
+        styleStatusSelect(select);
+        select.addEventListener('change', () => styleStatusSelect(select));
+    });
 
-    // Update the scheduleDateForm submission
-    const scheduleForm = document.getElementById('scheduleDateForm');
-    if (scheduleForm) {
-        scheduleForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const dateInput = this.querySelector('[name="schedule_date"]');
-            const statusForm = document.getElementById('scheduleStatusForm');
-            
-            // Create a hidden input for the date in the status form
-            const hiddenDateInput = document.createElement('input');
-            hiddenDateInput.type = 'hidden';
-            hiddenDateInput.name = 'schedule_date';
-            hiddenDateInput.value = dateInput.value;
-            statusForm.appendChild(hiddenDateInput);
-            
-            // Submit the status form
-            statusForm.submit();
-        });
-    }
-
-    // Student status update functionality
-    window.updateStudentStatus = function(select, requirementId, studentId) {
-        const status = select.value;
+    // --- Student Status Update ---
+    window.updateStudentStatus = function (select, requirementId, studentId) {
         const form = document.getElementById('statusUpdateForm');
-        
-        // Update form action with correct IDs
         form.action = `/requirements/${requirementId}/students/${studentId}/update-status/`;
-        document.getElementById('statusUpdateValue').value = status;
+        document.getElementById('statusUpdateValue').value = select.value;
         form.submit();
     };
 
-    // Initialize all status selects
-    document.querySelectorAll('.status-select').forEach(select => {
-        styleStatusSelect(select);
-        select.addEventListener('change', function() {
-            styleStatusSelect(this);
+    // --- Feedback Animation ---
+    document.querySelectorAll('.feedback-view').forEach(view => {
+        view.addEventListener('mouseenter', () => {
+            gsap.to(view, { backgroundColor: "#fff0e0", borderLeftWidth: "5px", duration: 0.3 });
+        });
+        view.addEventListener('mouseleave', () => {
+            gsap.to(view, { backgroundColor: "#fff8f2", borderLeftWidth: "3px", duration: 0.3 });
         });
     });
-    
-    // Initialize DataTables if available
+
+    // --- DataTables Initialization ---
     if (typeof $.fn.DataTable !== 'undefined' && document.getElementById('studentsTable')) {
         $('#studentsTable').DataTable({
             responsive: true,
@@ -1396,24 +1336,26 @@ document.getElementById('driveResultForm').addEventListener('submit', function(e
             dom: '<"top"lf>rt<"bottom"ip>'
         });
     }
-    const skillBadges = document.querySelectorAll('.skill-badge');
-        gsap.from(skillBadges, {
-            opacity: 0,
-            y: 10,
-            stagger: 0.05,
-            duration: 0.4,
-            ease: "power2.out",
-            delay: 0.5
-        });
-        
-        // Animation for progress bars
-        gsap.from(".progress-bar", {
-            width: 0,
-            duration: 1,
-            ease: "power2.out",
-            delay: 0.7,
-            stagger: 0.1
-        });
+
+    // --- Skill Badge Animation ---
+    gsap.from(document.querySelectorAll('.skill-badge'), {
+        opacity: 0,
+        y: 10,
+        stagger: 0.05,
+        duration: 0.4,
+        ease: "power2.out",
+        delay: 0.5
+    });
+
+    // --- Progress Bar Animation ---
+    gsap.from(".progress-bar", {
+        width: 0,
+        duration: 1,
+        ease: "power2.out",
+        delay: 0.7,
+        stagger: 0.1
+    });
 });
 </script>
+
 {% endblock %}

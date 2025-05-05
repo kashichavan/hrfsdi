@@ -7,30 +7,58 @@
 {% block extra_head %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
     body {
-        font-family: 'Poppins', sans-serif;
-        background-color: #f8f9fa;
+        font-family: 'Space Grotesk', sans-serif;
+        background: linear-gradient(135deg, #fff8f0 0%, #fff 100%);
+        background-attachment: fixed;
     }
     
     .form-container {
-        background-color: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        padding: 2rem;
-        margin: 2rem auto;
+        background: linear-gradient(145deg, #ffffff 0%, #fff5eb 100%);
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(255, 135, 0, 0.07);
+        padding: 2.5rem;
+        margin: 2.5rem auto;
         max-width: 800px;
+        border: 1px solid rgba(255, 135, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .form-container::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 6px;
+        background: linear-gradient(90deg, #FF8500 0%, #FF5722 100%);
     }
     
     .page-title {
-        font-family: 'Montserrat', sans-serif;
-        color: #2c3e50;
-        margin-bottom: 1.5rem;
+        font-family: 'Outfit', sans-serif;
+        color: #FF5722;
+        margin-bottom: 2rem;
         font-weight: 700;
         text-align: center;
-        border-bottom: 2px solid #3498db;
-        padding-bottom: 10px;
+        letter-spacing: -0.5px;
+        font-size: 2rem;
+        position: relative;
+        padding-bottom: 16px;
+    }
+    
+    .page-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 80px;
+        height: 3px;
+        background: linear-gradient(90deg, #FF8500 0%, #FF5722 100%);
+        border-radius: 3px;
     }
     
     .form-group {
@@ -39,44 +67,58 @@
     
     .form-group label {
         font-weight: 500;
-        color: #34495e;
+        color: #333;
         margin-bottom: 0.5rem;
         display: block;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.9rem;
     }
     
     .form-control {
-        border: 1px solid #ddd;
-        border-radius: 6px;
-        padding: 10px 15px;
-        font-family: 'Poppins', sans-serif;
-        font-weight: 300;
-        transition: border-color 0.3s;
+        border: 1px solid rgba(255, 135, 0, 0.2);
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 400;
+        transition: all 0.3s ease;
         width: 100%;
+        background-color: rgba(255, 255, 255, 0.8);
+        font-size: 0.95rem;
     }
     
     .form-control:focus {
         outline: none;
-        border-color: #3498db;
-        box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        border-color: #FF8500;
+        box-shadow: 0 0 0 3px rgba(255, 133, 0, 0.15);
+        background-color: #fff;
     }
     
     .submit-btn {
-        background-color: #3498db;
+        background: linear-gradient(90deg, #FF8500 0%, #FF5722 100%);
         color: white;
         border: none;
-        border-radius: 6px;
-        padding: 12px 25px;
-        font-family: 'Poppins', sans-serif;
-        font-weight: 500;
+        border-radius: 10px;
+        padding: 14px 30px;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
         cursor: pointer;
-        transition: background-color 0.3s;
+        transition: all 0.3s ease;
         display: block;
         width: 100%;
-        margin-top: 1rem;
+        margin-top: 2rem;
+        letter-spacing: 0.5px;
+        font-size: 1rem;
+        position: relative;
+        overflow: hidden;
     }
     
     .submit-btn:hover {
-        background-color: #2980b9;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(255, 87, 34, 0.25);
+    }
+    
+    .submit-btn:active {
+        transform: translateY(0);
     }
     
     .form-row {
@@ -86,44 +128,206 @@
         margin-left: -15px;
     }
     
+    .col-md-6, .col-md-4 {
+        padding-right: 15px;
+        padding-left: 15px;
+        margin-bottom: 0.5rem;
+    }
+    
     .col-md-6 {
         flex: 0 0 50%;
         max-width: 50%;
-        padding-right: 15px;
-        padding-left: 15px;
+    }
+    
+    .col-md-4 {
+        flex: 0 0 33.333333%;
+        max-width: 33.333333%;
     }
     
     @media (max-width: 768px) {
-        .col-md-6 {
+        .col-md-6, .col-md-4 {
             flex: 0 0 100%;
             max-width: 100%;
+        }
+        
+        .form-container {
+            padding: 1.5rem;
+            margin: 1rem;
         }
     }
     
     .breadcrumb {
         background-color: transparent;
-        padding: 0.75rem 0;
+        padding: 1rem 0;
         margin-bottom: 1rem;
     }
     
     .breadcrumb-item {
         display: inline;
         font-size: 0.9rem;
+        font-family: 'Space Grotesk', sans-serif;
     }
     
     .breadcrumb-item a {
-        color: #3498db;
+        color: #FF8500;
         text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+    
+    .breadcrumb-item a:hover {
+        color: #FF5722;
     }
     
     .breadcrumb-item.active {
-        color: #7f8c8d;
+        color: #777;
     }
     
     .breadcrumb-item + .breadcrumb-item::before {
         content: "›";
-        padding: 0 0.5rem;
-        color: #95a5a6;
+        padding: 0 0.8rem;
+        color: #999;
+        font-weight: 300;
+        font-size: 1.2rem;
+    }
+    
+    /* Dropout section styling */
+    .dropout-section {
+        background: linear-gradient(145deg, #fff5eb 0%, #fff9f0 100%);
+        padding: 1.8rem;
+        border-radius: 12px;
+        margin: 1.5rem 0;
+        border-left: 4px solid #FF5722;
+        box-shadow: 0 4px 15px rgba(255, 87, 34, 0.08);
+    }
+    
+    .dropout-section h5 {
+        color: #FF5722;
+        margin-bottom: 1.2rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    /* Rating section styling */
+    .rating-section {
+        background: linear-gradient(145deg, #f9f9f9 0%, #fff5eb 100%);
+        padding: 1.8rem;
+        border-radius: 12px;
+        margin: 1.5rem 0;
+        border-left: 4px solid #FF8500;
+        box-shadow: 0 4px 15px rgba(255, 133, 0, 0.08);
+    }
+    
+    .rating-section h5 {
+        color: #FF8500;
+        margin-bottom: 1.2rem;
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    /* Read-only fields styling */
+    .form-control[disabled] {
+        background-color: rgba(240, 240, 240, 0.6);
+        color: #777;
+        border-color: rgba(0, 0, 0, 0.1);
+        cursor: not-allowed;
+    }
+    
+    /* Checkbox styling */
+    .form-check {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1rem;
+        padding-left: 0;
+    }
+    
+    .form-check-input {
+        margin-right: 0.7rem;
+        width: 1.3em;
+        height: 1.3em;
+        appearance: none;
+        -webkit-appearance: none;
+        border: 2px solid rgba(255, 133, 0, 0.4);
+        border-radius: 5px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    
+    .form-check-input:checked {
+        background-color: #FF8500;
+        border-color: #FF8500;
+    }
+    
+    .form-check-input:checked::after {
+        content: '✓';
+        position: absolute;
+        color: white;
+        font-size: 0.85em;
+        font-weight: bold;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+    }
+    
+    .form-check-input:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 133, 0, 0.15);
+    }
+    
+    .form-check-label {
+        margin-bottom: 0;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 500;
+        cursor: pointer;
+    }
+    
+    /* Form sections */
+    .form-section {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+    
+    .form-section-title {
+        font-family: 'Outfit', sans-serif;
+        color: #FF8500;
+        font-size: 1.1rem;
+        margin-bottom: 1.2rem;
+        font-weight: 600;
+        position: relative;
+        display: inline-block;
+        padding-bottom: 5px;
+    }
+    
+    .form-section-title::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background: linear-gradient(90deg, #FF8500 0%, transparent 80%);
+    }
+    
+    /* Error messages */
+    .text-danger {
+        color: #dc3545;
+        font-size: 0.8rem;
+        margin-top: 0.3rem;
+        display: block;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .form-container {
+        animation: fadeIn 0.5s ease-out;
     }
 </style>
 {% endblock %}
@@ -143,125 +347,223 @@
         <form method="post" novalidate>
             {% csrf_token %}
             
-            <div class="form-row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.name.id_for_label }}">Full Name</label>
-                        {{ form.name|add_class:"form-control" }}
-                        {% if form.name.errors %}
-                            <small class="text-danger">{{ form.name.errors }}</small>
-                        {% endif %}
+            <!-- Basic Information Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Personal Information</h4>
+                <div class="form-row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.name.id_for_label }}">Full Name</label>
+                            {{ form.name|add_class:"form-control" }}
+                            {% if form.name.errors %}
+                                <small class="text-danger">{{ form.name.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.contact_number.id_for_label }}">Contact Number</label>
-                        {{ form.contact_number|add_class:"form-control" }}
-                        {% if form.contact_number.errors %}
-                            <small class="text-danger">{{ form.contact_number.errors }}</small>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.degree.id_for_label }}">Degree</label>
-                        {{ form.degree|add_class:"form-control" }}
-                        {% if form.degree.errors %}
-                            <small class="text-danger">{{ form.degree.errors }}</small>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.stream.id_for_label }}">Stream</label>
-                        {{ form.stream|add_class:"form-control" }}
-                        {% if form.stream.errors %}
-                            <small class="text-danger">{{ form.stream.errors }}</small>
-                        {% endif %}
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.contact_number.id_for_label }}">Contact Number</label>
+                            {{ form.contact_number|add_class:"form-control" }}
+                            {% if form.contact_number.errors %}
+                                <small class="text-danger">{{ form.contact_number.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="form-row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.yop.id_for_label }}">Year of Passing</label>
-                        {{ form.yop|add_class:"form-control" }}
-                        {% if form.yop.errors %}
-                            <small class="text-danger">{{ form.yop.errors }}</small>
-                        {% endif %}
+            <!-- Academic Information Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Academic Information</h4>
+                <div class="form-row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.degree.id_for_label }}">Degree</label>
+                            {{ form.degree|add_class:"form-control" }}
+                            {% if form.degree.errors %}
+                                <small class="text-danger">{{ form.degree.errors }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.stream.id_for_label }}">Stream</label>
+                            {{ form.stream|add_class:"form-control" }}
+                            {% if form.stream.errors %}
+                                <small class="text-danger">{{ form.stream.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
                 
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.gender.id_for_label }}">Gender</label>
-                        {{ form.gender|add_class:"form-control" }}
-                        {% if form.gender.errors %}
-                            <small class="text-danger">{{ form.gender.errors }}</small>
-                        {% endif %}
+                <div class="form-row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.yop.id_for_label }}">Year of Passing</label>
+                            {{ form.yop|add_class:"form-control" }}
+                            {% if form.yop.errors %}
+                                <small class="text-danger">{{ form.yop.errors }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.gender.id_for_label }}">Gender</label>
+                            {{ form.gender|add_class:"form-control" }}
+                            {% if form.gender.errors %}
+                                <small class="text-danger">{{ form.gender.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="form-row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.tenth_percent.id_for_label }}">10th Percentage</label>
-                        {{ form.tenth_percent|add_class:"form-control" }}
-                        {% if form.tenth_percent.errors %}
-                            <small class="text-danger">{{ form.tenth_percent.errors }}</small>
-                        {% endif %}
+            <!-- Percentage Information Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Academic Performance</h4>
+                <div class="form-row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.tenth_percent.id_for_label }}">10th Percentage</label>
+                            {{ form.tenth_percent|add_class:"form-control" }}
+                            {% if form.tenth_percent.errors %}
+                                <small class="text-danger">{{ form.tenth_percent.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.twelfth_percent.id_for_label }}">12th Percentage</label>
-                        {{ form.twelfth_percent|add_class:"form-control" }}
-                        {% if form.twelfth_percent.errors %}
-                            <small class="text-danger">{{ form.twelfth_percent.errors }}</small>
-                        {% endif %}
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.twelfth_percent.id_for_label }}">12th Percentage</label>
+                            {{ form.twelfth_percent|add_class:"form-control" }}
+                            {% if form.twelfth_percent.errors %}
+                                <small class="text-danger">{{ form.twelfth_percent.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="form-row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.degree_percent.id_for_label }}">Degree Percentage</label>
-                        {{ form.degree_percent|add_class:"form-control" }}
-                        {% if form.degree_percent.errors %}
-                            <small class="text-danger">{{ form.degree_percent.errors }}</small>
-                        {% endif %}
-                    </div>
-                </div>
-                
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="{{ form.type_of_data.id_for_label }}">Type of Data</label>
-                        {{ form.type_of_data|add_class:"form-control" }}
-                        {% if form.type_of_data.errors %}
-                            <small class="text-danger">{{ form.type_of_data.errors }}</small>
-                        {% endif %}
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.degree_percent.id_for_label }}">Degree Percentage</label>
+                            {{ form.degree_percent|add_class:"form-control" }}
+                            {% if form.degree_percent.errors %}
+                                <small class="text-danger">{{ form.degree_percent.errors }}</small>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="form-group">
-                <div class="form-check">
-                    {{ form.is_placed|add_class:"form-check-input" }}
-                    <label class="form-check-label" for="{{ form.is_placed.id_for_label }}">
-                        Is Placed
-                    </label>
-                    {% if form.is_placed.errors %}
-                        <small class="text-danger">{{ form.is_placed.errors }}</small>
+            <!-- Additional Information Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Additional Details</h4>
+                <div class="form-row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.type_of_data.id_for_label }}">Type of Data</label>
+                            {{ form.type_of_data|add_class:"form-control" }}
+                            {% if form.type_of_data.errors %}
+                                <small class="text-danger">{{ form.type_of_data.errors }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.overall_technical_rating.id_for_label }}">Overall Technical Rating</label>
+                            {{ form.overall_technical_rating|add_class:"form-control" }}
+                            {% if form.overall_technical_rating.errors %}
+                                <small class="text-danger">{{ form.overall_technical_rating.errors }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status Section -->
+            <div class="form-section">
+                <h4 class="form-section-title">Status Information</h4>
+                <div class="form-row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_placed|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.is_placed.id_for_label }}">
+                                    Is Placed
+                                </label>
+                                {% if form.is_placed.errors %}
+                                    <small class="text-danger">{{ form.is_placed.errors }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_dropout|add_class:"form-check-input" }}
+                                <label class="form-check-label" for="{{ form.is_dropout.id_for_label }}">
+                                    Is Dropout
+                                </label>
+                                {% if form.is_dropout.errors %}
+                                    <small class="text-danger">{{ form.is_dropout.errors }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dropout Section (Conditional) -->
+            <div class="dropout-section">
+                <h5>Dropout Information</h5>
+                <div class="form-row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="{{ form.dropout_date.id_for_label }}">Dropout Date</label>
+                            {{ form.dropout_date|add_class:"form-control" }}
+                            {% if form.dropout_date.errors %}
+                                <small class="text-danger">{{ form.dropout_date.errors }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.dropout_reason.id_for_label }}">Dropout Reason</label>
+                    {{ form.dropout_reason|add_class:"form-control" }}
+                    {% if form.dropout_reason.errors %}
+                        <small class="text-danger">{{ form.dropout_reason.errors }}</small>
                     {% endif %}
+                </div>
+            </div>
+            
+            <!-- Read-only Fields Section -->
+            <div class="rating-section">
+                <h5>System Information</h5>
+                <div class="form-row">
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.total_requirements.id_for_label }}">Total Requirements</label>
+                            {{ form.total_requirements|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.scheduled_requirements.id_for_label }}">Scheduled Requirements</label>
+                            {{ form.scheduled_requirements|add_class:"form-control" }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="form-group">
+                            <label for="{{ form.created_at.id_for_label }}">Created At</label>
+                            <input type="text" class="form-control" value="{{ form.instance.created_at|date:'Y-m-d H:i' }}" disabled>
+                        </div>
+                    </div>
                 </div>
             </div>
             
@@ -269,4 +571,37 @@
         </form>
     </div>
 </div>
+
+<script>
+// Enable/disable dropout fields based on checkbox
+document.getElementById('{{ form.is_dropout.id_for_label }}').addEventListener('change', function() {
+    const dropoutDate = document.getElementById('{{ form.dropout_date.id_for_label }}');
+    const dropoutReason = document.getElementById('{{ form.dropout_reason.id_for_label }}');
+    const dropoutSection = document.querySelector('.dropout-section');
+    
+    if (this.checked) {
+        dropoutDate.disabled = false;
+        dropoutReason.disabled = false;
+        dropoutSection.style.display = 'block';
+    } else {
+        dropoutDate.disabled = true;
+        dropoutReason.disabled = true;
+        dropoutDate.value = '';
+        dropoutReason.value = '';
+        dropoutSection.style.display = 'none';
+    }
+});
+
+// Initialize the state when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const isDropout = document.getElementById('{{ form.is_dropout.id_for_label }}');
+    const dropoutSection = document.querySelector('.dropout-section');
+    
+    if (!isDropout.checked) {
+        document.getElementById('{{ form.dropout_date.id_for_label }}').disabled = true;
+        document.getElementById('{{ form.dropout_reason.id_for_label }}').disabled = true;
+        dropoutSection.style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

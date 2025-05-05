@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Bulk Add Dropout Students</h2>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5>Upload Excel File</h5>
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <strong>File Format Requirements:</strong>
+                <ul class="mb-0">
+                    <li>Excel file (.xlsx) with two columns: "mobile" and "reason"</li>
+                    <li>First row should contain column headers</li>
+                    <li>Mobile column should contain student contact numbers</li>
+                    <li>Reason column should contain dropout reasons</li>
+                </ul>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="dropout_file" class="form-label">Select Excel File</label>
+                    <input class="form-control" type="file" id="dropout_file" name="dropout_file" accept=".xlsx" required>
+                </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Upload and Process
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    {% if error_messages %}
+    <div class="card border-danger">
+        <div class="card-header bg-danger text-white">
+            <h5>Processing Errors</h5>
+        </div>
+        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+            <ul class="list-unstyled mb-0">
+                {% for error in error_messages %}
+                <li class="text-danger mb-1">{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% endif %}
+    
+    <div class="mt-3">
+        <a href="{% static 'sample_dropout_upload.xlsx' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-download"></i> Download Sample File
+        </a>
+    </div>
+</div>
+{% endblock %}

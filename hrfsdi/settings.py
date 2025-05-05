@@ -55,8 +55,9 @@ INSTALLED_APPS = [
       'accounts',
       'whitenoise',
        'widget_tweaks',
+       'tempus_dominus',
 ]
-
+TEMPUS_DOMINUS_DATE_FORMAT = 'YYYY-MM-DD'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',

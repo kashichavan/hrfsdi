@@ -45,7 +45,7 @@
                     </div>
                     <h2 class="stats-number">{{ scheduled_today }}</h2>
                     <p class="stats-label">Today's Schedule</p>
-                    <a href="#today-section" class="stats-link">See details</a>
+                    <a href="{% url 'student_data:todays_requirements' %}" class="stats-link">See details</a>
                 </div>
             </div>
         </div>
@@ -53,11 +53,11 @@
             <div class="card dashboard-card stats-card">
                 <div class="card-body">
                     <div class="stats-icon">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-calendar-alt"></i>
                     </div>
-                    <h2 class="stats-number">Analytics</h2>
-                    <p class="stats-label">Student Performance</p>
-                    <a href="{% url 'student_data:student_analytics' %}" class="stats-link">View reports</a>
+                    <h2 class="stats-number">{{ scheduled_tomorrow }}</h2>
+                    <p class="stats-label">Tomorrow's Schedule</p>
+                    <a href="{% url 'student_data:tomorrow_requirements' %}" class="stats-link">See details</a>
                 </div>
             </div>
         </div>
@@ -84,12 +84,34 @@
                         </div>
                         <div class="col-md-3 col-sm-6 mb-2">
                             <a href="{% url 'student_data:students_attending_today' %}" class="btn btn-action btn-block">
-                                <i class="fas fa-clipboard-list mr-1"></i> Today Attending Students
+                                <i class="fas fa-clipboard-list mr-1"></i> Today's Students
                             </a>
                         </div>
                         <div class="col-md-3 col-sm-6 mb-2">
+                            <a href="{% url 'student_data:tomorrow_students' %}" class="btn btn-action btn-block">
+                                <i class="fas fa-calendar-day mr-1"></i> Tomorrow's Students
+                            </a>
+                        </div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-md-3 col-sm-6 mb-2">
                             <a href="{% url 'student_data:export_todays_requirements' %}" class="btn btn-action btn-block">
-                                <i class="fas fa-file-export mr-1"></i> Export Attending Today Data
+                                <i class="fas fa-file-export mr-1"></i> Export Today's Data
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <a href="{% url 'student_data:export_tomorrows_requirements' %}" class="btn btn-action btn-block">
+                                <i class="fas fa-file-export mr-1"></i> Export Tomorrow's Data
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <a href="{% url 'student_data:student_analytics' %}" class="btn btn-action btn-block">
+                                <i class="fas fa-chart-bar mr-1"></i> View Analytics
+                            </a>
+                        </div>
+                        <div class="col-md-3 col-sm-6 mb-2">
+                            <a href="{% url 'student_data:requirement_list' %}" class="btn btn-action btn-block">
+                                <i class="fas fa-th-list mr-1"></i> All Requirements
                             </a>
                         </div>
                     </div>
@@ -100,75 +122,170 @@
 
     <!-- Main Content Area -->
     <div class="row">
-        <!-- Latest Requirements Section -->
+        <!-- Current & Tomorrow's Requirements Tabs -->
         <div class="col-md-6 mb-3">
-            <div class="card dashboard-card content-card" id="today-section">
+            <div class="card dashboard-card content-card" id="requirements-section">
                 <div class="card-header content-header">
-                    <h5><i class="fas fa-clock mr-2"></i> Latest Requirements</h5>
+                    <ul class="nav nav-tabs card-header-tabs" id="requirementsTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="today-req-tab" data-toggle="tab" href="#today-req" role="tab">
+                                <i class="fas fa-calendar-day mr-1"></i> Today
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tomorrow-req-tab" data-toggle="tab" href="#tomorrow-req" role="tab">
+                                <i class="fas fa-calendar-alt mr-1"></i> Tomorrow
+                            </a>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <div class="content-list">
-                        {% for requirement in latest_requirements %}
-                            <div class="content-item">
-                                <div class="content-main">
-                                    <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="content-title">
-                                        {{ requirement.company_name }}
-                                    </a>
-                                    {% if requirement.company_code %}
-                                    <span class="content-badge">{{ requirement.company_code }}</span>
-                                    {% endif %}
-                                </div>
-                                <div class="content-date">{{ requirement.requirement_date }}</div>
+                    <div class="tab-content" id="requirementsTabContent">
+                        <!-- Today's Requirements Tab -->
+                        <div class="tab-pane fade show active" id="today-req" role="tabpanel">
+                            <div class="content-list">
+                                {% for requirement in todays_requirements %}
+                                    <div class="content-item">
+                                        <div class="content-main">
+                                            <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="content-title">
+                                                {{ requirement.company_name }}
+                                            </a>
+                                            {% if requirement.company_code %}
+                                            <span class="content-badge">{{ requirement.company_code }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="content-time">
+                                            <i class="far fa-clock mr-1"></i> {{ requirement.schedule_time }}
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <div class="no-content">No requirements scheduled for today.</div>
+                                {% endfor %}
                             </div>
-                        {% empty %}
-                            <div class="no-content">No recent requirements found.</div>
-                        {% endfor %}
-                    </div>
-                    <div class="text-center mt-3">
-                        <a href="{% url 'student_data:requirement_list' %}" class="btn btn-view-all">View All Requirements</a>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'student_data:export_todays_requirements' %}" class="btn btn-export">
+                                    <i class="fas fa-download mr-1"></i> Export Today's Data
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Tomorrow's Requirements Tab -->
+                        <div class="tab-pane fade" id="tomorrow-req" role="tabpanel">
+                            <div class="content-list">
+                                {% for requirement in tomorrows_requirements %}
+                                    <div class="content-item">
+                                        <div class="content-main">
+                                            <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="content-title">
+                                                {{ requirement.company_name }}
+                                            </a>
+                                            {% if requirement.company_code %}
+                                            <span class="content-badge">{{ requirement.company_code }}</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="content-time">
+                                            <i class="far fa-clock mr-1"></i> {{ requirement.schedule_time }}
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <div class="no-content">No requirements scheduled for tomorrow.</div>
+                                {% endfor %}
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'student_data:tomorrow_requirements' %}" class="btn btn-view-all">
+                                    <i class="fas fa-list mr-1"></i> View Details
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Today's Requirements Section -->
+        <!-- Today & Tomorrow's Students Tabs -->
         <div class="col-md-6 mb-3">
-            <div class="card dashboard-card content-card">
+            <div class="card dashboard-card content-card" id="attending-section">
                 <div class="card-header content-header">
-                    <h5><i class="fas fa-calendar-day mr-2"></i> Today's Scheduled Requirements</h5>
+                    <ul class="nav nav-tabs card-header-tabs" id="attendingTabs" role="tablist">
+                        <li class="nav-item">
+                            <a class="nav-link active" id="today-students-tab" data-toggle="tab" href="{% url 'student_data:students_attending_today' %}" role="tab">
+                                <i class="fas fa-user-graduate mr-1"></i> Today's Students
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" id="tomorrow-students-tab" data-toggle="tab" href="{% url 'student_data:tomorrow_students' %}" role="tab">
+                                <i class="fas fa-user-clock mr-1"></i> Tomorrow's Students
+                            </a>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <div class="content-list">
-                        {% for requirement in todays_requirements %}
-                            <div class="content-item">
-                                <div class="content-main">
-                                    <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="content-title">
-                                        {{ requirement.company_name }}
-                                    </a>
-                                    {% if requirement.company_code %}
-                                    <span class="content-badge">{{ requirement.company_code }}</span>
-                                    {% endif %}
-                                </div>
-                                <div class="content-time">
-                                    <i class="far fa-clock mr-1"></i> {{ requirement.schedule_time }}
-                                </div>
+                    <div class="tab-content" id="attendingTabContent">
+                        <!-- Today's Students Tab -->
+                        <div class="tab-pane fade show active" id="today-students" role="tabpanel">
+                            <div class="content-list">
+                                {% for student in students_attending_today %}
+                                    <div class="content-item">
+                                        <div class="content-main">
+                                            <a href="{% url 'student_data:student_detail' student.id %}" class="content-title">
+                                                {{ student.name }}
+                                            </a>
+                                            <span class="content-badge">{{ student.degree }} - {{ student.stream }}</span>
+                                        </div>
+                                        <div class="content-time">
+                                            <a href="{% url 'student_data:requirement_detail' student.requirement.id %}" class="text-muted">
+                                                <i class="fas fa-briefcase mr-1"></i> {{ student.requirement.company_name }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <div class="no-content">No students scheduled for today.</div>
+                                {% endfor %}
                             </div>
-                        {% empty %}
-                            <div class="no-content">No requirements scheduled for today.</div>
-                        {% endfor %}
-                    </div>
-                    <div class="text-center mt-3">
-                        <a href="{% url 'student_data:export_todays_requirements' %}" class="btn btn-export">
-                            <i class="fas fa-download mr-1"></i> Export Today's Data
-                        </a>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'student_data:students_attending_today' %}" class="btn btn-view-all">
+                                    <i class="fas fa-list mr-1"></i> View All
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <!-- Tomorrow's Students Tab -->
+                        <div class="tab-pane fade" id="tomorrow-students" role="tabpanel">
+                            <div class="content-list">
+                                {% for student in students_attending_tomorrow %}
+                                    <div class="content-item">
+                                        <div class="content-main">
+                                            <a href="{% url 'student_data:student_detail' student.id %}" class="content-title">
+                                                {{ student.name }}
+                                            </a>
+                                            <span class="content-badge">{{ student.degree }} - {{ student.stream }}</span>
+                                        </div>
+                                        <div class="content-time">
+                                            <a href="{% url 'student_data:requirement_detail' student.requirement.id %}" class="text-muted">
+                                                <i class="fas fa-briefcase mr-1"></i> {{ student.requirement.company_name }}
+                                            </a>
+                                        </div>
+                                    </div>
+                                {% empty %}
+                                    <div class="no-content">No students scheduled for tomorrow.</div>
+                                {% endfor %}
+                            </div>
+                            <div class="text-center mt-3">
+                                <a href="{% url 'student_data:export_tomorrows_requirements' %}" class="btn btn-export mr-2">
+                                    <i class="fas fa-download mr-1"></i> Export Data
+                                </a>
+                                <a href="{% url 'student_data:tomorrow_students' %}" class="btn btn-view-all">
+                                    <i class="fas fa-list mr-1"></i> View All
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Recent Students Section - Expanded to full width -->
+    <!-- Recent Students Section -->
+    <div class="row" id="tomorrow-section">
         <div class="col-12 mb-3">
             <div class="card dashboard-card content-card">
                 <div class="card-header content-header">
@@ -213,280 +330,436 @@
         </div>
     </div>
 </div>
-
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-    /* Dashboard Styles - Orange and White Theme */
-    .dashboard-container {
-        padding: 15px;
-        font-family: 'Poppins', sans-serif;
-        background-color: #fff;
+/* Dashboard Styles - Modern Orange and White Theme */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap');
+
+:root {
+  --primary-orange: #ff5a1f;
+  --secondary-orange: #ff7e3d;
+  --light-orange: #fff0e6;
+  --orange-gradient: linear-gradient(135deg, #ff5a1f, #ff9a5a);
+  --white-orange-gradient: linear-gradient(135deg, #ffffff, #fff0e6);
+}
+
+.dashboard-container {
+    padding: 20px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #fff;
+    background-image: radial-gradient(circle at top right, rgba(255, 240, 230, 0.4), transparent);
+}
+
+/* Header Styles */
+.dashboard-title {
+    color: var(--primary-orange);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 0;
+    position: relative;
+    padding-bottom: 10px;
+    letter-spacing: -0.5px;
+}
+
+.dashboard-title:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 80px;
+    height: 4px;
+    background: var(--orange-gradient);
+    border-radius: 8px;
+}
+
+.dashboard-subtitle {
+    color: #6b7280;
+    font-size: 1rem;
+    margin-bottom: 20px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+}
+
+/* Card Base Styles */
+.dashboard-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 25px rgba(255, 90, 31, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    height: 100%;
+    border-left: 4px solid var(--secondary-orange);
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 30px rgba(255, 90, 31, 0.12);
+}
+
+/* Stats Cards */
+.stats-card {
+    background: var(--white-orange-gradient);
+    text-align: center;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.stats-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, rgba(255, 126, 61, 0.1), transparent);
+    border-radius: 50%;
+}
+
+.stats-icon {
+    color: var(--primary-orange);
+    font-size: 2rem;
+    margin-bottom: 15px;
+    filter: drop-shadow(0 4px 6px rgba(255, 90, 31, 0.2));
+}
+
+.stats-number {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-orange);
+    margin-bottom: 5px;
+    background: var(--orange-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.stats-label {
+    color: #6b7280;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.stats-link {
+    color: var(--secondary-orange);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+    position: relative;
+    padding-bottom: 2px;
+}
+
+.stats-link:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: var(--orange-gradient);
+    transition: width 0.3s;
+}
+
+.stats-link:hover {
+    color: var(--primary-orange);
+}
+
+.stats-link:hover:after {
+    width: 100%;
+}
+
+/* Action Card */
+.action-header {
+    background: var(--orange-gradient);
+    color: white;
+    border: none;
+    padding: 15px 20px;
+}
+
+.action-header h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.3px;
+}
+
+.btn-action {
+    background-color: var(--light-orange);
+    color: var(--primary-orange);
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 10px 16px;
+    transition: all 0.3s;
+    font-size: 0.95rem;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.btn-action:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: var(--orange-gradient);
+    transition: width 0.3s ease;
+    z-index: -1;
+}
+
+.btn-action:hover {
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(255, 90, 31, 0.2);
+}
+
+.btn-action:hover:before {
+    width: 100%;
+}
+
+/* Content Cards */
+.content-header {
+    background-color: var(--light-orange);
+    color: var(--primary-orange);
+    border: none;
+    padding: 15px 20px;
+}
+
+.content-header h5 {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.1rem;
+    font-family: 'Outfit', sans-serif;
+    letter-spacing: 0.3px;
+}
+
+.content-list {
+    padding: 8px 0;
+}
+
+.content-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 0;
+    border-bottom: 1px solid rgba(255, 126, 61, 0.15);
+    transition: background-color 0.2s;
+}
+
+.content-item:hover {
+    background-color: rgba(255, 240, 230, 0.5);
+}
+
+.content-item:last-child {
+    border-bottom: none;
+}
+
+.content-title {
+    color: var(--secondary-orange);
+    font-weight: 500;
+    text-decoration: none;
+    font-size: 1rem;
+    transition: color 0.3s;
+}
+
+.content-title:hover {
+    color: var(--primary-orange);
+}
+
+.content-badge {
+    background: var(--orange-gradient);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-left: 8px;
+    box-shadow: 0 3px 5px rgba(255, 90, 31, 0.2);
+}
+
+.content-date, .content-time {
+    color: #6b7280;
+    font-size: 0.85rem;
+}
+
+.no-content {
+    text-align: center;
+    color: #6b7280;
+    padding: 20px 0;
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+.btn-view-all, .btn-export {
+    background: transparent;
+    color: var(--secondary-orange);
+    border: 2px solid var(--secondary-orange);
+    border-radius: 12px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s;
+}
+
+.btn-view-all:hover, .btn-export:hover {
+    background: var(--orange-gradient);
+    color: white;
+    border-color: transparent;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 90, 31, 0.2);
+}
+
+/* Student Table */
+.student-table {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+    border-collapse: separate;
+    border-spacing: 0 5px;
+}
+
+.student-table thead th {
+    background: var(--light-orange);
+    color: var(--primary-orange);
+    border: none;
+    padding: 12px 16px;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.8px;
+}
+
+.student-table tbody tr {
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.student-table tbody tr:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.student-table tbody td {
+    padding: 12px 16px;
+    background-color: white;
+    border: none;
+    vertical-align: middle;
+}
+
+.student-table tbody tr td:first-child {
+    border-top-left-radius: 10px;
+    border-bottom-left-radius: 10px;
+}
+
+.student-table tbody tr td:last-child {
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+}
+
+.btn-view {
+    background: var(--light-orange);
+    color: var(--primary-orange);
+    border: none;
+    border-radius: 8px;
+    transition: all 0.3s;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+.btn-view:hover {
+    background: var(--orange-gradient);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(255, 90, 31, 0.2);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 767px) {
+    .content-item {
+        flex-direction: column;
+        align-items: flex-start;
     }
     
-    /* Header Styles */
+    .content-date, .content-time {
+        margin-top: 6px;
+    }
+    
     .dashboard-title {
-        color: #e65100; /* Dark Orange */
-        font-weight: 600;
         font-size: 1.8rem;
-        margin-bottom: 0;
-        position: relative;
-        padding-bottom: 8px;
-    }
-    
-    .dashboard-title:after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 60px;
-        height: 3px;
-        background: linear-gradient(to right, #e65100, #ff9800);
-        border-radius: 2px;
-    }
-    
-    .dashboard-subtitle {
-        color: #777;
-        font-size: 0.95rem;
-        margin-bottom: 15px;
-        font-weight: 300;
-    }
-    
-    /* Card Base Styles */
-    .dashboard-card {
-        border: none;
-        border-radius: 10px;
-        overflow: hidden;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-        transition: transform 0.2s, box-shadow 0.2s;
-        height: 100%;
-        border-left: 3px solid #ff7800;
-    }
-    
-    .dashboard-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-    }
-    
-    /* Stats Cards */
-    .stats-card {
-        background: linear-gradient(to bottom right, #fff, #fff8e1);
-        text-align: center;
-        padding: 15px;
-    }
-    
-    .stats-icon {
-        color: #ff7800;
-        font-size: 1.8rem;
-        margin-bottom: 10px;
     }
     
     .stats-number {
         font-size: 1.8rem;
-        font-weight: 700;
-        color: #e65100;
-        margin-bottom: 2px;
     }
-    
-    .stats-label {
-        color: #777;
-        margin-bottom: 10px;
-        font-size: 0.85rem;
-    }
-    
-    .stats-link {
-        color: #ff7800;
-        text-decoration: none;
-        font-weight: 600;
-        font-size: 0.85rem;
-        transition: all 0.2s;
-    }
-    
-    .stats-link:hover {
-        color: #e65100;
-        text-decoration: underline;
-    }
-    
-    /* Action Card */
-    .action-header {
-        background-color: #ff7800;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-    }
-    
-    .action-header h5 {
-        margin: 0;
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    
-    .btn-action {
-        background-color: #ffe0b2;
-        color: #e65100;
-        border: none;
-        border-radius: 6px;
-        font-weight: 500;
-        padding: 8px 10px;
-        transition: all 0.2s;
-        font-size: 0.9rem;
-    }
-    
-    .btn-action:hover {
-        background-color: #ffcc80;
-        transform: translateY(-2px);
-    }
-    
-    /* Content Cards */
-    .content-header {
-        background-color: #ffe0b2;
-        color: #e65100;
-        border: none;
-        padding: 10px 15px;
-    }
-    
-    .content-header h5 {
-        margin: 0;
-        font-weight: 600;
-        font-size: 1rem;
-    }
-    
-    .content-list {
-        padding: 5px 0;
-    }
-    
-    .content-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 10px 0;
-        border-bottom: 1px solid #ffe0b2;
-    }
-    
-    .content-item:last-child {
-        border-bottom: none;
-    }
-    
-    .content-title {
-        color: #ff7800;
-        font-weight: 500;
-        text-decoration: none;
-        font-size: 0.95rem;
-    }
-    
-    .content-title:hover {
-        color: #e65100;
-    }
-    
-    .content-badge {
-        background-color: #ffe0b2;
-        color: #e65100;
-        padding: 2px 6px;
-        border-radius: 10px;
-        font-size: 0.7rem;
-        margin-left: 6px;
-    }
-    
-    .content-date, .content-time {
-        color: #888;
-        font-size: 0.8rem;
-    }
-    
-    .no-content {
-        text-align: center;
-        color: #888;
-        padding: 15px 0;
-        font-size: 0.9rem;
-    }
-    
-    .btn-view-all, .btn-export {
-        background-color: #fff3e0;
-        color: #ff7800;
-        border: 1px solid #ffe0b2;
-        border-radius: 6px;
-        padding: 6px 12px;
-        font-weight: 500;
-        font-size: 0.85rem;
-        transition: all 0.2s;
-    }
-    
-    .btn-view-all:hover, .btn-export:hover {
-        background-color: #ffe0b2;
-        color: #e65100;
-    }
-    
-    /* Student Table */
-    .student-table {
-        margin-bottom: 0;
-        font-size: 0.9rem;
-    }
-    
-    .student-table thead th {
-        background-color: #fff3e0;
-        color: #e65100;
-        border: none;
-        padding: 10px 12px;
-        font-weight: 600;
-    }
-    
-    .student-table tbody td {
-        padding: 8px 12px;
-        border-bottom: 1px solid #ffe0b2;
-        vertical-align: middle;
-    }
-    
-    .btn-view {
-        background-color: #ffe0b2;
-        color: #e65100;
-        border: none;
-        border-radius: 4px;
-        transition: all 0.2s;
-        padding: 4px 8px;
-    }
-    
-    .btn-view:hover {
-        background-color: #ffcc80;
-    }
-    
-    /* Responsive Adjustments */
-    @media (max-width: 767px) {
-        .content-item {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        
-        .content-date, .content-time {
-            margin-top: 4px;
-        }
-    }
+}
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
 <script>
-    // Simple GSAP animations
-    document.addEventListener('DOMContentLoaded', function() {
-        // Initial setup - hide elements
-        gsap.set('.dashboard-title, .dashboard-subtitle', { opacity: 0, y: -20 });
-        gsap.set('.dashboard-card', { opacity: 0, y: 20 });
-        
-        // Create timeline
-        const tl = gsap.timeline();
-        
-        // Header animation
-        tl.to('.dashboard-title', { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" })
-          .to('.dashboard-subtitle', { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, "-=0.3")
-          
-        // Cards animation with stagger
-          .to('.dashboard-card', { 
-              opacity: 1, 
-              y: 0,
-              duration: 0.5, 
-              stagger: 0.1,
-              ease: "power2.out" 
-          }, "-=0.2");
-    });
+// Initialize all Bootstrap tabs
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Requirements Tabs
+    const requirementsTabs = new bootstrap.Tab(document.getElementById('today-req-tab'))
+    const tomorrowReqTab = document.getElementById('tomorrow-req-tab')
+    if (tomorrowReqTab) {
+        tomorrowReqTab.addEventListener('click', function(e) {
+            new bootstrap.Tab(e.target).show()
+        })
+    }
+
+    // Initialize Students Tabs
+    const studentsTabs = new bootstrap.Tab(document.getElementById('today-students-tab'))
+    const tomorrowStudentsTab = document.getElementById('tomorrow-students-tab')
+    if (tomorrowStudentsTab) {
+        tomorrowStudentsTab.addEventListener('click', function(e) {
+            new bootstrap.Tab(e.target).show()
+        })
+    }
+
+    // Handle deep linking
+    const url = new URL(window.location)
+    if (url.hash) {
+        const activeTab = document.querySelector(`[href="${url.hash}"]`)
+        if (activeTab) new bootstrap.Tab(activeTab).show()
+    }
+
+    // Update URL hash when tabs change
+    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
+        tab.addEventListener('shown.bs.tab', function(e) {
+            window.history.replaceState(null, null, e.target.hash)
+        })
+    })
+
+    // GSAP animations (your existing code)
+    gsap.set('.dashboard-title, .dashboard-subtitle', { opacity: 0, y: -20 });
+    gsap.set('.dashboard-card', { opacity: 0, y: 20 });
+    
+    const tl = gsap.timeline();
+    tl.to('.dashboard-title', { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" })
+      .to('.dashboard-subtitle', { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, "-=0.3")
+      .to('.dashboard-card', { 
+          opacity: 1, 
+          y: 0,
+          duration: 0.5, 
+          stagger: 0.1,
+          ease: "power2.out" 
+      }, "-=0.2");
+})
 </script>
 {% endblock %}
 {% endblock %}

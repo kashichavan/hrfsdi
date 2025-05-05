@@ -106,5 +106,14 @@ urlpatterns = [
      path('bulk-rating-upload/', views.BulkStudentRatingUploadView.as_view(), name='bulk_rating_upload'),
       path('download-rating-template/', views.DownloadRatingTemplateView.as_view(), name='download_rating_template'),
      path('students/<int:pk>/add-rating/', views.add_subject_rating, name='add_subject_rating'),
-path('student/<int:pk>/subject-rating/<int:rating_id>/', views.add_subject_rating, name='add_subject_rating'),
+     path('student/<int:pk>/subject-rating/<int:rating_id>/', views.add_subject_rating, name='add_subject_rating'),
+     path('bulk-add-dropouts/', views.bulk_add_dropouts, name='bulk_add_dropouts'),
+
+
+
+     # TOMORROW
+     path('tomorrow-requirements/', views.tomorrows_requirements, name='tomorrow_requirements'),
+     path('tomorrow-students/', views.students_attending_tomorrow, name='tomorrow_students'),
+     path('export/tomorrow-requirements/', views.export_tomorrow_scheduled_requirements, name='export_tomorrows_requirements'),
 ]
+

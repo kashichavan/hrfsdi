@@ -237,8 +237,6 @@ def download_excel_template(request):
     return response
 
 
-
-
 from django.shortcuts import render
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.db.models import Q, Count
@@ -280,6 +278,8 @@ def student_list(request):
                     Q(type_of_data__iexact='early_placement') | 
                     Q(type_of_data__iexact='early placement')
                 )
+            elif type_filter_lower == 'dropout':
+                students = students.filter(is_dropout=True)
             else:
                 students = students.filter(type_of_data__iexact=type_filter_lower)
 
@@ -322,7 +322,7 @@ def student_list(request):
             Q(contact_number__icontains=search_query)
         )
 
-    # Sorting configuration - force scheduled_requirements high-to-low as primary sort
+    # Sorting configuration
     valid_sorts = {
         'name', '-name',
         'yop', '-yop',
@@ -336,16 +336,12 @@ def student_list(request):
         'created_at', '-created_at'
     }
 
-    # Force scheduled_requirements as primary sort
     if sort_by in valid_sorts:
         if sort_by not in ['scheduled_requirements', '-scheduled_requirements']:
-            # If sorting by another field, make it secondary to scheduled_requirements
             students = students.order_by('-scheduled_requirements', sort_by, 'name')
         else:
-            # If explicitly sorting by scheduled_requirements, respect the direction
             students = students.order_by(sort_by, 'name')
     else:
-        # Default case - sort by scheduled_requirements high-to-low
         students = students.order_by('-scheduled_requirements', 'name')
 
     # Get cleaned unique values for filters
@@ -355,7 +351,6 @@ def student_list(request):
                                .values_list(field_name, flat=True) \
                                .distinct()
         
-        # Clean and deduplicate while preserving case for display
         cleaned = set()
         for value in values:
             if value:
@@ -375,7 +370,7 @@ def student_list(request):
     except EmptyPage:
         page_obj = paginator.get_page(paginator.num_pages)
 
-    # Standardize display values for each student
+    # Standardize display values
     for student in page_obj:
         if student.name:
             student.display_name = ' '.join(word.title() for word in student.name.split())
@@ -385,7 +380,7 @@ def student_list(request):
             student.display_stream = ' '.join(word.title() for word in student.stream.split())
 
     # Type counts for quick filters
-    base_query = Student.objects.exclude(requirementstudent__status='selected')
+    base_query = Student.objects.exclude(requirementstudent__status='selected').exclude(is_placed=True)
     type_counts = {
         'all': base_query.count(),
         'fsdi': base_query.filter(type_of_data__iexact='fsdi').count(),
@@ -400,6 +395,7 @@ def student_list(request):
             Q(type_of_data__iexact='early_placement') | 
             Q(type_of_data__iexact='early placement')
         ).count(),
+        'dropout': base_query.filter(is_dropout=True).count(),
     }
 
     # Context data
@@ -440,7 +436,6 @@ def student_list(request):
     }
 
     return render(request, 'student_list.html', context)
-
 
 @login_required
 def student_detail(request, student_id):
@@ -547,7 +542,6 @@ from django.db import transaction
 from .forms import RequirementForm
 from .models import Student, RequirementStudent, RequirementSubject, Subject
 import pandas as pd
-
 @login_required
 @transaction.atomic
 def add_requirement(request):
@@ -564,17 +558,29 @@ def add_requirement(request):
 
                 # Handle subjects and other subject name
                 subjects = form.cleaned_data['subjects']
-                other_subject_name = form.cleaned_data.get('other_subject_name')
+                other_subject_name = form.cleaned_data.get('other_subject_name', '').strip()
+                other_subject = Subject.objects.filter(name__iexact='other').first()
+
+                # Process subjects and handle "Other" replacement
+                final_subjects = []
+                
+                if other_subject and other_subject in subjects:
+                    # Validate other subject name
+                    if not other_subject_name:
+                        form.add_error('other_subject_name', 'Please specify the subject name when selecting "Other"')
+                        raise ValidationError("Missing other subject name")
+                    
+                    # Save other subject name separately
+                    requirement.other_subject_name = other_subject_name
+                else:
+                    final_subjects = list(subjects)
                 
                 # Create RequirementSubject entries
-                for subject in subjects:
-                    RequirementSubject.objects.create(requirement=requirement, subject=subject)
-                
-                # Handle "Other" subject
-                other_subject = Subject.objects.filter(name__iexact='other').first()
-                if other_subject and other_subject in subjects and other_subject_name:
-                    requirement.other_subject_name = other_subject_name
-                    requirement.save()
+                for subject in final_subjects:
+                    RequirementSubject.objects.get_or_create(
+                        requirement=requirement,
+                        subject=subject
+                    )
 
                 # Process student Excel file
                 if 'student_file' in request.FILES:
@@ -594,7 +600,6 @@ def add_requirement(request):
         'form': form,
         'title': 'Add New Requirement'
     })
-
 def handle_excel_upload(request, requirement, form):
     """Helper function to process student Excel file"""
     try:
@@ -1157,81 +1162,90 @@ def bulk_remove_requirement_students(request, requirement_id):
         messages.error(request, f"Error removing students: {str(e)}")
     
     return redirect('requirement_students', pk=requirement_id)
-
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, F
+from django.db.models import Q, Count, F, Prefetch
 from django.contrib import messages
-from .models import Requirement, Student, RequirementStudent
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.db.models import Q, F
-from django.core.paginator import Paginator
-from .models import Requirement, Student, RequirementStudent
+from .models import Requirement, Student, RequirementStudent, StudentSubjectRating, Subject
 
 def add_students_to_requirement(request, requirement_id):
     requirement = get_object_or_404(Requirement, id=requirement_id)
 
-    # Get IDs of students already assigned to this requirement
     assigned_students_ids = RequirementStudent.objects.filter(
         requirement=requirement
     ).values_list('student_id', flat=True)
 
-    # Get all students who are NOT assigned to this requirement AND are not placed
-    students = Student.objects.exclude(id__in=assigned_students_ids).filter(is_placed=False)
-    # Start with unassigned, unplaced students
-    students = Student.objects.exclude(id__in=assigned_students_ids).filter(is_placed=False)
+    students = Student.objects.exclude(
+        Q(id__in=assigned_students_ids) | 
+        Q(is_placed=True) | 
+        Q(is_dropout=True)
+    )
 
-    from django.db.models import OuterRef, Subquery, Exists
-
-# Apply percentage criteria (ignore master's)
     if requirement.percentage_10th is not None:
         students = students.filter(tenth_percent__gte=requirement.percentage_10th)
-
     if requirement.percentage_12th is not None:
         students = students.filter(twelfth_percent__gte=requirement.percentage_12th)
-
     if requirement.percentage_degree is not None:
         students = students.filter(degree_percent__gte=requirement.percentage_degree)
 
-    
-    # Check if any students available
-    if not students.exists():
-        total_students = Student.objects.count()
-        placed_count = Student.objects.filter(is_placed=True).count()
-        if total_students == placed_count:
-            messages.warning(request, "All students are already placed.")
-        elif Student.objects.count() == 0:
-            messages.warning(request, "No students available in the system.")
-        else:
-            messages.warning(request, "All available students are already assigned to this requirement.")
+    required_subjects = requirement.subjects.all()
+    required_subject_ids = list(required_subjects.values_list('id', flat=True))
+    has_other_subject = required_subjects.filter(name='other').exists()
 
-    # SEARCH
+    if required_subjects.exists() and not has_other_subject:
+        students = students.annotate(
+            matching_subjects_count=Count(
+                'subject_ratings',
+                filter=Q(subject_ratings__subject__in=required_subjects)
+            )
+        ).filter(matching_subjects_count=len(required_subject_ids))
+
+        students = students.prefetch_related(
+            Prefetch(
+                'subject_ratings',
+                queryset=StudentSubjectRating.objects.filter(
+                    subject__in=required_subjects
+                ).select_related('subject'),
+                to_attr='prefetched_required_ratings'
+            )
+        )
+    elif has_other_subject:
+        students = students.prefetch_related(
+            Prefetch(
+                'subject_ratings',
+                queryset=StudentSubjectRating.objects.all().select_related('subject'),
+                to_attr='all_subject_ratings'
+            )
+        )
+
     query = request.GET.get('q')
     if query:
         students = students.filter(
             Q(name__icontains=query) |
-            Q(contact_number__icontains=query)
+            Q(contact_number__icontains=query) |
+            Q(degree__icontains=query) |
+            Q(stream__icontains=query)
         )
 
-    # STREAM FILTER
     stream_filters = request.GET.getlist('stream')
     if stream_filters:
-        students = students.filter(stream__in=stream_filters)
+        stream_query = Q()
+        for stream in stream_filters:
+            stream_query |= Q(stream__iexact=stream)
+        students = students.filter(stream_query)
 
-    # DEGREE FILTER
     degree_filters = request.GET.getlist('degree')
     if degree_filters:
-        students = students.filter(degree__in=degree_filters)
+        degree_query = Q()
+        for degree in degree_filters:
+            degree_query |= Q(degree__iexact=degree)
+        students = students.filter(degree_query)
 
-    # YEAR OF PASSING
     start_year = request.GET.get('start_year')
     end_year = request.GET.get('end_year')
     if start_year and end_year and start_year.isdigit() and end_year.isdigit():
         students = students.filter(yop__range=(start_year, end_year))
 
-    # PERCENTAGE RANGES
     tenth = request.GET.get('tenth')
     if tenth and tenth.replace('.', '', 1).isdigit():
         students = students.filter(tenth_percent__gte=float(tenth))
@@ -1244,80 +1258,117 @@ def add_students_to_requirement(request, requirement_id):
     if degree_percentage and degree_percentage.replace('.', '', 1).isdigit():
         students = students.filter(degree_percent__gte=float(degree_percentage))
 
-    # Ordering
+    gender_filter = request.GET.get('gender')
+    if gender_filter:
+        students = students.filter(gender=gender_filter)
+
+    data_type_filter = request.GET.get('data_type')
+    if data_type_filter:
+        students = students.filter(type_of_data=data_type_filter)
+
     students = students.order_by(
         F('scheduled_requirements').asc(nulls_first=True),
         F('total_requirements').asc(nulls_first=True),
         'name'
-    )
+    ).distinct()
 
-    # POST handler
     if request.method == 'POST':
         selected_ids = request.POST.getlist('selected_students')
         if selected_ids:
             count = 0
             for student_id in selected_ids:
-                try:
-                    student = Student.objects.get(id=student_id)
-                    if not RequirementStudent.objects.filter(student=student, requirement=requirement).exists():
-                        RequirementStudent.objects.create(
-                            student=student,
-                            requirement=requirement,
-                            status='pending'
-                        )
-                        count += 1
-                except Student.DoesNotExist:
-                    continue
-            
+                student = Student.objects.get(id=student_id)
+                if not RequirementStudent.objects.filter(
+                    student=student,
+                    requirement=requirement
+                ).exists():
+                    RequirementStudent.objects.create(
+                        student=student,
+                        requirement=requirement,
+                        status='pending'
+                    )
+                    count += 1
+
             if count > 0:
                 messages.success(request, f'Successfully assigned {count} student(s) to the requirement.')
             else:
                 messages.info(request, 'No new students were assigned.')
             return redirect('student_data:add_students_to_requirement', requirement_id=requirement.id)
 
-    # Pagination
     paginator = Paginator(students, 25)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Enhanced students with progress percentage
     enhanced_students = []
     for student in page_obj:
         progress_percentage = 0
         if student.total_requirements and student.total_requirements > 0:
             progress_percentage = (student.scheduled_requirements / student.total_requirements) * 100
-        
+
+        subject_ratings = []
+        if required_subjects.exists() and not has_other_subject:
+            ratings_dict = {
+                rating.subject.name: rating for rating in getattr(student, 'prefetched_required_ratings', [])
+            }
+            for subject in required_subjects:
+                rating = ratings_dict.get(subject.name)
+                subject_ratings.append({
+                    'subject': subject.get_name_display(),
+                    'rating': rating.get_rating_display() if rating else 'Not Rated',
+                    'remarks': rating.remarks if rating else ''
+                })
+        # else: skip showing any ratings if "other" is included
+
         enhanced_students.append({
             'student': student,
-            'is_assigned': False,
-            'status': None,
-            'progress_percentage': progress_percentage
+            'progress_percentage': progress_percentage,
+            'subject_ratings': subject_ratings,
+            'is_assigned': student.id in assigned_students_ids,
         })
-    streams = Student.objects.values_list('stream', flat=True)
-    unique_streams = sorted(set(s.strip().upper() for s in streams if s))
+
+    def get_eligible_uppercase_values(field_name):
+        return sorted({
+            value.upper() for value in 
+            students.exclude(**{f'{field_name}__isnull': True})
+                    .exclude(**{f'{field_name}__exact': ''})
+                    .values_list(field_name, flat=True)
+            if value.strip()
+        })
 
     context = {
         'requirement': requirement,
         'enhanced_students': enhanced_students,
         'page_obj': page_obj,
-        'unique_streams': unique_streams,
-        'unique_degrees': Student.objects.values_list('degree', flat=True).distinct().order_by('degree'),
-        'selected_streams': stream_filters,
-        'degree_filters': degree_filters,
+        'required_subjects': required_subjects,
+        'has_other_subject': has_other_subject,
+        'unique_streams': get_eligible_uppercase_values('stream'),
+        'unique_degrees': get_eligible_uppercase_values('degree'),
+        'unique_data_types': Student.objects.values_list('type_of_data', flat=True)
+                          .distinct().order_by('type_of_data'),
+        'selected_data_type': data_type_filter,
+        'selected_streams': [s.upper() for s in stream_filters],
+        'degree_filters': [d.upper() for d in degree_filters],
         'start_year': start_year,
         'end_year': end_year,
         'tenth': tenth,
         'twelfth': twelfth,
         'degree_percentage': degree_percentage,
         'query': query,
+        'gender_filter': gender_filter,
         'total_available': students.count(),
-        'total_filtered': students.count(),
+        'total_filtered': page_obj.paginator.count,
     }
+
     return render(request, 'add_student_to_requirement.html', context)
+
+
 # Dashboard views
+from datetime import timedelta
+
 @login_required
 def home_dashboard(request):
     today = timezone.now().date()
+    tomorrow = today + timedelta(days=1)
     
     context = {
         'total_students': Student.objects.count(),
@@ -1325,6 +1376,11 @@ def home_dashboard(request):
         'scheduled_today': Requirement.objects.filter(
             schedule_status='scheduled',
             schedule_date=today
+        ).count(),
+        # New entry for tomorrow's schedules
+        'scheduled_tomorrow': Requirement.objects.filter(
+            schedule_status='scheduled',
+            schedule_date=tomorrow
         ).count(),
         'latest_requirements': Requirement.objects.all().order_by('-created_at')[:5],
         'todays_requirements': Requirement.objects.filter(
@@ -1481,12 +1537,16 @@ from .models import Requirement
 
 def todays_requirements_view(request):
     today = timezone.now().date()
-    requirements = Requirement.objects.filter(created_at__date=today).order_by('-created_at')
-    
+    requirements = Requirement.objects.filter(
+        schedule_date=today,
+        is_scheduled=True
+    ).order_by('schedule_time')
+
     context = {
         'requirements': requirements
     }
     return render(request, 'todays_requirements.html', context)
+
 from django.utils import timezone
 from django.shortcuts import render
 from .models import Requirement, RequirementStudent
@@ -1737,21 +1797,20 @@ class StudentDeleteView(LoginRequiredMixin, DeleteView):
         # Add any additional filtering logic here if needed
         return qs
     
-# views.py
-from django.shortcuts import redirect
+from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import Requirement
+import openpyxl
+from datetime import datetime as dt  # Import with alias to avoid confusion
+from datetime import date
 
 def delete_all_requirements(request):
     if request.method == 'POST':
-        # Delete all requirements (this will also delete entries in RequirementStudent due to FK CASCADE)
         Requirement.objects.all().delete()
-        
         messages.success(request, "✅ All requirements deleted and students updated.")
     else:
         messages.error(request, "❌ Invalid request method.")
-
-    return redirect('student_data:requirement_list')  # Replace with your actual list view name
+    return redirect('student_data:requirement_list')
 
 def parse_excel_date(cell_value, row_index, field_name, failed_rows):
     """
@@ -1760,10 +1819,10 @@ def parse_excel_date(cell_value, row_index, field_name, failed_rows):
     if cell_value is None or (isinstance(cell_value, str) and not cell_value.strip()):
         return None
 
-    # Excel sometimes gives a datetime object
-    if isinstance(cell_value, (datetime.datetime, datetime.date)):
+    # Handle datetime/date objects from Excel
+    if isinstance(cell_value, (dt, date)):
         try:
-            return cell_value if isinstance(cell_value, datetime.date) else cell_value.date()
+            return cell_value if isinstance(cell_value, date) else cell_value.date()
         except Exception as e:
             failed_rows.append(f"Row {row_index}: Error processing date object - {str(e)}")
             return None
@@ -1771,24 +1830,19 @@ def parse_excel_date(cell_value, row_index, field_name, failed_rows):
     # Handle string dates
     if isinstance(cell_value, str):
         cell_value = cell_value.strip()
-
-        # Try parsing formats
         for fmt in ("%d-%m-%Y", "%m-%d-%Y", "%d/%m/%Y", "%m/%d/%Y"):
             try:
-                return datetime.datetime.strptime(cell_value, fmt).date()
+                return dt.strptime(cell_value, fmt).date()
             except ValueError:
                 continue
 
-        # All parsing failed
         failed_rows.append(
             f"Row {row_index}: Invalid {field_name} format ('{cell_value}') - must be DD-MM-YYYY, MM-DD-YYYY, DD/MM/YYYY or MM/DD/YYYY"
         )
         return None
 
-    # Unknown type
     failed_rows.append(f"Row {row_index}: Invalid {field_name} type")
     return None
-
 
 def upload_requirements_view(request):
     message = None
@@ -1798,30 +1852,26 @@ def upload_requirements_view(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
         try:
-            # Read Excel file
             wb = openpyxl.load_workbook(excel_file, data_only=True)
             sheet = wb.active
 
-            for i, row in enumerate(sheet.iter_rows(min_row=3), start=3):  # Skip header
+            for i, row in enumerate(sheet.iter_rows(min_row=3), start=3):
                 try:
                     company_name = row[1].value
                     company_code = row[2].value
                     requirement_date_raw = row[3].value
                     schedule_date_raw = row[4].value
 
-                    # Validate required fields
                     if not company_code or not company_name:
                         failed_rows.append(f"Row {i}: Missing company name/code")
                         continue
 
-                    # Parse dates with strict DD-MM-YYYY handling
                     requirement_date = parse_excel_date(
                         requirement_date_raw, i, "requirement date", failed_rows
                     )
                     if requirement_date is None:
                         continue
 
-                    # Handle optional schedule date
                     schedule_date = None
                     if schedule_date_raw is not None and str(schedule_date_raw).strip():
                         schedule_date = parse_excel_date(
@@ -1830,7 +1880,6 @@ def upload_requirements_view(request):
                         if schedule_date is None:
                             continue
 
-                    # Save to database
                     Requirement.objects.update_or_create(
                         company_code=company_code,
                         defaults={
@@ -1858,7 +1907,6 @@ def upload_requirements_view(request):
         'message': message,
         'errors': failed_rows
     })
-
 # views.py (add this new view)
 import openpyxl
 from django.shortcuts import render, redirect
@@ -2207,29 +2255,73 @@ def download_student_selection_template(request):
     response['Content-Disposition'] = 'attachment; filename=student_selection_template.xlsx'
     return response
 
-
-from django.views.generic import CreateView
-from django.urls import reverse_lazy
-from .models import Student
 from django.contrib import messages
+from django.urls import reverse_lazy
+from django.views.generic.edit import CreateView
+from .models import Student
+
 class StudentCreateView(CreateView):
     model = Student
     fields = [
-        'name', 'contact_number', 'degree', 'stream', 'yop',
-        'tenth_percent', 'twelfth_percent', 'degree_percent',
-        'gender', 'type_of_data'
+        'name', 
+        'contact_number', 
+        'degree', 
+        'stream', 
+        'yop',
+        'tenth_percent', 
+        'twelfth_percent', 
+        'degree_percent',
+        'gender', 
+        'type_of_data',
+        'is_dropout',
+        'dropout_date',
+        'dropout_reason',
+        'overall_technical_rating',
     ]
     template_name = 'student_add.html'
     success_url = reverse_lazy('student_data:add')
     
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        # Add placeholders or help text if needed
+        form.fields['name'].help_text = "Enter full name"
+        form.fields['contact_number'].help_text = "Include country code if international"
+        form.fields['yop'].label = "Year of Passing"
+        form.fields['tenth_percent'].label = "10th Percentage"
+        form.fields['twelfth_percent'].label = "12th Percentage"
+        form.fields['degree_percent'].label = "Degree Percentage"
+        
+        # Make dropout fields conditional
+        if not self.object or not self.object.is_dropout:
+            form.fields['dropout_date'].widget.attrs['disabled'] = True
+            form.fields['dropout_reason'].widget.attrs['disabled'] = True
+            
+        return form
+    
     def form_valid(self, form):
-        response = super().form_valid(form)
+        # Clean and process data before saving
+        instance = form.save(commit=False)
+        
+        # Handle dropout fields logic
+        if not instance.is_dropout:
+            instance.dropout_date = None
+            instance.dropout_reason = None
+            
+        instance.save()
+        form.save_m2m()  # In case there are many-to-many fields added later
+        
         messages.success(self.request, 'Student added successfully!')
-        return response
+        return super().form_valid(form)
     
     def form_invalid(self, form):
         messages.error(self.request, 'Please correct the errors below.')
         return super().form_invalid(form)
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = "Add New Student"
+        return context
+
 
 from django.http import HttpResponse
 import openpyxl
@@ -2354,7 +2446,8 @@ class MonthlyReportsView(TemplateView):
         selected_month = self.request.GET.get('month')
         if selected_month:
             try:
-                month_date = datetime.datetime.strptime(selected_month, '%Y-%m').date()
+                from datetime import datetime
+                month_date = datetime.strptime(selected_month, '%Y-%m').date()
                 context['selected_month'] = month_date
                 month_details = self.get_month_details(month_date)
                 context.update(month_details)
@@ -2517,8 +2610,9 @@ class MonthlyReportsView(TemplateView):
         return details
 
     def get_cross_month_requirements(self, current_month):
+        from datetime import datetime, timedelta
         """Requirements posted last month but scheduled this month"""
-        last_month = (current_month.replace(day=1) - datetime.timedelta(days=1)).replace(day=1)
+        last_month = (current_month.replace(day=1) - timedelta(days=1)).replace(day=1)
         qs = Requirement.objects.filter(
             requirement_date__year=last_month.year,
             requirement_date__month=last_month.month,
@@ -2625,15 +2719,85 @@ from django.views.generic.edit import UpdateView
 from django.urls import reverse_lazy
 from .models import Student
 
+from django.views.generic.edit import UpdateView
+from django.urls import reverse_lazy
+from .models import Student
+
 class StudentUpdateView(UpdateView):
     model = Student
+    template_name = 'student_edit.html'
+    success_url = reverse_lazy('student_data:student_list')
+    
+    # Include all fields from the model
     fields = [
         'name', 'contact_number', 'degree', 'stream', 'yop',
         'tenth_percent', 'twelfth_percent', 'degree_percent',
-        'gender', 'type_of_data', 'is_placed'
+        'gender', 'type_of_data', 'is_placed', 'is_dropout',
+        'dropout_date', 'dropout_reason', 'overall_technical_rating',
+        'total_requirements', 'scheduled_requirements'
     ]
-    template_name = 'student_edit.html'
-    success_url = reverse_lazy('student_data:student_list')  # or wherever you want to redirect after edit
+    
+    def get_form(self, form_class=None):
+        form = super().get_form(form_class)
+        
+        # Customize form fields as needed
+        form.fields['name'].widget.attrs.update({'class': 'form-control'})
+        form.fields['contact_number'].widget.attrs.update({'class': 'form-control'})
+        form.fields['degree'].widget.attrs.update({'class': 'form-control'})
+        form.fields['stream'].widget.attrs.update({'class': 'form-control'})
+        form.fields['yop'].widget.attrs.update({'class': 'form-control'})
+        form.fields['tenth_percent'].widget.attrs.update({
+            'class': 'form-control',
+            'step': '0.01',
+            'min': '0',
+            'max': '100'
+        })
+        form.fields['twelfth_percent'].widget.attrs.update({
+            'class': 'form-control',
+            'step': '0.01',
+            'min': '0',
+            'max': '100'
+        })
+        form.fields['degree_percent'].widget.attrs.update({
+            'class': 'form-control',
+            'step': '0.01',
+            'min': '0',
+            'max': '100'
+        })
+        form.fields['gender'].widget.attrs.update({'class': 'form-control'})
+        form.fields['type_of_data'].widget.attrs.update({'class': 'form-control'})
+        form.fields['overall_technical_rating'].widget.attrs.update({'class': 'form-control'})
+        form.fields['dropout_date'].widget.attrs.update({
+            'class': 'form-control',
+            'type': 'date'
+        })
+        form.fields['dropout_reason'].widget.attrs.update({
+            'class': 'form-control',
+            'rows': 3
+        })
+        
+        # Conditional logic for dropout fields
+        if not form.instance.is_dropout:
+            form.fields['dropout_date'].disabled = True
+            form.fields['dropout_reason'].disabled = True
+        
+        # Read-only fields that shouldn't be manually edited
+        form.fields['total_requirements'].disabled = True
+        form.fields['scheduled_requirements'].disabled = True
+       # form.fields['created_at'].disabled = True  # If you choose to include it
+        
+        return form
+    
+    def form_valid(self, form):
+        # Custom save logic if needed
+        response = super().form_valid(form)
+        
+        # Update derived fields
+        self.object.update_overall_technical_rating()
+        self.object.update_requirement_counts()
+        self.object.update_placement_status()
+        
+        return response  # or wherever you want to redirect after edit
 
 
 
@@ -3139,3 +3303,265 @@ def add_subject_rating(request, pk):
         'is_edit': False  # Not needed unless you're dynamically changing UI
     }
     return render(request, 'add_subject_rating.html', context)
+
+
+
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.db import transaction
+import pandas as pd
+from io import BytesIO
+from datetime import datetime
+from .models import Student
+
+def bulk_add_dropouts(request):
+    if request.method == 'POST':
+        excel_file = request.FILES.get('dropout_file')
+        
+        if not excel_file:
+            messages.error(request, "Please upload an Excel file")
+            return redirect('bulk_add_dropouts')
+        
+        try:
+            # Read the Excel file
+            df = pd.read_excel(BytesIO(excel_file.read()))
+            
+            # Validate columns
+            required_columns = {'mobile', 'reason'}
+            if not required_columns.issubset(df.columns):
+                missing = required_columns - set(df.columns)
+                messages.error(request, f"Missing required columns: {', '.join(missing)}")
+                return redirect('bulk_add_dropouts')
+            
+            # Process data
+            success_count = 0
+            error_messages = []
+            
+            with transaction.atomic():
+                for index, row in df.iterrows():
+                    mobile = str(row['mobile']).strip()
+                    reason = str(row['reason']).strip() if pd.notna(row['reason']) else ""
+                    
+                    try:
+                        student = Student.objects.get(contact_number=mobile)
+                        
+                        if student.is_dropout:
+                            error_messages.append(f"Row {index+2}: {mobile} - Already marked as dropout")
+                            continue
+                            
+                        student.is_dropout = True
+                        student.dropout_date = datetime.now().date()
+                        student.dropout_reason = reason
+                        student.save()
+                        success_count += 1
+                        
+                    except Student.DoesNotExist:
+                        error_messages.append(f"Row {index+2}: {mobile} - Student not found")
+                    except Exception as e:
+                        error_messages.append(f"Row {index+2}: {mobile} - Error: {str(e)}")
+            
+            if success_count > 0:
+                messages.success(request, f"Successfully marked {success_count} students as dropouts")
+            
+            if error_messages:
+                messages.warning(request, f"Completed with {len(error_messages)} errors")
+                request.session['bulk_upload_errors'] = error_messages
+            
+            return redirect('student_data:bulk_add_dropouts')
+            
+        except Exception as e:
+            messages.error(request, f"Error processing file: {str(e)}")
+            return redirect('bulk_add_dropouts')
+    
+    # Get error messages from session if any
+    error_messages = request.session.pop('bulk_upload_errors', [])
+    
+    context = {
+        'error_messages': error_messages,
+    }
+    return render(request, 'bulk_add_dropouts.html', context)
+
+from django.shortcuts import render
+from django.utils import timezone
+from datetime import datetime, time, timedelta
+from .models import Requirement
+
+def tomorrows_requirements(request):
+    tomorrow = timezone.localdate() + timedelta(days=1)
+
+    start = timezone.make_aware(datetime.combine(tomorrow, time.min))
+    end = timezone.make_aware(datetime.combine(tomorrow, time.max))
+
+    requirements = Requirement.objects.filter(
+        schedule_date__range=(start, end),
+        is_scheduled=True
+    ).order_by('schedule_time')
+
+    context = {
+        'tomorrows_requirements': requirements,   # ✅ this name matches your template
+        'tomorrow_date': tomorrow                 # ✅ used in your template header
+    }
+
+    return render(request, 'tommarows_requirement.html', context)
+
+
+
+
+def students_attending_tomorrow(request):
+    tomorrow = timezone.localdate() + timezone.timedelta(days=1)
+
+    requirements_tomorrow = Requirement.objects.filter(
+        schedule_date=tomorrow,
+        schedule_status='scheduled'
+    ).order_by('schedule_time').prefetch_related('requirementstudent_set__student')
+
+    tomorrows_students = []
+
+    for requirement in requirements_tomorrow:
+        for rs in requirement.requirementstudent_set.all():
+            student = rs.student
+            tomorrows_students.append({
+                'id': student.id,
+                'name': student.name,
+                'contact_number': student.contact_number,
+                'degree': student.degree,
+                'stream': student.stream,
+                'yop': student.yop,
+                'degree_percent': student.degree_percent,
+                'twelfth_percent': student.twelfth_percent,
+                'tenth_percent': student.tenth_percent,
+                'overall_technical_rating': student.overall_technical_rating,
+                'is_dropout': student.is_dropout,
+                'dropout_reason': student.dropout_reason,
+                'is_placed': student.is_placed,
+                # Add company information to each student
+                'requirement': {
+                    'company_name': requirement.company_name,
+                }
+            })
+
+    context = {
+        'tomorrows_students': tomorrows_students,
+        'tomorrow_date': tomorrow,
+    }
+
+    return render(request, 'students_attending_tomorrow.html', context)
+
+
+
+
+
+import io
+import zipfile
+import pandas as pd
+from django.http import HttpResponse
+from django.utils import timezone
+from .models import RequirementStudent, Requirement, Student
+from openpyxl.utils import get_column_letter
+from openpyxl.styles import Font, PatternFill
+
+def export_tomorrow_scheduled_requirements(request):
+    tomorrow = timezone.now().date() + timezone.timedelta(days=1)
+    requirements = Requirement.objects.filter(schedule_date=tomorrow, schedule_status='scheduled')
+    
+    if not requirements.exists():
+        return HttpResponse("No scheduled requirements for tomorrow.", status=404)
+
+    zip_buffer = io.BytesIO()
+
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for req in requirements:
+            req_students = RequirementStudent.objects.filter(
+                requirement=req
+            ).select_related('student').order_by('student__name')
+            
+            student_data = []
+            for req_student in req_students:
+                student = req_student.student
+                student_data.append({
+                    'Student Name': student.name,
+                    'Contact Number': student.contact_number,
+                    'Gender': student.gender,
+                    'Degree': student.degree,
+                    'Stream': student.stream,
+                    'Year of Passing': student.yop,
+                    '10th %': student.tenth_percent,
+                    '12th %': student.twelfth_percent,
+                    'Degree %': student.degree_percent,
+                    'Type of Data': student.type_of_data,
+                    'Status': req_student.status,
+                    'Feedback': req_student.feedback or '',
+                    'Is Placed': "Yes" if student.is_placed else "No"
+                })
+
+            student_df = pd.DataFrame(student_data)
+
+            requirement_details = {
+                'Requirement Field': [
+                    'Company Name',
+                    'Company Code',
+                    'Schedule Date',
+                    'Schedule Time',
+                    'Requirement Date',
+                    'Description',
+                    'Schedule Status',
+                    'Escalation'
+                ],
+                'Value': [
+                    req.company_name,
+                    req.company_code,
+                    str(req.schedule_date),
+                    str(req.schedule_time),
+                    str(req.requirement_date),
+                    req.description,
+                    req.schedule_status,
+                    req.escalation
+                ]
+            }
+            details_df = pd.DataFrame(requirement_details)
+
+            excel_buffer = io.BytesIO()
+            with pd.ExcelWriter(excel_buffer, engine='openpyxl') as writer:
+                details_df.to_excel(writer, index=False, sheet_name='Requirement Details')
+                student_df.to_excel(writer, index=False, sheet_name='Students')
+
+                workbook = writer.book
+                details_sheet = writer.sheets['Requirement Details']
+                students_sheet = writer.sheets['Students']
+
+                # Format both sheets
+                header_font = Font(bold=True)
+                header_fill = PatternFill("solid", fgColor="DDDDDD")
+
+                # Format Requirement Details Sheet
+                for col in range(1, 3):  # A and B columns
+                    col_letter = get_column_letter(col)
+                    details_sheet.column_dimensions[col_letter].width = 30
+                    cell = details_sheet[f"{col_letter}1"]
+                    cell.font = header_font
+                    cell.fill = header_fill
+
+                # Format Students Sheet
+                for col_idx, column in enumerate(student_df.columns, 1):
+                    max_length = max(
+                        student_df[column].astype(str).map(len).max(),
+                        len(column)
+                    )
+                    col_letter = get_column_letter(col_idx)
+                    students_sheet.column_dimensions[col_letter].width = min(max_length + 2, 30)
+                    header_cell = students_sheet[f"{col_letter}1"]
+                    header_cell.font = header_font
+                    header_cell.fill = header_fill
+
+            excel_buffer.seek(0)
+            filename = f"{req.company_name.replace(' ', '_')}_{req.id}_{tomorrow}.xlsx"
+            zip_file.writestr(filename, excel_buffer.read())
+
+    zip_buffer.seek(0)
+    response = HttpResponse(zip_buffer, content_type='application/zip')
+    response['Content-Disposition'] = f'attachment; filename="scheduled_requirements_{tomorrow}.zip"'
+    return response
+
+
+
+

@@ -28,6 +28,23 @@
         <div class="card-body">
             <form method="GET" id="filterForm">
                 <div class="row">
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="d-block mb-2">Data Type:</label>
+                            <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                <a href="?{% url_replace data_type='' %}" 
+                                   class="btn btn-outline-orange {% if not selected_data_type %}active{% endif %}">
+                                    All Types
+                                </a>
+                                {% for dtype in unique_data_types %}
+                                    <a href="?{% url_replace data_type=dtype %}" 
+                                       class="btn btn-outline-orange {% if dtype == selected_data_type %}active{% endif %}">
+                                        {{ dtype|title }}
+                                    </a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
                     <!-- Search -->
                     <div class="col-md-4 mb-3">
                         <label for="search">Search</label>
@@ -95,45 +112,15 @@
                         </div>
                     </div>
                     
-                    <!-- Percentage Filters -->
-                    <div class="col-md-6 mb-3">
-                        <label>Minimum Percentage</label>
-                        <div class="row">
-                            <div class="col">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text orange-input-group">10th</span>
-                                    </div>
-                                    <input type="number" step="0.01" class="form-control custom-input" name="tenth" placeholder="Min %" value="{{ tenth|default:'' }}">
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text orange-input-group">12th</span>
-                                    </div>
-                                    <input type="number" step="0.01" class="form-control custom-input" name="twelfth" placeholder="Min %" value="{{ twelfth|default:'' }}">
-                                </div>
-                            </div>
-                            <div class="col">
-                                <div class="input-group">
-                                    <div class="input-group-prepend">
-                                        <span class="input-group-text orange-input-group">Degree</span>
-                                    </div>
-                                    <input type="number" step="0.01" class="form-control custom-input" name="degree_percentage" placeholder="Min %" value="{{ degree_percentage|default:'' }}">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
                     <!-- Filter Buttons -->
                     <div class="col-md-2 d-flex align-items-end justify-content-end mb-3">
                         <button type="submit" class="btn btn-orange mr-2">
                             <i class="fas fa-filter mr-1"></i> Apply
                         </button>
-                        <a href="{% url 'student_data:add_students_to_requirement' requirement.id %}" class="btn btn-outline-orange">
-                            <i class="fas fa-undo mr-1"></i> Reset
-                        </a>
+                       <!-- Changed from <a> to <button> -->
+<button type="button" class="btn btn-outline-orange" id="resetFilters">
+    <i class="fas fa-undo mr-1"></i> Reset
+</button>
                     </div>
                 </div>
             </form>
@@ -170,13 +157,13 @@
                                     <th>Stream</th>
                                     <th>Degree</th>
                                     <th>Year</th>
-                                    <th>10th %</th>
-                                    <th>12th %</th>
-                                    <th>Degree %</th>
                                     <th>Contact</th>
-                                    <th>Gender</th>
                                     <th>Type of Data</th>
                                     <th>Requirements</th>
+                                    <!-- Dynamic Subject Columns -->
+                                    {% for subject in required_subjects %}
+                                        <th>{{ subject.get_name_display }}</th>
+                                    {% endfor %}
                                 </tr>
                             </thead>
                             <tbody>
@@ -198,30 +185,9 @@
                                         <td>{{ item.student.degree }}</td>
                                         <td>{{ item.student.yop }}</td>
                                         <td>
-                                            <div class="percentage-pill tenth {% if item.student.tenth_percent > 80 %}high{% elif item.student.tenth_percent < 60 %}low{% else %}medium{% endif %}">
-                                                {{ item.student.tenth_percent|floatformat:2 }}%
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="percentage-pill twelfth {% if item.student.twelfth_percent > 80 %}high{% elif item.student.twelfth_percent < 60 %}low{% else %}medium{% endif %}">
-                                                {{ item.student.twelfth_percent|floatformat:2 }}%
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="percentage-pill degree {% if item.student.degree_percent > 80 %}high{% elif item.student.degree_percent < 60 %}low{% else %}medium{% endif %}">
-                                                {{ item.student.degree_percent|floatformat:2 }}%
-                                            </div>
-                                        </td>
-                                        <td>
                                             <div class="contact-info">
                                                 <i class="fas fa-phone-alt mr-1"></i>
                                                 {{ item.student.contact_number }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="gender-badge {% if item.student.gender == 'Male' %}male{% elif item.student.gender == 'Female' %}female{% else %}other{% endif %}">
-                                                <i class="fas {% if item.student.gender == 'Male' %}fa-mars{% elif item.student.gender == 'Female' %}fa-venus{% else %}fa-genderless{% endif %} mr-1"></i>
-                                                {{ item.student.gender }}
                                             </div>
                                         </td>
                                         <td>
@@ -239,10 +205,21 @@
                                                 <span class="text-muted small">{{ item.student.scheduled_requirements }}/{{ item.student.total_requirements }}</span>
                                             </div>
                                         </td>
+                                        <!-- Dynamic Subject Ratings -->
+                                        {% for rating in item.subject_ratings %}
+                                            <td>
+                                                <span class="rating-badge {{ rating.rating|lower|cut:' ' }}">
+                                                    {{ rating.rating }}
+                                                    {% if rating.remarks %}
+                                                        <i class="fas fa-info-circle ml-1" data-toggle="tooltip" title="{{ rating.remarks }}"></i>
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                        {% endfor %}
                                     </tr>
                                 {% empty %}
                                     <tr>
-                                        <td colspan="12" class="text-center py-4">
+                                        <td colspan="{% widthratio 8 1 1 %}{% if required_subjects %}{{ required_subjects|length }}{% else %}0{% endif %}" class="text-center py-4">
                                             <div class="alert alert-warning mb-0">
                                                 <i class="fas fa-info-circle mr-2"></i> No matching students found.
                                             </div>
@@ -253,65 +230,64 @@
                         </table>
                     </div>
                     
-                    <!-- Pagination controls - Keep this as a fallback in case DataTables pagination fails -->
-                    <!-- Replace your current pagination section with this -->
-<div class="pagination-container mt-3 mb-3 d-flex justify-content-center">
-    <nav aria-label="Student pagination">
-        <ul class="pagination">
-            {% if page_obj.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?{% url_replace page=1 %}" aria-label="First">
-                        <span aria-hidden="true">&laquo;&laquo;</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?{% url_replace page=page_obj.previous_page_number %}" aria-label="Previous">
-                        <span aria-hidden="true">&laquo;</span>
-                    </a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">&laquo;&laquo;</span>
-                </li>
-                <li class="page-item disabled">
-                    <span class="page-link">&laquo;</span>
-                </li>
-            {% endif %}
-            
-            {% for i in page_obj.paginator.page_range %}
-                {% if page_obj.number == i %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
-                    </li>
-                {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
-                    <li class="page-item">
-                        <a class="page-link" href="?{% url_replace page=i %}">{{ i }}</a>
-                    </li>
-                {% endif %}
-            {% endfor %}
-            
-            {% if page_obj.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?{% url_replace page=page_obj.next_page_number %}" aria-label="Next">
-                        <span aria-hidden="true">&raquo;</span>
-                    </a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?{% url_replace page=page_obj.paginator.num_pages %}" aria-label="Last">
-                        <span aria-hidden="true">&raquo;&raquo;</span>
-                    </a>
-                </li>
-            {% else %}
-                <li class="page-item disabled">
-                    <span class="page-link">&raquo;</span>
-                </li>
-                <li class="page-item disabled">
-                    <span class="page-link">&raquo;&raquo;</span>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
-</div>
+                    <!-- Pagination controls -->
+                    <div class="pagination-container mt-3 mb-3 d-flex justify-content-center">
+                        <nav aria-label="Student pagination">
+                            <ul class="pagination">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% url_replace page=1 %}" aria-label="First">
+                                            <span aria-hidden="true">&laquo;&laquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% url_replace page=page_obj.previous_page_number %}" aria-label="Previous">
+                                            <span aria-hidden="true">&laquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;&laquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&laquo;</span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for i in page_obj.paginator.page_range %}
+                                    {% if page_obj.number == i %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ i }} <span class="sr-only">(current)</span></span>
+                                        </li>
+                                    {% elif i > page_obj.number|add:"-3" and i < page_obj.number|add:"3" %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?{% url_replace page=i %}">{{ i }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% url_replace page=page_obj.next_page_number %}" aria-label="Next">
+                                            <span aria-hidden="true">&raquo;</span>
+                                        </a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% url_replace page=page_obj.paginator.num_pages %}" aria-label="Last">
+                                            <span aria-hidden="true">&raquo;&raquo;</span>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;</span>
+                                    </li>
+                                    <li class="page-item disabled">
+                                        <span class="page-link">&raquo;&raquo;</span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    </div>
                 {% else %}
                     <div class="alert alert-warning m-3">No matching students found.</div>
                 {% endif %}
@@ -348,19 +324,15 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 
 <script>
-    // Main Vue application
     const app = new Vue({
         el: '#app',
         delimiters: ['${', '}'],
         data: {
             selectedStudents: [],
             selectAll: false,
-            searchQuery: "{{ query|default:'' }}",
             isLoading: false,
             table: null,
-            // Track if we're programmatically changing checkboxes to prevent loops
             programmaticChange: false,
-            // Track if we're navigating away
             isNavigating: false
         },
         computed: {
@@ -369,386 +341,263 @@
             }
         },
         methods: {
-            // Handle row click
             handleRowClick(event, studentId) {
-                // Don't toggle if clicking on a button, link, or the checkbox itself
                 if ($(event.target).is('button, a, .btn, .dropdown, .dropdown *, .form-check-label') || 
                     $(event.target).parents('button, a, .btn, .dropdown').length) {
                     return;
                 }
-                
-                // Don't toggle if clicking directly on the checkbox (let the checkbox handler deal with it)
-                if ($(event.target).is('input[type="checkbox"]') || $(event.target).parents('input[type="checkbox"]').length) {
-                    return;
-                }
-                
                 this.toggleStudentSelection(studentId, event);
             },
-            
-            // Toggle all student checkboxes
+
             toggleSelectAll() {
                 this.programmaticChange = true;
-                
-                if (this.selectAll) {
-                    // Get all student IDs currently visible in the table
+
+                const visibleCheckboxes = $('.student-checkbox:visible');
+                const allVisibleSelected = visibleCheckboxes.length === $('.student-checkbox:visible:checked').length;
+
+                if (allVisibleSelected) {
                     this.selectedStudents = [];
-                    $('.student-checkbox:visible').each((index, checkbox) => {
-                        this.selectedStudents.push($(checkbox).val());
-                    });
+                    this.selectAll = false;
                 } else {
-                    this.selectedStudents = [];
+                    this.selectedStudents = Array.from(visibleCheckboxes).map(c => c.value);
+                    this.selectAll = true;
                 }
-                
+
                 this.updateCheckboxStates();
                 this.programmaticChange = false;
             },
-            
-            // Check if a student is selected
+
             isSelected(id) {
                 return this.selectedStudents.includes(id.toString());
             },
-            
-            // Toggle single student selection
+
             toggleStudentSelection(studentId, event) {
                 if (this.programmaticChange) return;
-                
+
                 const index = this.selectedStudents.indexOf(studentId.toString());
                 if (index === -1) {
                     this.selectedStudents.push(studentId.toString());
                 } else {
                     this.selectedStudents.splice(index, 1);
                 }
-                
-                // Update the checkbox state if this was a row click
-                if (event && !$(event.target).is('input[type="checkbox"]')) {
-                    this.programmaticChange = true;
-                    const checkbox = $(`input.student-checkbox[value="${studentId}"]`);
-                    checkbox.prop('checked', !checkbox.prop('checked'));
-                    this.programmaticChange = false;
-                }
-                
+
+                this.updateCheckboxStates();
                 this.updateSelectAllState();
             },
-            
-            // Update all checkbox states and row highlighting
+
             updateCheckboxStates() {
                 const self = this;
-                
-                // Update all checkboxes
                 $('.student-checkbox').each(function() {
-                    $(this).prop('checked', self.selectedStudents.includes($(this).val()));
-                });
-                
-                // Update row highlighting
-                $('#studentDataTable tbody tr').each(function() {
-                    const checkbox = $(this).find('.student-checkbox');
-                    if (checkbox.length && self.selectedStudents.includes(checkbox.val())) {
-                        $(this).addClass('selected-row');
-                    } else {
-                        $(this).removeClass('selected-row');
-                    }
+                    const $checkbox = $(this);
+                    const isChecked = self.selectedStudents.includes($checkbox.val());
+                    $checkbox.prop('checked', isChecked);
+                    $checkbox.closest('tr').toggleClass('selected-row', isChecked);
                 });
             },
-            
-            // Update the selectAll checkbox state
+
             updateSelectAllState() {
                 const visibleCheckboxes = $('.student-checkbox:visible');
-                const checkedVisible = $('.student-checkbox:visible:checked');
-                
-                this.selectAll = visibleCheckboxes.length > 0 && 
-                               checkedVisible.length === visibleCheckboxes.length;
+                const checkedCount = $('.student-checkbox:visible:checked').length;
+                this.selectAll = visibleCheckboxes.length > 0 && visibleCheckboxes.length === checkedCount;
             },
-            
-            // Initialize DataTable
+
             initDataTable() {
                 const self = this;
+                if ($.fn.DataTable.isDataTable('#studentDataTable')) {
+                    this.table.destroy();
+                }
+
                 this.table = $('#studentDataTable').DataTable({
                     dom: '<"top"Bf>rt<"bottom"lip>',
                     responsive: true,
-                    fixedHeader: true,
-                    pageLength: 10,
-                    lengthMenu: [[10, 25, 50, -1], [10, 25, 50, "All"]],
-                    pagingType: "full_numbers",
+                    paging: false,
+                    searching: false,
+                    info: false,
+                    ordering: false,
                     buttons: [
                         {
                             extend: 'excel',
                             text: '<i class="fas fa-file-excel"></i> Excel',
                             className: 'btn btn-sm btn-success mr-1',
-                            exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-                            title: 'Students List'
+                            exportOptions: { columns: ':visible:not(:first-child)' }
                         },
                         {
                             extend: 'pdf',
                             text: '<i class="fas fa-file-pdf"></i> PDF',
                             className: 'btn btn-sm btn-danger mr-1',
-                            exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] },
-                            title: 'Students List'
+                            exportOptions: { columns: ':visible:not(:first-child)' }
                         },
                         {
                             extend: 'print',
                             text: '<i class="fas fa-print"></i> Print',
                             className: 'btn btn-sm btn-info',
-                            exportOptions: { columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] }
+                            exportOptions: { columns: ':visible:not(:first-child)' }
                         }
                     ],
-                    columnDefs: [
-                        { orderable: false, targets: [0] },
-                        { responsivePriority: 1, targets: [0, 1] },
-                        { responsivePriority: 2, targets: [2, 3, 4] },
-                        { className: "dt-center", targets: [0, 4, 5, 6, 7, 9] }
-                    ],
-                    language: {
-                        search: "<i class='fas fa-search'></i> _INPUT_",
-                        searchPlaceholder: "Search students...",
-                        lengthMenu: "Show _MENU_ students",
-                        info: "Showing _START_ to _END_ of _TOTAL_ students",
-                        infoEmpty: "Showing 0 to 0 of 0 students",
-                        infoFiltered: "(filtered from _MAX_ total students)",
-                        zeroRecords: "<div class='text-center'><i class='fas fa-exclamation-triangle text-warning fa-2x mb-2'></i><br>No matching students found</div>",
-                        paginate: {
-                            first: "<i class='fas fa-angle-double-left'></i>",
-                            previous: "<i class='fas fa-angle-left'></i>",
-                            next: "<i class='fas fa-angle-right'></i>",
-                            last: "<i class='fas fa-angle-double-right'></i>"
-                        }
-                    },
                     initComplete: function() {
-                        $('.dt-buttons').addClass('mb-2 mt-2 ml-2');
-                        $('.dataTables_filter').addClass('mb-2 mt-2 mr-2');
-                        $('.dataTables_filter input').addClass('search-input');
-                        $('.dataTables_paginate').addClass('mb-3 mt-2');
+                        $('.dt-buttons').addClass('mb-2');
+                        $('.dataTables_filter input').addClass('form-control');
                     }
                 });
-                
-                // Handle checkbox changes in DataTable
-                $('#studentDataTable tbody').on('change', '.student-checkbox', function(e) {
-                    if (self.programmaticChange) return;
-                    const studentId = $(this).val();
-                    self.toggleStudentSelection(studentId, e);
-                });
-                
-                // Update checkboxes on DataTable redraw
+
                 this.table.on('draw', () => {
-                    self.updateCheckboxStates();
-                    self.updateSelectAllState();
-                    self.initTooltips();
-                });
-            },
-            
-            // Initialize tooltips
-            initTooltips() {
-                if (typeof $.fn.tooltip === 'function') {
+                    this.updateCheckboxStates();
+                    this.updateSelectAllState();
                     $('[data-toggle="tooltip"]').tooltip();
-                }
-            },
-            
-            // Show success notification
-            showSuccessNotification(message) {
-                Swal.fire({
-                    title: 'Success!',
-                    text: message,
-                    icon: 'success',
-                    confirmButtonColor: '#ff7b00',
-                    confirmButtonText: 'OK'
                 });
             },
-            
-            // Show warning notification
+
+            handleNavigationConfirmation(href) {
+                if (this.selectedStudents.length > 0 && !this.isNavigating) {
+                    this.isNavigating = true;
+                    Swal.fire({
+                        title: 'Unsaved Selections',
+                        text: 'You have selected students that have not been assigned yet.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#ff7b00',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Leave page',
+                        cancelButtonText: 'Stay here'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = href;
+                        } else {
+                            this.isNavigating = false;
+                        }
+                    });
+                    return true;
+                }
+                return false;
+            },
+
             showWarningNotification(message) {
                 Swal.fire({
                     title: 'Warning',
                     text: message,
                     icon: 'warning',
-                    confirmButtonColor: '#ff7b00',
-                    confirmButtonText: 'OK'
+                    confirmButtonColor: '#ff7b00'
                 });
             }
         },
+
         mounted() {
-            // Initialize with pre-checked boxes if any
-            const initialSelected = Array.from(document.querySelectorAll('.student-checkbox:checked'))
+            this.selectedStudents = Array.from(document.querySelectorAll('.student-checkbox:checked'))
                 .map(checkbox => checkbox.value);
-            this.selectedStudents = initialSelected;
-                
-            // Initialize components after Vue render
+
             this.$nextTick(() => {
                 this.initDataTable();
-                this.initTooltips();
-                this.updateCheckboxStates();
-                this.updateSelectAllState();
+                $('[data-toggle="tooltip"]').tooltip();
+            });
+
+            window.addEventListener('beforeunload', (e) => {
+                if (this.selectedStudents.length > 0 && !this.isNavigating) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
             });
         }
     });
 
-    // Document ready function
     $(document).ready(function() {
-        // Initialize Select2
-        function initSelect2() {
-            $('.select2-orange').select2({
-                width: '100%',
-                placeholder: 'Select options',
-                allowClear: true,
-                closeOnSelect: false,
-                dropdownAutoWidth: true
-            });
-            
-            updateSelectedCounts();
-            
-            $('#streamFilter, #degreeFilter').on('change', function() {
-                updateSelectedCounts();
-            });
-        }
-        
-        // Update selected counts for filters
-        function updateSelectedCounts() {
-            const streamCount = $('#streamFilter').select2('data').length;
-            const degreeCount = $('#degreeFilter').select2('data').length;
-            
-            $('#streamSelectedCount').text(streamCount > 0 ? `${streamCount} selected` : 'None selected');
-            $('#degreeSelectedCount').text(degreeCount > 0 ? `${degreeCount} selected` : 'None selected');
-        }
-        
-        // Form submission handler
-        function initFormHandlers() {
-            $('#studentForm').submit(function(e) {
-                if (app.selectedStudents.length === 0) {
-                    e.preventDefault();
-                    app.showWarningNotification('Please select at least one student to assign.');
-                    return false;
-                }
-                
-                app.isLoading = true;
-                $('#assignBtn').html('<span class="spinner-border spinner-border-sm text-orange" role="status" aria-hidden="true"></span> <span class="text-orange">Assigning...</span>')
-                    .prop('disabled', true);
-                
-                // Show confirmation dialog
+        $('.select2-orange').select2({
+            width: '100%',
+            placeholder: 'Select options',
+            allowClear: true
+        }).on('select2:close', function() {
+            // Submit filter only after user finishes selecting multiple options
+            $('#filterForm').submit();
+        });
+
+        $('#resetFilters').click(function() {
+            $('#search').val('');
+            $('.select2-orange').val(null).trigger('change');
+            $('input[name="start_year"], input[name="end_year"]').val('');
+            $('#filterForm').submit();
+        });
+
+        let searchTimeout;
+        $('#search').on('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => $('#filterForm').submit(), 500);
+        });
+
+        $('input[name="start_year"], input[name="end_year"]').on('change', function() {
+            $('#filterForm').submit();
+        });
+
+        $('#studentForm').on('submit', function(e) {
+            if (app.selectedStudents.length === 0) {
                 e.preventDefault();
-                Swal.fire({
-                    title: 'Confirm Assignment',
-                    html: `You are about to assign <strong>${app.selectedStudents.length}</strong> student(s) to this requirement.<br><br>Do you want to proceed?`,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonColor: '#ff7b00',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Yes, assign students'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Submit the form
-                        $(this).unbind('submit').submit();
-                    } else {
-                        app.isLoading = false;
-                        $('#assignBtn').html('<i class="fas fa-user-plus mr-1 text-orange"></i> <span class="text-orange">Assign Selected Students</span>')
-                            .prop('disabled', false);
-                    }
-                });
-            });
-            
-            // Filter form reset handler
-            $('#filterForm').on('reset', function(e) {
-                e.preventDefault();
-                showResetConfirmation();
-            });
-            
-            // Handle pagination links
-            $('.pagination a').on('click', function(e) {
-                if (app.selectedStudents.length > 0) {
-                    e.preventDefault();
-                    const href = $(this).attr('href');
-                    
-                    Swal.fire({
-                        title: 'Unsaved Selections',
-                        text: 'You have selected students that have not been assigned yet. Navigating away will clear your selections.',
-                        icon: 'warning',
-                        showCancelButton: true,
-                        confirmButtonColor: '#ff7b00',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Continue without saving',
-                        cancelButtonText: 'Stay on this page'
-                    }).then((result) => {
-                        if (result.isConfirmed) {
-                            app.isNavigating = true;
-                            window.location.href = href;
-                        }
-                    });
-                }
-            });
-        }
-        
-        // Show reset confirmation dialog
-        function showResetConfirmation() {
+                app.showWarningNotification('Please select at least one student to assign.');
+                return false;
+            }
+
+            e.preventDefault();
             Swal.fire({
-                title: 'Reset filters?',
-                text: 'This will clear all search filters and show all students.',
+                title: 'Confirm Assignment',
+                html: `Assign ${app.selectedStudents.length} student(s)?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#ff7b00',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, reset filters'
+                confirmButtonText: 'Yes, assign'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.location.href = "{% url 'student_data:add_students_to_requirement' requirement.id %}";
+                    app.isNavigating = true;
+                    e.target.submit();
                 }
             });
-        }
-        
-        // Initialize percentage tooltips
-        function initPercentageTooltips() {
-            $('.percentage-pill').tooltip({
-                title: function() {
-                    const percent = $(this).text().trim();
-                    let message = '';
-                    
-                    if ($(this).hasClass('high')) {
-                        message = `Excellent performance: ${percent}`;
-                    } else if ($(this).hasClass('medium')) {
-                        message = `Good performance: ${percent}`;
-                    } else {
-                        message = `Needs improvement: ${percent}`;
-                    }
-                    
-                    return message;
-                },
-                placement: 'top'
-            });
-        }
-        
-        // Window resize handler for DataTable
-        function initWindowResizeHandler() {
-            $(window).resize(function() {
-                if (app.table) {
-                    app.table.columns.adjust().responsive.recalc();
+        });
+
+        $(document).on('click', 'a', function(e) {
+            const href = $(this).attr('href');
+            if (href && href !== '#' && !$(this).hasClass('no-confirm')) {
+                if (app.handleNavigationConfirmation(href)) {
+                    e.preventDefault();
+                    e.stopImmediatePropagation();
                 }
-            });
-        }
-        
-        // Before unload handler
-        function initBeforeUnloadHandler() {
-            $(window).on('beforeunload', function() {
-                if (app.selectedStudents.length > 0 && !app.isNavigating) {
-                    return "You have selected students that have not been assigned yet. Are you sure you want to leave?";
-                }
-            });
-        }
-        
-        // Initialize all components
-        initSelect2();
-        initFormHandlers();
-        initPercentageTooltips();
-        initWindowResizeHandler();
-        initBeforeUnloadHandler();
-        
-        // Debounced search
-        let searchTimeout;
-        $('#search').on('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(function() {
-                app.searchQuery = $('#search').val();
-            }, 500);
+            }
         });
     });
 </script>
 
 <style>
+
+    /* Add these new styles for quick filters */
+    .btn-group-toggle .btn {
+        border-radius: 20px;
+        margin: 2px;
+        padding: 5px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-group-toggle .btn.active {
+        background-color: #ff7b00;
+        color: white;
+        box-shadow: 0 2px 4px rgba(255, 123, 0, 0.3);
+    }
+
+    .btn-group-toggle .btn:hover:not(.active) {
+        background-color: #ffead8;
+        color: #ff7b00;
+    }
+
+    /* Adjust existing styles for better spacing */
+    .filter-card .card-body {
+        padding: 1.5rem;
+    }
+
+    .filter-card label {
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+    }
+
+    .select2-container--default .select2-selection--multiple {
+        border-color: #ff7b00;
+        border-radius: 4px;
+    }
     /* Custom CSS for the Add Students page */
     .orange-gradient {
         background: linear-gradient(135deg, #ff7b00, #ff9a44);
@@ -810,7 +659,6 @@
     .badge-orange {
         background-color: #ff7b00;
         color: white;
-   
     }
     
     .select2-orange .select2-selection {
@@ -869,7 +717,7 @@
         font-weight: 500;
     }
     
-    .percentage-pill {
+    .rating-badge {
         display: inline-block;
         padding: 3px 8px;
         border-radius: 12px;
@@ -880,37 +728,24 @@
         min-width: 60px;
     }
     
-    .percentage-pill.high {
+    .rating-badge.excellent {
         background-color: #28a745;
     }
     
-    .percentage-pill.medium {
+    .rating-badge.good {
+        background-color: #17a2b8;
+    }
+    
+    .rating-badge.average {
         background-color: #ffc107;
         color: #212529;
     }
     
-    .percentage-pill.low {
+    .rating-badge.bad {
         background-color: #dc3545;
     }
     
-    .gender-badge {
-        display: inline-block;
-        padding: 3px 8px;
-        border-radius: 12px;
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: white;
-    }
-    
-    .gender-badge.male {
-        background-color: #007bff;
-    }
-    
-    .gender-badge.female {
-        background-color: #e83e8c;
-    }
-    
-    .gender-badge.other {
+    .rating-badge.notrated {
         background-color: #6c757d;
     }
     
