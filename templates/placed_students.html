@@ -82,6 +82,15 @@
     pointer-events: none;
   }
 
+  .stats-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 1.5rem;
+    opacity: 0;
+  }
+
   .stats-badge {
     background: var(--white);
     border-radius: 50px;
@@ -89,8 +98,6 @@
     padding: 0.7rem 2rem;
     display: inline-flex;
     align-items: center;
-    margin: 1.5rem auto;
-    opacity: 0;
     transform: scale(0.9);
   }
   
@@ -114,6 +121,149 @@
     margin: 0 auto;
     position: relative;
     z-index: 1;
+  }
+
+  .search-filter-container {
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.07);
+    padding: 1.5rem;
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .search-filter-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 15px 0;
+    width: 100%;
+  }
+
+  .search-input-container {
+    flex: 2;
+    min-width: 250px;
+    position: relative;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 15px 12px 40px;
+    border: 1px solid var(--accent-line);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: var(--orange-light);
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+  }
+
+  .search-icon {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-medium);
+    font-size: 1.1rem;
+  }
+
+  .filter-select-container {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .filter-select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--accent-line);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath fill='none' d='M0 0h24v24H0z'/%3E%3Cpath d='M12 15l-4.243-4.243 1.415-1.414L12 12.172l2.828-2.829 1.415 1.414z' fill='%23555555'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 15px center;
+    transition: all 0.3s ease;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: var(--orange-light);
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+  }
+
+  .date-filter-container {
+    flex: 1;
+    min-width: 200px;
+    position: relative;
+  }
+
+  .date-filter {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid var(--accent-line);
+    border-radius: 50px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    transition: all 0.3s ease;
+  }
+
+  .date-filter:focus {
+    outline: none;
+    border-color: var(--orange-light);
+    box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.2);
+  }
+
+  .showcase-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    opacity: 0;
+  }
+
+  .showcase-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .showcase-actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .showcase-action-button {
+    background: var(--white);
+    border: 1px solid var(--accent-line);
+    border-radius: 50px;
+    padding: 8px 15px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-medium);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .showcase-action-button:hover {
+    background: var(--orange-cream);
+    color: var(--orange-bright);
   }
 
   .showcase-grid {
@@ -363,9 +513,12 @@
     transform: translateY(30px);
   }
 
-  .placement-button-container {
-    text-align: center;
+  .placement-buttons-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
     margin-top: 20px;
+    opacity: 0;
   }
 
   .placement-button {
@@ -396,6 +549,199 @@
   .placement-button .button-text {
     margin-right: 10px;
   }
+
+  .placement-button.secondary {
+    background: var(--white);
+    color: var(--orange-bright);
+    border: 1px solid var(--orange-bright);
+    box-shadow: 0 8px 15px rgba(255, 107, 53, 0.1);
+  }
+
+  .placement-button.secondary:hover {
+    background: var(--orange-cream);
+  }
+
+  .student-counter {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: 10px;
+    font-size: 0.9rem;
+    color: var(--text-medium);
+  }
+
+  /* Quick insights section */
+  .insights-container {
+    margin-top: 40px;
+    background: var(--white);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.07);
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  .insights-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+  }
+
+  .insights-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+  }
+
+  .insight-card {
+    background: var(--off-white);
+    border-radius: 12px;
+    padding: 1.2rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .insight-value {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--orange-bright);
+    margin: 0 0 5px 0;
+  }
+
+  .insight-label {
+    font-size: 0.9rem;
+    color: var(--text-medium);
+    margin: 0;
+  }
+
+  .insight-icon {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    font-size: 1.6rem;
+    opacity: 0.2;
+    color: var(--orange-light);
+  }
+
+  /* Tooltip Styles */
+  .tooltip {
+    position: relative;
+  }
+
+  .tooltip .tooltip-text {
+    visibility: hidden;
+    width: 200px;
+    background: var(--text-dark);
+    color: var(--white);
+    text-align: center;
+    border-radius: 8px;
+    padding: 8px;
+    position: absolute;
+    z-index: 10;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 0.8rem;
+    font-weight: normal;
+    pointer-events: none;
+  }
+
+  .tooltip .tooltip-text::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: var(--text-dark) transparent transparent transparent;
+  }
+
+  .tooltip:hover .tooltip-text {
+    visibility: visible;
+    opacity: 0.9;
+  }
+
+  /* Notification badge */
+  .notification-badge {
+    position: absolute;
+    background: var(--orange-bright);
+    color: var(--white);
+    font-size: 0.7rem;
+    font-weight: 600;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    top: 15px;
+    right: 15px;
+  }
+
+  /* No results state */
+  .no-results {
+    text-align: center;
+    padding: 3rem;
+    background: var(--white);
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(255, 107, 53, 0.07);
+  }
+
+  .no-results-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    color: var(--orange-light);
+  }
+
+  .no-results-text {
+    font-size: 1.2rem;
+    color: var(--text-medium);
+    margin: 0;
+    font-weight: 500;
+  }
+
+  .no-results-hint {
+    font-size: 0.9rem;
+    color: var(--text-medium);
+    margin-top: 10px;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .stats-container {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .showcase-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    
+    .showcase-actions {
+      width: 100%;
+      justify-content: space-between;
+    }
+    
+    .showcase-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .placement-buttons-container {
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    .insights-grid {
+      grid-template-columns: 1fr;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -410,33 +756,96 @@
     <span class="celebration-emoji">🎉</span>
     <p class="celebration-subtitle">Congratulations to our talented students on their career journey</p>
     
-    <div class="stats-badge">
-      <div class="stats-badge-number">{{ placed_students|length }}</div>
-      <div class="stats-badge-label">Successful Placements</div>
+    <div class="stats-container">
+      <div class="stats-badge">
+        <div class="stats-badge-number">{{ placed_students|length }}</div>
+        <div class="stats-badge-label">Successful Placements</div>
+      </div>
+      
+      <div class="stats-badge">
+        <div class="stats-badge-number" id="companies-count">0</div>
+        <div class="stats-badge-label">Hiring Companies</div>
+      </div>
+      
+      <div class="stats-badge">
+        <div class="stats-badge-number" id="avg-package">0</div>
+        <div class="stats-badge-label">Avg Package (LPA)</div>
+      </div>
     </div>
   </div>
-  <div class="placement-button-container">
+  
+  <div class="placement-buttons-container">
     <a href="{% url 'student_data:placed_outside' %}" class="placement-button">
       <span class="button-text">Students Placed Outside</span> ➡️
+    </a>
+    <a href="" class="placement-button secondary">
+      <span class="button-text">Add New Placement</span> ➕
     </a>
   </div>
 
   <div class="students-showcase" id="students-showcase">
+    <!-- Search and filter section -->
+    <div class="search-filter-container">
+      <h3 class="search-filter-title">Search & Filter</h3>
+      
+      <div class="search-input-container">
+        <input type="text" class="search-input" id="student-search" placeholder="Search students or companies...">
+        <span class="search-icon">🔍</span>
+      </div>
+      
+      <div class="filter-select-container">
+        <select class="filter-select" id="company-filter">
+          <option value="">All Companies</option>
+          <!-- Will be populated dynamically -->
+        </select>
+      </div>
+      
+      <div class="date-filter-container">
+        <input type="date" class="date-filter" id="date-filter" placeholder="Filter by date">
+      </div>
+    </div>
+    
+    <!-- Section header -->
+    <div class="showcase-header">
+      <h2 class="showcase-title">Placed Students</h2>
+      <div class="showcase-actions">
+        <button class="showcase-action-button" id="sort-name-btn">
+          <span>Sort by Name</span>
+        </button>
+        <button class="showcase-action-button" id="sort-date-btn">
+          <span>Sort by Date</span>
+        </button>
+        <div class="student-counter">
+          Showing <span id="showing-count">0</span> of <span id="total-count">{{ placed_students|length }}</span> students
+        </div>
+      </div>
+    </div>
+    
     {% if placed_students %}
       <div id="showcase-grid" class="showcase-grid">
         {% for entry in placed_students %}
-          <div class="student-card" data-page="{{ forloop.counter0|intdiv:9|add:1 }}">
+          <div class="student-card" data-page="{{ forloop.counter0|intdiv:9|add:1 }}" 
+               data-student="{{ entry.student.name|lower }}" 
+               data-company="{{ entry.requirement.company_name|lower }}"
+               data-date="{{ entry.requirement.schedule_date|default:'' }}">
+            
+            {% if entry.requirement.is_new %}
+              <div class="notification-badge">New</div>
+            {% endif %}
+            
             <h3 class="student-name">{{ entry.student.name }}</h3>
             <div class="company-name">{{ entry.requirement.company_name }}</div>
             
             <div class="student-info">
-              <div class="info-item">
+              <div class="info-item tooltip">
                 <span class="info-label">Requirements</span>
                 <span class="info-value">{{ entry.student.total_requirements }}</span>
+                <span class="tooltip-text">Total requirements the student applied for</span>
               </div>
-              <div class="info-item">
+              <div class="info-item tooltip">
                 <span class="info-label">Scheduled</span>
                 <span class="info-value">{{ entry.student.scheduled_requirements }}</span>
+                <span class="tooltip-text">Requirements that have been scheduled</span>
               </div>
               <div class="info-item">
                 <span class="info-label">Schedule Date</span>
@@ -460,362 +869,447 @@
         {% endfor %}
       </div>
       
+      <!-- No results state (hidden by default) -->
+      <div class="no-results" id="no-results" style="display: none;">
+        <div class="no-results-icon">🔍</div>
+        <p class="no-results-text">No matching students found</p>
+        <p class="no-results-hint">Try changing your search criteria or clear filters</p>
+      </div>
+      
+      <!-- Quick insights section -->
+      <div class="insights-container">
+        <h3 class="insights-title">Quick Insights</h3>
+        <div class="insights-grid">
+          <div class="insight-card">
+            <div class="insight-value" id="top-company-count">-</div>
+            <p class="insight-label">Students placed at <span id="top-company-name">-</span></p>
+            <div class="insight-icon">🏢</div>
+          </div>
+          
+          <div class="insight-card">
+            <div class="insight-value" id="recent-placements">0</div>
+            <p class="insight-label">Placements in last 30 days</p>
+            <div class="insight-icon">📅</div>
+          </div>
+          
+          <div class="insight-card">
+            <div class="insight-value" id="upcoming-interviews">0</div>
+            <p class="insight-label">Upcoming interviews</p>
+            <div class="insight-icon">📋</div>
+          </div>
+          
+          <div class="insight-card">
+            <div class="insight-value" id="completion-rate">0%</div>
+            <p class="insight-label">Placement completion rate</p>
+            <div class="insight-icon">📊</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Pagination -->
       <!-- Pagination -->
       <div class="pagination-container">
         <div class="pagination-inner" id="pagination-inner">
           <div class="pagination-active-indicator" id="pagination-indicator"></div>
-          <button class="pagination-button pagination-prev" id="prev-page" disabled>&larr;</button>
+          <button class="pagination-button pagination-prev disabled" id="prev-page" disabled>&lt;</button>
           <!-- Pagination buttons will be added dynamically -->
-          <button class="pagination-button pagination-next" id="next-page">&rarr;</button>
+          <button class="pagination-button pagination-next" id="next-page">&gt;</button>
         </div>
       </div>
     {% else %}
+      <!-- Empty state when no students are placed -->
       <div class="empty-state">
-        <div class="empty-state-icon">📋</div>
-        <p class="empty-state-text">No placed students found yet. Check back soon!</p>
+        <div class="empty-state-icon">🔍</div>
+        <p class="empty-state-text">No placed students found</p>
       </div>
     {% endif %}
   </div>
 </div>
 
 <script>
-  // Enhanced Three.js Background
-  function initThreeJS() {
-    const container = document.getElementById('three-background');
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+  document.addEventListener('DOMContentLoaded', function() {
+    // GSAP animations for elements
+    gsap.from(".celebration-title", {opacity: 0, y: -20, duration: 0.8, ease: "power2.out"});
+    gsap.to(".celebration-emoji", {
+      opacity: 1, 
+      y: 0, 
+      duration: 0.6, 
+      ease: "back.out(1.7)",
+      stagger: 0.15,
+      delay: 0.3
+    });
+    gsap.to(".celebration-subtitle", {opacity: 1, duration: 0.8, delay: 0.7});
+    gsap.to(".stats-container", {opacity: 1, duration: 0.8, delay: 0.9});
+    gsap.to(".stats-badge", {scale: 1, duration: 0.6, ease: "back.out(1.5)", stagger: 0.1, delay: 1});
     
+    gsap.to(".search-filter-container", {opacity: 1, y: 0, duration: 0.8, delay: 1.1});
+    gsap.to(".showcase-header", {opacity: 1, duration: 0.8, delay: 1.2});
+    gsap.to(".student-card", {
+      opacity: 1, 
+      y: 0, 
+      duration: 0.6, 
+      stagger: 0.05,
+      ease: "power2.out",
+      delay: 1.3
+    });
+    
+    gsap.to(".pagination-container", {opacity: 1, y: 0, duration: 0.8, delay: 1.8});
+    gsap.to(".insights-container", {opacity: 1, y: 0, duration: 0.8, delay: 2});
+    gsap.to(".placement-buttons-container", {opacity: 1, duration: 0.8, delay: 1.5});
+
+    // Three.js background animation
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    
+    const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio * 0.8);
-    container.appendChild(renderer.domElement);
-
-    // Geometric Shapes Configuration
-    const geometries = [
-      new THREE.TorusGeometry(1.2, 0.4, 16, 100),
-      new THREE.OctahedronGeometry(1.5),
-      new THREE.DodecahedronGeometry(1.3),
-      new THREE.IcosahedronGeometry(1.4)
-    ];
-
-    const materials = [
-      new THREE.MeshBasicMaterial({ 
-        color: 0xFFD700, // Metallic Gold
-        wireframe: true,
-        transparent: true,
-        opacity: 0.15
-      }),
-      new THREE.MeshPhongMaterial({
-        color: 0x6A5ACD, // Slate Blue
-        transparent: true,
-        opacity: 0.2
-      }),
-      new THREE.MeshStandardMaterial({
-        color: 0xCD7F32, // Bronze
-        metalness: 0.4,
-        roughness: 0.5,
-        transparent: true,
-        opacity: 0.25
-      })
-    ];
-
-    // Create Floating Shapes
-    const shapes = [];
-    const totalShapes = 30;
-
-    for(let i = 0; i < totalShapes; i++) {
-      const geometry = geometries[Math.floor(Math.random() * geometries.length)];
-      const material = materials[Math.floor(Math.random() * materials.length)];
-      const mesh = new THREE.Mesh(geometry, material);
+    renderer.setClearColor(0x000000, 0);
+    document.getElementById('three-background').appendChild(renderer.domElement);
+    
+    // Create particles
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesCount = 500;
+    
+    const posArray = new Float32Array(particlesCount * 3);
+    const colorsArray = new Float32Array(particlesCount * 3);
+    
+    for(let i = 0; i < particlesCount * 3; i++) {
+      // Position
+      posArray[i] = (Math.random() - 0.5) * 10;
       
-      mesh.position.set(
-        (Math.random() - 0.5) * 40,
-        (Math.random() - 0.5) * 25,
-        Math.random() * -100 - 50
-      );
-      
-      mesh.rotation.set(
-        Math.random() * Math.PI,
-        Math.random() * Math.PI,
-        Math.random() * Math.PI
-      );
-      
-      mesh.speed = Math.random() * 0.002 + 0.001;
-      shapes.push(mesh);
-      scene.add(mesh);
+      // Colors (orange to light orange)
+      if(i % 3 === 0) colorsArray[i] = Math.random() * (1 - 0.8) + 0.8; // R
+      if(i % 3 === 1) colorsArray[i] = Math.random() * (0.5 - 0.3) + 0.3; // G
+      if(i % 3 === 2) colorsArray[i] = Math.random() * (0.3 - 0.1) + 0.1; // B
     }
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
-    scene.add(ambientLight);
-
-    camera.position.z = 35;
-
-    // Animation Logic
-    let frameCount = 0;
-    const animate = () => {
+    
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
+    
+    const particlesMaterial = new THREE.PointsMaterial({
+      size: 0.01,
+      transparent: true,
+      opacity: 0.5,
+      vertexColors: true,
+      blending: THREE.AdditiveBlending
+    });
+    
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+    
+    camera.position.z = 5;
+    
+    // Animation loop
+    function animate() {
       requestAnimationFrame(animate);
-      frameCount += 0.005;
-
-      shapes.forEach((mesh, index) => {
-        mesh.rotation.x += mesh.speed;
-        mesh.rotation.y += mesh.speed * 0.8;
-        mesh.position.z += 0.08;
-        
-        if(mesh.position.z > 20) {
-          mesh.position.z = -100;
-          mesh.position.x = (Math.random() - 0.5) * 40;
-          mesh.position.y = (Math.random() - 0.5) * 25;
-        }
-      });
-
+      particlesMesh.rotation.x += 0.0003;
+      particlesMesh.rotation.y += 0.0002;
       renderer.render(scene, camera);
-    };
-
-    // Resize Handler
-    const onWindowResize = () => {
+    }
+    
+    animate();
+    
+    // Handle window resize
+    window.addEventListener('resize', function() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight);
-    };
-    window.addEventListener('resize', onWindowResize);
-
-    animate();
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', onWindowResize);
-      renderer.dispose();
-      scene.clear();
-    };
-  }
-
-  // Pagination Logic
-  function initPagination() {
-    const gridContainer = document.getElementById('showcase-grid');
-    const paginationInner = document.getElementById('pagination-inner');
-    const paginationIndicator = document.getElementById('pagination-indicator');
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
+    });
     
-    // Check if pagination is needed
-    if (!gridContainer) return;
+    // Calculate and display statistics
+    const studentCards = document.querySelectorAll('.student-card');
+    const companies = new Set();
+    let totalPackage = 0;
+    let recentPlacements = 0;
+    let upcomingInterviews = 0;
+    const companyStudentCount = {};
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     
-    // Get all cards
-    const allCards = document.querySelectorAll('.student-card');
+    studentCards.forEach(card => {
+      const company = card.getAttribute('data-company');
+      companies.add(company);
+      
+      // Count students per company
+      if (companyStudentCount[company]) {
+        companyStudentCount[company]++;
+      } else {
+        companyStudentCount[company] = 1;
+      }
+      
+      // Count recent placements
+      const dateStr = card.getAttribute('data-date');
+      if (dateStr) {
+        const cardDate = new Date(dateStr);
+        if (cardDate >= thirtyDaysAgo && cardDate <= now) {
+          recentPlacements++;
+        }
+        
+        // Count upcoming interviews
+        if (cardDate > now) {
+          upcomingInterviews++;
+        }
+      }
+      
+      // For demonstration, we're generating random package values
+      // In a real scenario, this would come from your data
+      totalPackage += Math.floor(Math.random() * 10) + 3; // Random package between 3-12 LPA
+    });
     
-    // Calculate pagination info
-    const itemsPerPage = 9;
-    const totalItems = allCards.length;
-    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    // Populate company filter
+    const companyFilter = document.getElementById('company-filter');
+    Array.from(companies).sort().forEach(company => {
+      const option = document.createElement('option');
+      option.value = company;
+      option.textContent = company.charAt(0).toUpperCase() + company.slice(1);
+      companyFilter.appendChild(option);
+    });
     
-    // If only one page, hide pagination
-    if (totalPages <= 1) {
-      document.querySelector('.pagination-container').style.display = 'none';
-      return;
+    // Update stats
+    document.getElementById('companies-count').textContent = companies.size;
+    document.getElementById('avg-package').textContent = (totalPackage / studentCards.length).toFixed(1);
+    document.getElementById('showing-count').textContent = studentCards.length;
+    document.getElementById('recent-placements').textContent = recentPlacements;
+    document.getElementById('upcoming-interviews').textContent = upcomingInterviews;
+    
+    // Find top company (with most placements)
+    let topCompany = '';
+    let topCount = 0;
+    
+    for (const company in companyStudentCount) {
+      if (companyStudentCount[company] > topCount) {
+        topCount = companyStudentCount[company];
+        topCompany = company.charAt(0).toUpperCase() + company.slice(1);
+      }
     }
     
+    document.getElementById('top-company-count').textContent = topCount;
+    document.getElementById('top-company-name').textContent = topCompany;
+    
+    // Calculate completion rate (for demonstration)
+    // In a real scenario, you would calculate based on actual data
+    const targetPlacements = Math.floor(studentCards.length * 1.3); // Just for demonstration
+    const completionRate = Math.round((studentCards.length / targetPlacements) * 100);
+    document.getElementById('completion-rate').textContent = completionRate + '%';
+    
+    // Pagination implementation
+    const itemsPerPage = 9;
+    const totalPages = Math.ceil(studentCards.length / itemsPerPage);
     let currentPage = 1;
     
-    // Create pagination buttons
-    const createPaginationButtons = () => {
-      // Clear existing buttons except prev and next
-      const existingButtons = paginationInner.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)');
-      existingButtons.forEach(btn => paginationInner.removeChild(btn));
+    function setupPagination() {
+      const paginationInner = document.getElementById('pagination-inner');
+      const paginationIndicator = document.getElementById('pagination-indicator');
+      const prevBtn = document.getElementById('prev-page');
+      const nextBtn = document.getElementById('next-page');
       
-      // Determine which page numbers to show
-      let pagesToShow = [];
-      if (totalPages <= 7) {
-        // Show all pages if 7 or fewer
-        pagesToShow = Array.from({length: totalPages}, (_, i) => i + 1);
-      } else {
-        // Always show first, last, and pages around current
-        if (currentPage <= 3) {
-          pagesToShow = [1, 2, 3, 4, 5, '...', totalPages];
-        } else if (currentPage >= totalPages - 2) {
-          pagesToShow = [1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
-        } else {
-          pagesToShow = [1, '...', currentPage - 1, currentPage, currentPage + 1, '...', totalPages];
+      // Clear existing pagination buttons (except prev/next)
+      const existingButtons = document.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)');
+      existingButtons.forEach(btn => btn.remove());
+      
+      // Insert page buttons before the next button
+      for (let i = 1; i <= totalPages; i++) {
+        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+          const pageBtn = document.createElement('button');
+          pageBtn.classList.add('pagination-button');
+          pageBtn.textContent = i;
+          pageBtn.setAttribute('data-page', i);
+          
+          if (i === currentPage) {
+            pageBtn.classList.add('active-page');
+            
+            // Position the active indicator
+            setTimeout(() => {
+              const activeBtnRect = pageBtn.getBoundingClientRect();
+              const containerRect = paginationInner.getBoundingClientRect();
+              paginationIndicator.style.width = activeBtnRect.width + 'px';
+              paginationIndicator.style.left = (activeBtnRect.left - containerRect.left) + 'px';
+            }, 0);
+          }
+          
+          paginationInner.insertBefore(pageBtn, nextBtn);
+        } else if ((i === 2 && currentPage > 3) || (i === totalPages - 1 && currentPage < totalPages - 2)) {
+          const dotSpan = document.createElement('span');
+          dotSpan.classList.add('pagination-dot');
+          dotSpan.textContent = '...';
+          paginationInner.insertBefore(dotSpan, nextBtn);
         }
       }
       
-      // Create page buttons
-      pagesToShow.forEach((page, index) => {
-        if (page === '...') {
-          const dot = document.createElement('div');
-          dot.className = 'pagination-dot';
-          dot.textContent = '•••';
-          paginationInner.insertBefore(dot, nextPageBtn);
-          return;
+      // Enable/disable prev/next buttons
+      prevBtn.disabled = currentPage === 1;
+      prevBtn.classList.toggle('disabled', currentPage === 1);
+      nextBtn.disabled = currentPage === totalPages;
+      nextBtn.classList.toggle('disabled', currentPage === totalPages);
+      
+      // Show/hide cards based on current page
+      studentCards.forEach(card => {
+        const cardPage = parseInt(card.dataset.page);
+        if (cardPage === currentPage) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
         }
-        
-        const button = document.createElement('button');
-        button.className = `pagination-button ${page === currentPage ? 'active-page' : ''}`;
-        button.textContent = page;
-        button.setAttribute('data-page', page);
-        button.addEventListener('click', () => {
-          if (page !== currentPage) {
-            goToPage(page);
-          }
-        });
-        
-        paginationInner.insertBefore(button, nextPageBtn);
       });
       
-      // Set indicator position
-      updateActiveIndicator();
-    };
-    
-    // Update the active indicator
-    const updateActiveIndicator = () => {
-      const activeButton = paginationInner.querySelector('.active-page');
-      if (activeButton) {
-        const buttonRect = activeButton.getBoundingClientRect();
-        const containerRect = paginationInner.getBoundingClientRect();
-        
-        paginationIndicator.style.width = `${buttonRect.width}px`;
-        paginationIndicator.style.left = `${activeButton.offsetLeft}px`;
-      }
-    };
-    
-    // Go to specific page
-    const goToPage = (page) => {
-      if (page < 1 || page > totalPages || page === currentPage) return;
-      
-      // Add transition class
-      gridContainer.classList.add('page-transition');
-      
-      // After short delay to allow transition to finish
-      setTimeout(() => {
-        currentPage = parseInt(page);
-        
-        // Update buttons state
-        prevPageBtn.disabled = currentPage === 1;
-        nextPageBtn.disabled = currentPage === totalPages;
-        
-        // Show only cards for current page
-        allCards.forEach(card => {
-          card.style.display = 'none';
+      // Add click events to page buttons
+      document.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)').forEach(btn => {
+        btn.addEventListener('click', () => {
+          currentPage = parseInt(btn.getAttribute('data-page'));
+          setupPagination();
+          
+          // Animate page transition
+          const grid = document.getElementById('showcase-grid');
+          grid.classList.add('page-transition');
+          setTimeout(() => {
+            grid.classList.remove('page-transition');
+          }, 400);
         });
-        
-        const cardsForPage = document.querySelectorAll(`.student-card[data-page="${currentPage}"]`);
-        cardsForPage.forEach(card => {
-          card.style.display = 'flex';
-        });
-        
-        // Update pagination
-        createPaginationButtons();
-        
-        // Animate cards
-        gsap.fromTo(
-          cardsForPage,
-          { opacity: 0, y: 30 },
-          { 
-            opacity: 1, 
-            y: 0, 
-            stagger: 0.05,
-            duration: 0.6,
-            ease: "power2.out",
-            onComplete: () => {
-              gridContainer.classList.remove('page-transition');
-            }
-          }
-        );
-        
-        // Scroll to top of grid if needed
-        const gridTop = gridContainer.offsetTop - 100; // With some offset
-        if (window.scrollY > gridTop) {
-          window.scrollTo({
-            top: gridTop,
-            behavior: 'smooth'
-          });
-        }
-      }, 300);
-    };
-    
-    // Initialize pagination
-    createPaginationButtons();
-    
-    // Show only first page cards initially
-    allCards.forEach(card => {
-      card.style.display = card.getAttribute('data-page') == currentPage ? 'flex' : 'none';
-    });
-    
-    // Add event listeners for prev/next buttons
-    prevPageBtn.addEventListener('click', () => {
-      if (currentPage > 1) {
-        goToPage(currentPage - 1);
-      }
-    });
-    
-    nextPageBtn.addEventListener('click', () => {
-      if (currentPage < totalPages) {
-        goToPage(currentPage + 1);
-      }
-    });
-    
-    // Animate pagination container
-    gsap.to('.pagination-container', {
-      opacity: 1,
-      y: 0,
-      duration: 0.6,
-      delay: 0.8
-    });
-    
-    // Return control functions for external use
-    return {
-      goToPage,
-      getCurrentPage: () => currentPage,
-      getTotalPages: () => totalPages
-    };
-  }
-
-  // GSAP Animations
-  function initAnimations() {
-    gsap.timeline()
-      .to(".celebration-title", { opacity: 1, duration: 0.8 })
-      .to(".celebration-emoji", { 
-        opacity: 1, 
-        y: 0, 
-        stagger: 0.1, 
-        ease: "bounce.out",
-        duration: 0.6
-      }, "-=0.3")
-      .to(".celebration-subtitle", { opacity: 1, duration: 0.5 }, "-=0.2")
-      .to(".stats-badge", { 
-        opacity: 1, 
-        scale: 1, 
-        ease: "elastic.out(1, 0.5)",
-        duration: 0.8
-      })
-      .to(".student-card[data-page='1']", {
-        opacity: 1,
-        y: 0,
-        stagger: 0.05,
-        ease: "power2.out",
-        duration: 0.6
-      }, "-=0.2");
-      
-    // Special animation for empty state if present
-    const emptyState = document.querySelector('.empty-state');
-    if (emptyState) {
-      gsap.to(emptyState, {
-        opacity: 1,
-        duration: 0.8,
-        delay: 0.5
       });
     }
-  }
-
-  // Initialize
-  document.addEventListener('DOMContentLoaded', () => {
-    const cleanThree = initThreeJS();
-    initAnimations();
-    const pagination = initPagination();
     
-    window.addEventListener('beforeunload', () => {
-      cleanThree();
+    // Initial pagination setup
+    setupPagination();
+    
+    // Previous page button
+    document.getElementById('prev-page').addEventListener('click', function() {
+      if (currentPage > 1) {
+        currentPage--;
+        setupPagination();
+        
+        // Animate page transition
+        const grid = document.getElementById('showcase-grid');
+        grid.classList.add('page-transition');
+        setTimeout(() => {
+          grid.classList.remove('page-transition');
+        }, 400);
+      }
     });
+    
+    // Next page button
+    document.getElementById('next-page').addEventListener('click', function() {
+      if (currentPage < totalPages) {
+        currentPage++;
+        setupPagination();
+        
+        // Animate page transition
+        const grid = document.getElementById('showcase-grid');
+        grid.classList.add('page-transition');
+        setTimeout(() => {
+          grid.classList.remove('page-transition');
+        }, 400);
+      }
+    });
+    
+    // Search functionality
+    const searchInput = document.getElementById('student-search');
+    searchInput.addEventListener('input', filterStudents);
+    
+    // Company filter
+    companyFilter.addEventListener('change', filterStudents);
+    
+    // Date filter
+    const dateFilter = document.getElementById('date-filter');
+    dateFilter.addEventListener('change', filterStudents);
+    
+    // Sorting functionality
+    document.getElementById('sort-name-btn').addEventListener('click', function() {
+      sortStudents('name');
+    });
+    
+    document.getElementById('sort-date-btn').addEventListener('click', function() {
+      sortStudents('date');
+    });
+    
+    // Filter students based on search, company filter, and date filter
+    function filterStudents() {
+      const searchTerm = searchInput.value.toLowerCase();
+      const selectedCompany = companyFilter.value.toLowerCase();
+      const selectedDate = dateFilter.value;
+      
+      let visibleCount = 0;
+      let matchFound = false;
+      
+      studentCards.forEach(card => {
+        const studentName = card.getAttribute('data-student');
+        const companyName = card.getAttribute('data-company');
+        const cardDate = card.getAttribute('data-date');
+        
+        const matchesSearch = !searchTerm || 
+                             studentName.includes(searchTerm) || 
+                             companyName.includes(searchTerm);
+        
+        const matchesCompany = !selectedCompany || companyName === selectedCompany;
+        
+        const matchesDate = !selectedDate || cardDate === selectedDate;
+        
+        if (matchesSearch && matchesCompany && matchesDate) {
+          card.classList.remove('filtered-out');
+          visibleCount++;
+          matchFound = true;
+        } else {
+          card.classList.add('filtered-out');
+        }
+      });
+      
+      // Update the pagination
+      updatePaginationAfterFilter();
+      
+      // Update visible student count
+      document.getElementById('showing-count').textContent = visibleCount;
+      
+      // Toggle no results message
+      document.getElementById('no-results').style.display = matchFound ? 'none' : 'block';
+      document.getElementById('showcase-grid').style.display = matchFound ? 'grid' : 'none';
+    }
+    
+    // Update pagination after filtering
+    function updatePaginationAfterFilter() {
+      const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
+      
+      // Reassign page numbers to visible cards
+      visibleCards.forEach((card, index) => {
+        const newPage = Math.floor(index / itemsPerPage) + 1;
+        card.setAttribute('data-page', newPage);
+      });
+      
+      // Reset to first page and update pagination
+      currentPage = 1;
+      setupPagination();
+    }
+    
+    // Sort students by name or date
+    function sortStudents(sortBy) {
+      const grid = document.getElementById('showcase-grid');
+      const cards = Array.from(document.querySelectorAll('.student-card'));
+      
+      cards.sort((a, b) => {
+        if (sortBy === 'name') {
+          return a.getAttribute('data-student').localeCompare(b.getAttribute('data-student'));
+        } else if (sortBy === 'date') {
+          const dateA = a.getAttribute('data-date') || '9999-99-99'; // Cards without dates go last
+          const dateB = b.getAttribute('data-date') || '9999-99-99';
+          return dateA.localeCompare(dateB);
+        }
+        return 0;
+      });
+      
+      // Remove all cards
+      cards.forEach(card => grid.removeChild(card));
+      
+      // Add sorted cards back
+      cards.forEach((card, index) => {
+        // Update page number
+        const newPage = Math.floor(index / itemsPerPage) + 1;
+        card.setAttribute('data-page', newPage);
+        grid.appendChild(card);
+      });
+      
+      // Reset to first page and update pagination
+      currentPage = 1;
+      setupPagination();
+    }
   });
 </script>
 {% endblock %}

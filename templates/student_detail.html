@@ -884,6 +884,180 @@
     position: relative;
     z-index: 100;
 }
+
+{% if student.is_placed %}
+    
+:root {
+    --neon-blue: #00f3ff;
+    --neon-purple: #bc13fe;
+    --matrix-green: #0aff0a;
+    --cyber-red: #ff073a;
+    --cyber-yellow: #ffe838;
+    --cyber-black: #0a0a12;
+    --hud-glass: rgba(11, 11, 20, 0.95);
+}
+
+body {
+    background: var(--cyber-black);
+    color: #fff;
+    font-family: 'Oxanium', monospace;
+}
+
+.profile-header {
+    background: linear-gradient(135deg,
+        rgba(188, 19, 254, 0.15),
+        rgba(0, 243, 255, 0.1)),
+        var(--cyber-black);
+    border: 1px solid var(--neon-purple);
+    box-shadow: 0 0 40px rgba(188, 19, 254, 0.3),
+                inset 0 0 20px rgba(0, 243, 255, 0.2);
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% 90%, 98% 100%, 2% 100%, 0 90%);
+}
+
+.profile-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 243, 255, 0.1) 3px,
+        rgba(0, 243, 255, 0.1) 4px
+    );
+}
+
+.status-scheduled {
+    background: rgba(0, 243, 255, 0.1);
+    border: 2px solid var(--neon-blue);
+    color: var(--neon-blue);
+    text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    box-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+    animation: scanline 2s infinite linear;
+}
+
+.requirements-table {
+    background: var(--hud-glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--neon-purple);
+    box-shadow: 0 0 30px rgba(188, 19, 254, 0.2);
+}
+
+.requirements-table th {
+    background: linear-gradient(to right,
+        rgba(188, 19, 254, 0.3),
+        rgba(0, 243, 255, 0.2));
+    color: var(--neon-purple);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.student-info-card {
+    background: var(--hud-glass);
+    border: 1px solid var(--neon-blue);
+    box-shadow: 0 0 25px rgba(0, 243, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.student-info-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+        transparent,
+        var(--neon-blue),
+        transparent 30%);
+    animation: rotate 4s linear infinite;
+}
+
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
+}
+
+.btn-delete-student {
+    background: linear-gradient(45deg,
+        var(--cyber-red),
+        #ff006e);
+    clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%);
+    transition: all 0.3s ease;
+}
+
+.btn-delete-student:hover {
+    filter: brightness(1.2);
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+}
+
+.cyber-border {
+    position: relative;
+}
+
+.cyber-border::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: 2px solid var(--neon-purple);
+    clip-path: polygon(
+        0 10px, 10px 0, calc(100% - 10px) 0, 100% 10px,
+        100% calc(100% - 10px), calc(100% - 10px) 100%,
+        10px 100%, 0 calc(100% - 10px)
+    );
+}
+
+.rating-badge {
+    background: rgba(10, 255, 10, 0.1);
+    border: 1px solid var(--matrix-green);
+    box-shadow: 0 0 15px rgba(10, 255, 10, 0.3);
+}
+
+@keyframes scanline {
+    0% { background-position: 0 0; }
+    100% { background-position: 0 100vh; }
+}
+
+/* Cyberpunk loading animation */
+.loading-pulse {
+    width: 20px;
+    height: 20px;
+    background: var(--neon-purple);
+    box-shadow: 0 0 20px var(--neon-purple);
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.5); opacity: 0.5; }
+}
+
+/* HUD Elements */
+.hud-text {
+    text-shadow: 0 0 8px rgba(0, 243, 255, 0.5);
+    background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Circuit board pattern background */
+.circuit-pattern {
+    background-image: 
+        radial-gradient(circle at center, 
+            rgba(0, 243, 255, 0.05) 0%, 
+            transparent 70%),
+        repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 3px,
+            rgba(188, 19, 254, 0.05) 4px,
+            rgba(188, 19, 254, 0.05) 5px
+        );
+}
+
+{% endif %}
+
 </style>
 {% endblock %}
 
@@ -902,6 +1076,11 @@
         <a href="{% url 'student_data:student_edit' student.id %}" class="btn btn-primary ms-2">
             <i class="fas fa-edit me-2"></i> Update Profile
         </a>
+
+        <a href="{% url 'student_data:update_placement' student.id %}" class="btn btn-primary ms-2">
+            Update Placement Status
+        </a>
+
     </div>
     
     <!-- Profile Header -->
@@ -1113,6 +1292,33 @@
             </div>
         {% endif %}
     </div>
+    {% if student.is_placed %}
+<!-- Add Placement Removal Section Here -->
+<div class="placement-removal-section mt-4 border-top pt-3">
+    <h4 class="text-danger mb-3">Remove Placement</h4>
+    
+    {% if student.internal_placement %}
+    <div class="alert alert-warning">
+        This will reject the placement with 
+        <strong>{{ student.internal_placement.requirement.company_name }}</strong>
+        and remove any external placement records.
+    </div>
+    {% else %}
+    <div class="alert alert-warning">
+        This will permanently remove the external placement record with 
+        <strong>{{ student.placed_outside.company_name }}</strong>.
+    </div>
+    {% endif %}
+
+    <form method="post" action="{% url 'student_data:remove_placement' student.id %}">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger"
+                onclick="return confirm('This action cannot be undone. Proceed?')">
+            <i class="bi bi-trash"></i> Confirm Removal
+        </button>
+    </form>
+</div>
+{% endif %}
 </div>
 
 <script>
@@ -1274,6 +1480,8 @@ document.addEventListener('DOMContentLoaded', function () {
     
     const particles = new THREE.Points(particleGeometry, particleMaterial);
     scene.add(particles);
+
+    
     
     camera.position.z = 5;
     

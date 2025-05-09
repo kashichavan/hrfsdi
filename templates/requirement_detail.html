@@ -772,6 +772,7 @@ class="btn btn-danger btn-action delete-requirement-btn">
                         {% endif %}
                         <!-- Add this in your requirement info card (after the schedule date row) -->
 {% if requirement.is_scheduled %}
+<!-- Update the drive result status display -->
 <tr>
     <th>Drive Result</th>
     <td>
@@ -781,12 +782,16 @@ class="btn btn-danger btn-action delete-requirement-btn">
                     {% elif requirement.scheduled_details.result == 'selected' %}btn-success
                     {% elif requirement.scheduled_details.result == 'no_selects' %}btn-danger
                     {% elif requirement.scheduled_details.result == 'partial_scheduled' %}btn-info
+                    {% elif requirement.scheduled_details.result == 'cancelled' %}btn-dark
+                    {% elif requirement.scheduled_details.result == 'postponed' %}btn-secondary
                     {% else %}btn-secondary{% endif %}"
                     data-bs-toggle="modal" data-bs-target="#driveResultModal">
                 <i class="fas fa-{% if requirement.scheduled_details.result == 'pending' %}clock
                                 {% elif requirement.scheduled_details.result == 'selected' %}check-circle
                                 {% elif requirement.scheduled_details.result == 'no_selects' %}times-circle
                                 {% elif requirement.scheduled_details.result == 'partial_scheduled' %}users
+                                {% elif requirement.scheduled_details.result == 'cancelled' %}ban
+                                {% elif requirement.scheduled_details.result == 'postponed' %}calendar-times
                                 {% else %}calendar{% endif %} me-1"></i>
                 {{ requirement.scheduled_details.get_result_display }}
             </button>

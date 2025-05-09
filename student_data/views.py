@@ -1037,21 +1037,106 @@ def update_requirement_schedule(request, requirement_id):
             return redirect('student_data:requirement_detail', pk=requirement.id)
     
     return redirect('student_data:requirement_detail', pk=requirement.id)
+from django.shortcuts import get_object_or_404, redirect
+from django.views.decorators.http import require_POST
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from .models import Requirement, ScheduledRequirement, RequirementStudent, Student
+
+@require_POST
+def update_drive_result(request, pk):
+    requirement = get_object_or_404(Requirement, id=pk)
+    feedback = request.POST.get('feedback', '')
+    selected_student_ids = request.POST.getlist('selected_students', [])
+
+    scheduled_detail, _ = ScheduledRequirement.objects.get_or_create(requirement=requirement)
+    scheduled_detail.feedback = feedback
+    scheduled_detail.save()
+
+    selected_students = Student.objects.filter(id__in=selected_student_ids)
+    all_students = requirement.students.all()
+
+    for student in all_students:
+        status = 'selected' if student in selected_students else 'rejected'
+        RequirementStudent.objects.update_or_create(
+            requirement=requirement,
+            student=student,
+            defaults={'status': status}
+        )
+
+    update_drive_result_status(requirement)
+    messages.success(request, "Drive result updated successfully.")
+    return redirect('student_data:requirement_detail', pk=pk)
 
 @login_required
 def update_student_status(request, requirement_id, student_id):
     requirement = get_object_or_404(Requirement, pk=requirement_id)
     student = get_object_or_404(Student, pk=student_id)
-    requirement_student = get_object_or_404(RequirementStudent, requirement=requirement, student=student)
-    
+    req_student = get_object_or_404(RequirementStudent, requirement=requirement, student=student)
+
     if request.method == 'POST':
-        new_status = request.POST.get('status')
-        if new_status in ['pending', 'selected', 'rejected', 'on_hold']:
-            requirement_student.status = new_status
-            requirement_student.save()
-            messages.success(request, f'Updated status for {student.name} to {new_status}.')
+        new_status = request.POST.get('status', '').strip()
+        valid_statuses = ['pending', 'selected', 'rejected']
+        old_status = req_student.status
+
+        if new_status in valid_statuses:
+            req_student.status = new_status
+            req_student.save()
+
+            # Update placement flag on Student
+            if old_status == 'selected' and new_status != 'selected':
+                still_selected_elsewhere = RequirementStudent.objects.filter(
+                    student=student,
+                    status='selected'
+                ).exclude(requirement=requirement).exists()
+                if not still_selected_elsewhere:
+                    student.is_placed = False
+                    student.placed_date = None
+                    student.placed_company = None
+                    student.save()
+            elif new_status == 'selected':
+                student.is_placed = True
+                student.placed_date = timezone.now().date()
+                student.placed_company = requirement.company_name
+                student.save()
+
+            update_drive_result_status(requirement)
+            messages.success(request, f"Status updated for {student.name}.")
+        else:
+            messages.error(request, "Invalid status.")
     
     return redirect('student_data:requirement_detail', pk=requirement_id)
+
+def update_drive_result_status(requirement):
+    """Update ScheduledRequirement result and students_appeared based on RequirementStudent statuses."""
+    if not hasattr(requirement, 'scheduled_detail'):
+        scheduled_detail, _ = ScheduledRequirement.objects.get_or_create(requirement=requirement)
+    else:
+        scheduled_detail = requirement.scheduled_detail
+
+    selected_students = Student.objects.filter(
+        requirementstudent__requirement=requirement,
+        requirementstudent__status='selected'
+    )
+    scheduled_detail.students_appeared.set(selected_students)
+
+    # Recalculate result
+    all_statuses = RequirementStudent.objects.filter(requirement=requirement).values_list('status', flat=True)
+
+    if all(status == 'pending' for status in all_statuses):
+        result = 'pending'
+    elif any(status == 'selected' for status in all_statuses):
+        result = 'selected'
+    else:
+        result = 'no_selects'
+
+    if scheduled_detail.result != result:
+        scheduled_detail.result = result
+        scheduled_detail.save()
+
+
+
 
 @login_required
 def bulk_import_students(request, requirement_id):
@@ -1999,7 +2084,6 @@ def combined_view(request):
     mobile_number = request.GET.get("mobile_number")
     company_code = request.GET.get("company_code")
 
-    # Handle POST request for status update
     if request.method == "POST" and 'req_student_id' in request.POST:
         req_student_id = request.POST.get("req_student_id")
         new_status = request.POST.get("status")
@@ -2009,8 +2093,16 @@ def combined_view(request):
         try:
             req_student = RequirementStudent.objects.get(id=req_student_id)
             if new_status in dict(RequirementStudent.STATUS_CHOICES):
+                old_status = req_student.status
                 req_student.status = new_status
                 req_student.save()
+
+                # Update student placement status if status changed to/from 'selected'
+                if new_status == 'selected' or old_status == 'selected':
+                    student = req_student.student
+                    student.update_placement_status()
+                    student.save()
+
                 messages.success(request, "Status updated successfully.")
             else:
                 messages.error(request, "Invalid status.")
@@ -2054,21 +2146,28 @@ def combined_view(request):
 
 
 from django.core.paginator import Paginator
+from django.shortcuts import render
+
+from django.shortcuts import render
+from .models import RequirementStudent
 
 def placed_students_view(request):
-    placed_students_list = RequirementStudent.objects.filter(
-        status='selected'
-    ).select_related('student', 'requirement')
-    
-    # Set how many records per page
-    paginator = Paginator(placed_students_list, 10)  # Show 10 students per page
-    
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
+    # Get internal placements through RequirementStudent relationships
+    placed_students = RequirementStudent.objects.filter(
+        status='selected',
+        student__is_placed=True,
+        student__is_dropout=False
+    ).exclude(
+        student__placed_outside__isnull=False
+    ).select_related(
+        'student', 
+        'requirement',
+        'student__placed_outside'
+    ).distinct().order_by('-created_at')
+
     return render(request, 'placed_students.html', {
-        'page_obj': page_obj,
-        'placed_students': placed_students_list
+        'placed_students': placed_students,
+        'total_count': placed_students.count(),
     })
 
 def delete_requirement(request, pk):
@@ -2084,12 +2183,6 @@ def delete_requirement(request, pk):
     }
     return render(request, 'delete_requirement.html', context)
 
-import pandas as pd
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db import transaction
-from .models import Student, RequirementStudent
-from io import BytesIO
 
 import pandas as pd
 from django.shortcuts import render, redirect
@@ -2098,15 +2191,6 @@ from django.db import transaction
 from .models import Student, Requirement, RequirementStudent
 from io import BytesIO
 from django.core.exceptions import ObjectDoesNotExist
-
-import pandas as pd
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.db import transaction
-from .models import Student, Requirement, RequirementStudent
-from io import BytesIO
-from django.core.exceptions import ObjectDoesNotExist
-
 def update_selected_students(request):
     context = {
         'existing_companies': Requirement.objects.exclude(
@@ -2192,6 +2276,11 @@ def update_selected_students(request):
                         obj.save()
                         results['records_updated'] += 1
 
+                    # Update student's placement status
+                    if not student.is_placed:
+                        student.is_placed = True
+                        student.save()
+
                     results['students_selected'] += 1
                     student.update_requirement_counts()
 
@@ -2231,6 +2320,8 @@ def update_selected_students(request):
             messages.error(request, f"<strong>Error:</strong> {str(e)}")
 
     return render(request, 'update_selected_students.html', context)
+
+
 import io
 import pandas as pd
 from django.http import HttpResponse
@@ -2382,45 +2473,6 @@ class RaiseEscalationView(UpdateView):
 
 
 
-from django.shortcuts import get_object_or_404, redirect
-from django.views.decorators.http import require_POST
-from .models import Requirement, ScheduledRequirement, RequirementStudent
-
-@require_POST
-def update_drive_result(request, pk):
-    requirement = get_object_or_404(Requirement, id=pk)
-    result_status = request.POST.get('result_status')
-    feedback = request.POST.get('feedback', '')
-
-    # Get or create scheduled details
-    scheduled_details, _ = ScheduledRequirement.objects.get_or_create(
-        requirement=requirement
-    )
-
-    # Update the result and feedback
-    scheduled_details.result = result_status
-    scheduled_details.feedback = feedback
-    scheduled_details.save()
-
-    # Handle student status updates based on result
-    if result_status == 'selected':
-        selected_student_ids = request.POST.getlist('selected_students', [])
-        for student in requirement.students.all():
-            rs = RequirementStudent.objects.get(
-                requirement=requirement,
-                student=student
-            )
-            rs.status = 'selected' if str(student.id) in selected_student_ids else 'rejected'
-            rs.save()
-
-    elif result_status == 'no_selects':
-        RequirementStudent.objects.filter(requirement=requirement).update(status='rejected')
-
-    elif result_status == 'pending':
-        RequirementStudent.objects.filter(requirement=requirement).update(status='pending')
-
-    # ✅ Redirect to requirement detail view
-    return redirect('student_data:requirement_detail', pk=requirement.id)
 from django.views.generic import TemplateView
 from django.db.models import Count, Q, F
 from django.db.models.functions import TruncMonth
@@ -2807,30 +2859,27 @@ from .models import GotPlacedOutside, Student
 from .forms import GotPlacedOutsideForm
 
 def add_got_placed_student(request):
-    # Handle search query for student by name
     search_query = request.GET.get('search_query', '')
-    
-    # If search query exists, filter students by name
     students = Student.objects.filter(is_placed=False)
+    
     if search_query:
         students = students.filter(name__icontains=search_query)
-
-    # Create the form with the filtered students
+    
     form = GotPlacedOutsideForm(request.POST or None)
     
-    # If form is submitted, process it
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        placement = form.save()
+        student = placement.student
+        student.is_placed = True  # Update the student's placement status
+        student.save()
         messages.success(request, 'Student placement details have been added successfully.')
-        return redirect('student_data:placed_students')  # Redirect to the placement list page
-
-    # Render the template
+        return redirect('student_data:placed_students')
+    
     return render(request, 'got_placed_outside.html', {
         'form': form,
         'students': students,
-        'search_query': search_query  # Pass the search query to keep it in the search bar
+        'search_query': search_query
     })
-
 
 # views.py
 import pandas as pd
@@ -2844,19 +2893,15 @@ from django.utils import timezone
 class BulkOutsidePlacementView(FormView):
     template_name = 'bulk_outside_placement.html'
     form_class = BulkOutsidePlacementForm
-    success_url = 'student_list:placed'  # Change to your desired success URL
+    success_url = 'student_list:placed'
 
     def form_valid(self, form):
         excel_file = form.cleaned_data['excel_file']
         
         try:
-            # Read Excel file
             df = pd.read_excel(excel_file)
-            
-            # Convert column names to lowercase for case-insensitive matching
             df.columns = df.columns.str.lower()
             
-            # Initialize counters
             success_count = 0
             error_count = 0
             errors = []
@@ -2867,13 +2912,13 @@ class BulkOutsidePlacementView(FormView):
                     if not mobile_number:
                         raise ValueError("Mobile number is required")
                     
-                    # Find student by mobile number
-                    try:
-                        student = Student.objects.get(contact_number=mobile_number)
-                    except Student.DoesNotExist:
-                        raise ValueError(f"Student with mobile number {mobile_number} not found")
+                    student = Student.objects.get(contact_number=mobile_number)
                     
-                    # Get or create placement record
+                    # Check if student is already placed internally
+                    if student.is_placed and not GotPlacedOutside.objects.filter(student=student).exists():
+                        raise ValueError(f"Student {student.name} is already placed internally and cannot be added externally.")
+                    
+                    # Create or update external placement
                     placement, created = GotPlacedOutside.objects.get_or_create(
                         student=student,
                         defaults={
@@ -2884,7 +2929,6 @@ class BulkOutsidePlacementView(FormView):
                         }
                     )
                     
-                    # Update fields if not created (existing record)
                     if not created:
                         placement.company_name = row.get('company_name', placement.company_name)
                         placement.package = row.get('package', placement.package)
@@ -2892,13 +2936,17 @@ class BulkOutsidePlacementView(FormView):
                         placement.placed_date = row.get('placed_date', placement.placed_date)
                         placement.save()
                     
+                    # Update student's is_placed status if newly placed externally
+                    if created:
+                        student.is_placed = True
+                        student.save()
+                    
                     success_count += 1
                     
                 except Exception as e:
                     error_count += 1
                     errors.append(f"Row {index + 2}: {str(e)}")
             
-            # Prepare result message
             message = f"Successfully processed {success_count} records."
             if error_count > 0:
                 message += f" {error_count} records had errors."
@@ -2908,11 +2956,10 @@ class BulkOutsidePlacementView(FormView):
                 messages.success(self.request, message)
             
             return super().form_valid(form)
-            
+        
         except Exception as e:
             messages.error(self.request, f"Error processing file: {str(e)}")
             return self.form_invalid(form)
-
 
 # views.py
 from django.http import HttpResponse
@@ -2957,13 +3004,39 @@ def download_sample_excel(request):
 from django.shortcuts import render
 from .models import GotPlacedOutside, Student
 
-def students_placed_outside(request):
-    # Get all students who have been placed outside
-    students_placed = GotPlacedOutside.objects.all()
+from django.shortcuts import render
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import GotPlacedOutside
 
+def students_placed_outside(request):
+    # Get search query
+    query = request.GET.get('q', '')
+    
+    # Filter students based on search query if provided
+    if query:
+        students_placed = GotPlacedOutside.objects.filter(
+            Q(student__name__icontains=query) |
+            Q(company_name__icontains=query) |
+            Q(role__icontains=query) |
+            Q(student__degree__icontains=query) |
+            Q(student__type_of_data__icontains=query)
+        )
+    else:
+        # Get all students who have been placed outside
+        students_placed = GotPlacedOutside.objects.all()
+    
+    # Order by most recent placements first
+    students_placed = students_placed.order_by('-placed_date')
+    
+    # Set up pagination - 12 students per page
+    paginator = Paginator(students_placed, 12)
+    page_number = request.GET.get('page', 1)
+    page_obj = paginator.get_page(page_number)
+    
     # Create context for rendering the template
     context = {
-        'students_placed': students_placed,
+        'page_obj': page_obj,
     }
 
     return render(request, 'students_placed_outside.html', context)
@@ -3565,3 +3638,126 @@ def export_tomorrow_scheduled_requirements(request):
 
 
 
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from .models import Student, RequirementStudent, GotPlacedOutside
+from datetime import datetime
+
+def update_placement_status(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    
+    if request.method == 'POST':
+        placement_type = request.POST.get('placement_type')
+        
+        if placement_type == 'internal':
+            req_student_id = request.POST.get('selected_requirement')
+            if req_student_id:
+                # Get selected requirement with optimized query
+                selected_req = get_object_or_404(
+                    RequirementStudent.objects.select_related('requirement'),
+                    id=req_student_id, 
+                    student=student
+                )
+                selected_req.status = 'selected'
+                selected_req.save()
+                
+                # Reject all other requirements for this student
+                RequirementStudent.objects.filter(student=student).exclude(id=req_student_id).update(status='rejected')
+                
+                # Critical addition: Reject other students' pending applications for the same requirement
+                RequirementStudent.objects.filter(
+                    requirement=selected_req.requirement,
+                    status='pending'
+                ).exclude(student=student).update(status='rejected')
+            
+            # Clear external placement if exists
+            GotPlacedOutside.objects.filter(student=student).delete()
+            
+        elif placement_type == 'external':
+            company_name = request.POST.get('company_name')
+            package = request.POST.get('package')
+            role = request.POST.get('role')
+            placed_date = request.POST.get('placed_date') or timezone.now().date()
+            
+            # Validate date format
+            try:
+                placed_date = datetime.strptime(placed_date, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                placed_date = timezone.now().date()
+            
+            # Update or create external placement
+            GotPlacedOutside.objects.update_or_create(
+                student=student,
+                defaults={
+                    'company_name': company_name,
+                    'package': package,
+                    'role': role,
+                    'placed_date': placed_date
+                }
+            )
+            
+            # Reject all internal requirements
+            RequirementStudent.objects.filter(student=student).update(status='rejected')
+        
+        # Update student status and redirect
+        student.update_placement_status()
+        return redirect('student_data:student_detail', student_id=student.id)
+    
+    else:
+        # GET request with optimized queries
+        internal_reqs = student.requirementstudent_set.select_related('requirement').all()
+        external_placement = getattr(student, 'placed_outside', None)
+        
+        # Determine initial selection state
+        initial_type = 'external' if external_placement else \
+                      'internal' if internal_reqs.filter(status='selected').exists() else None
+        
+        context = {
+            'student': student,
+            'internal_reqs': internal_reqs,
+            'external_placement': external_placement,
+            'initial_type': initial_type,
+        }
+        return render(request, 'update_placement.html', context)
+    
+
+from django.contrib import messages
+from django.shortcuts import get_object_or_404, redirect
+from .models import Student, RequirementStudent, GotPlacedOutside
+
+def remove_placement(request, student_id):
+    student = get_object_or_404(Student, pk=student_id)
+    
+    # Try to find existing internal placement
+    internal_placement = RequirementStudent.objects.filter(
+        student=student,
+        status='selected'
+    ).first()
+
+    if internal_placement:
+        # Reject the selected internal placement
+        internal_placement.status = 'rejected'
+        internal_placement.save()
+        
+        # Delete any external placement record if exists
+        GotPlacedOutside.objects.filter(student=student).delete()
+        
+        messages.success(request, 
+            f"Internal placement with {internal_placement.requirement.company_name} "
+            f"has been removed and status set to rejected.")
+            
+    else:
+        # Try to remove external placement
+        external_placement = GotPlacedOutside.objects.filter(student=student).first()
+        if external_placement:
+            company_name = external_placement.company_name
+            external_placement.delete()
+            messages.success(request, 
+                f"External placement with {company_name} has been removed.")
+        else:
+            messages.warning(request, "No active placement found to remove.")
+    
+    # Update student's placement status
+    student.update_placement_status()
+    
+    return redirect('student_data:student_detail', student_id=student.id)

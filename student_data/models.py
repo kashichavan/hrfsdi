@@ -475,3 +475,34 @@ def handle_scheduled_requirement_delete(sender, instance, **kwargs):
 def update_student_overall_rating(sender, instance, **kwargs):
     """Update the student's overall technical rating when subject ratings change"""
     transaction.on_commit(instance.student.save)
+    
+    
+    
+# models.py (add this signal handler)
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+@receiver(post_save, sender=RequirementStudent)
+def update_drive_result_status(sender, instance, **kwargs):
+    requirement = instance.requirement
+    if not hasattr(requirement, 'scheduled_detail'):
+        return
+
+    scheduled_detail = requirement.scheduled_detail
+    status_counts = RequirementStudent.objects.filter(
+        requirement=requirement
+    ).values('status').annotate(count=models.Count('status'))
+
+    status_map = {count['status']: count['count'] for count in status_counts}
+    
+    selected = status_map.get('selected', 0)
+    pending = status_map.get('pending', 0)
+
+    if selected > 0:
+        scheduled_detail.result = 'selected'
+    elif pending > 0:
+        scheduled_detail.result = 'pending'
+    else:
+        scheduled_detail.result = 'no_selects'
+    
+    scheduled_detail.save()

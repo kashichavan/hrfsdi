@@ -1,8 +1,12 @@
 {% extends "base.html" %}
 
-{% block head_extras %}
-<!-- Import trending fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+{% block title %}Add Placed Student{% endblock %}
+
+{% block extra_head %}
+<!-- Import modern fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
+<!-- Font Awesome -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <!-- AOS Animation Library -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
 <!-- Custom CSS -->
@@ -11,111 +15,161 @@
         --orange-primary: #ff7a00;
         --orange-secondary: #ff9f1c;
         --orange-light: #ffbe0b;
-        --dark-bg: #1a1a2e;
+        --orange-ultra-light: rgba(255, 122, 0, 0.05);
+        --dark-text: #1e293b;
+        --light-text: #64748b;
+        --success: #10b981;
+        --white: #ffffff;
+        --border-radius: 12px;
+    }
+    
+    body {
+        background-color: #f8fafc;
+        color: var(--dark-text);
+        font-family: 'Inter', sans-serif;
+        line-height: 1.6;
+    }
+    
+    .page-header {
+        padding: 2rem 0;
+        margin-bottom: 1.5rem;
+    }
+    
+    .header-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 1.75rem;
+        color: var(--orange-primary);
+        margin-bottom: 0.75rem;
+    }
+    
+    .header-subtitle {
+        color: var(--light-text);
+        font-size: 1.05rem;
+        font-weight: 400;
     }
     
     .card-placement {
         border: none;
-        border-radius: 16px;
-        box-shadow: 0 10px 30px rgba(255, 122, 0, 0.1);
+        border-radius: var(--border-radius);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
         overflow: hidden;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        background: var(--white);
     }
     
     .card-placement:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 15px 35px rgba(255, 122, 0, 0.15);
+        transform: translateY(-4px);
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.07);
     }
     
-    .card-header-gradient {
-        background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
-        border: none;
-        padding: 1.5rem;
+    .card-header {
+        background: var(--white);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.5rem 2rem;
     }
     
-    .placement-title {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        letter-spacing: 0.5px;
+    .card-header-tabs {
         margin: 0;
+        border-bottom: 0;
     }
     
-    .placement-icon {
-        font-size: 1.5rem;
-        margin-right: 12px;
-        vertical-align: middle;
+    .nav-link {
+        font-weight: 500;
+        color: var(--light-text);
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        margin-right: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .nav-link.active {
+        background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
+        color: var(--white);
+        font-weight: 600;
     }
     
     .placement-form-body {
         padding: 2rem;
-        background-color: #fff;
+        background-color: var(--white);
+    }
+    
+    .section-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+        margin-bottom: 1.5rem;
+        color: var(--dark-text);
+        display: flex;
+        align-items: center;
+    }
+    
+    .section-title i {
+        font-size: 1.25rem;
+        margin-right: 0.75rem;
+        color: var(--orange-primary);
+        background: var(--orange-ultra-light);
+        padding: 0.5rem;
+        border-radius: 8px;
     }
     
     .form-label {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 600;
-        color: var(--orange-primary);
+        font-weight: 500;
+        color: var(--dark-text);
         margin-bottom: 0.5rem;
-        font-size: 1rem;
+        font-size: 0.875rem;
     }
     
-    .form-control {
+    .custom-form-control {
         border-radius: 8px;
-        border: 2px solid #e9ecef;
+        border: 1px solid rgba(0, 0, 0, 0.1);
         padding: 0.75rem 1rem;
-        font-family: 'Outfit', sans-serif;
-        font-size: 1rem;
-        transition: all 0.3s ease;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        color: var(--dark-text);
+        background-color: #f9fafb;
     }
     
-    .form-control:focus {
+    .custom-form-control:focus {
         border-color: var(--orange-light);
-        box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.25);
+        box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.15);
+        background-color: var(--white);
     }
     
-    .btn-gradient {
+    .btn-primary {
         background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
         border: none;
-        border-radius: 10px;
-        padding: 0.75rem 2rem;
-        font-family: 'Space Grotesk', sans-serif;
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
         font-weight: 600;
-        letter-spacing: 0.5px;
         color: white;
         transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(255, 122, 0, 0.3);
+        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
     }
     
-    .btn-gradient:hover {
+    .btn-primary:hover {
         transform: translateY(-2px);
-        box-shadow: 0 6px 18px rgba(255, 122, 0, 0.4);
+        box-shadow: 0 6px 15px rgba(255, 122, 0, 0.35);
     }
     
-    .btn-gradient:active {
-        transform: translateY(1px);
+    .btn-outline {
+        background: transparent;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: var(--light-text);
+        border-radius: 8px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
     }
     
-    /* Divider style */
-    .styled-divider {
-        height: 3px;
-        background: linear-gradient(45deg, var(--orange-light), transparent);
-        margin: 2rem 0;
-        border-radius: 3px;
+    .btn-outline:hover {
+        border-color: var(--orange-light);
+        color: var(--orange-primary);
     }
     
-    /* Field animations */
-    .animate-field {
-        transition: all 0.3s ease;
-    }
-    
-    .animate-field:focus-within {
-        transform: translateY(-5px);
-    }
-    
-    /* Search section styling */
     .search-container {
         position: relative;
-        margin-bottom: 2rem;
+        margin-bottom: 1.5rem;
     }
     
     .search-icon {
@@ -123,151 +177,220 @@
         top: 50%;
         left: 15px;
         transform: translateY(-50%);
-        color: #adb5bd;
+        color: var(--light-text);
         pointer-events: none;
     }
     
     .search-input {
-        padding-left: 40px;
+        padding-left: 2.5rem;
+        background-color: #f9fafb;
     }
-
-    /* Required field indicator animation */
+    
     .required-star {
         color: var(--orange-primary);
-        display: inline-block;
-        animation: pulse 1.5s infinite;
+        margin-left: 0.25rem;
     }
     
-    @keyframes pulse {
-        0% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.2); opacity: 0.8; }
-        100% { transform: scale(1); opacity: 1; }
+    .form-hint {
+        font-size: 0.75rem;
+        color: var(--light-text);
+        margin-top: 0.375rem;
     }
     
-    /* Error message styling */
     .error-message {
-        color: #dc3545;
-        font-size: 0.875rem;
-        margin-top: 0.25rem;
-        font-family: 'Outfit', sans-serif;
-        display: block;
-        animation: shake 0.5s;
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.375rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
     }
     
-    @keyframes shake {
-        0%, 100% { transform: translateX(0); }
-        10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-        20%, 40%, 60%, 80% { transform: translateX(5px); }
+    .error-message:before {
+        content: "⚠️";
+        margin-right: 0.375rem;
+    }
+    
+    .form-section {
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        background-color: #fafafa;
+        margin-bottom: 1.5rem;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .divider {
+        height: 1px;
+        background: linear-gradient(90deg, rgba(0, 0, 0, 0.05), transparent);
+        margin: 2rem 0;
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container mt-5 mb-5">
+<div class="container py-5">
+    <!-- Page Header -->
+    <div class="page-header text-center" data-aos="fade-down">
+        <h1 class="header-title">Student Placement Portal</h1>
+        <p class="header-subtitle">Register students who secured placements outside the campus</p>
+    </div>
+
     <div class="row justify-content-center">
-        <div class="col-lg-8">
+        <div class="col-lg-10">
             <div class="card card-placement" data-aos="fade-up" data-aos-duration="800">
-                <div class="card-header-gradient">
-                    <h2 class="placement-title text-white mb-0">
-                        <i class="fas fa-user-graduate placement-icon"></i>Add Got Placed Outside Student
-                    </h2>
+                <div class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li class="nav-item">
+                            <a class="nav-link active" href="#">
+                                <i class="fas fa-user-graduate me-2"></i>Add Placement
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#">
+                                <i class="fas fa-list me-2"></i>View Records
+                            </a>
+                        </li>
+                    </ul>
                 </div>
+                
                 <div class="placement-form-body">
-                    <!-- Search Bar for Students -->
-                    <form method="get" action="{% url 'student_data:add_got_placed_outside' %}" class="needs-validation mb-4" novalidate data-aos="fade-up" data-aos-delay="100">
-                        {% csrf_token %}
-                        <div class="form-group animate-field search-container">
-                            <label for="search_query" class="form-label">
-                                Search Student by Name
-                            </label>
-                            <i class="fas fa-search search-icon"></i>
-                            <input type="text" class="form-control search-input" id="search_query" name="search_query" placeholder="Enter Student Name" value="{{ search_query }}">
-                        </div>
-                        <div class="form-group text-center mt-4">
-                            <button type="submit" class="btn btn-gradient">
-                                <i class="fas fa-search mr-2"></i>Search
-                            </button>
-                        </div>
-                    </form>
-
-                    <div class="styled-divider" data-aos="fade-right" data-aos-delay="200"></div>
-
-                    <!-- Form for Adding Got Placed Outside -->
-                    <form method="post" class="needs-validation" novalidate data-aos="fade-up" data-aos-delay="300">
-                        {% csrf_token %}
+                    <!-- Search Section -->
+                    <div class="form-section" data-aos="fade-up" data-aos-delay="100">
+                        <h3 class="section-title">
+                            <i class="fas fa-search"></i>Find Student
+                        </h3>
                         
-                        {% for field in form %}
-                        <div class="form-group animate-field mb-4">
-                            <label for="{{ field.id_for_label }}" class="form-label">
-                                {{ field.label }}
-                                {% if field.field.required %}<span class="required-star">*</span>{% endif %}
-                            </label>
+                        <form method="get" action="{% url 'student_data:add_got_placed_outside' %}">
+                            <div class="row align-items-end">
+                                <div class="col-md-8">
+                                    <div class="mb-0">
+                                        <label for="search_query" class="form-label">Student Name</label>
+                                        <div class="search-container">
+                                            <i class="fas fa-search search-icon"></i>
+                                            <input type="text" class="form-control custom-form-control search-input" 
+                                                id="search_query" name="search_query" 
+                                                placeholder="Enter student's name to search" value="{{ search_query }}">
+                                        </div>
+                                        <div class="form-hint">Search by full name or partial match</div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                    <button type="submit" class="btn btn-primary w-100">
+                                        <i class="fas fa-search me-2"></i>Search Student
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="divider" data-aos="fade-right" data-aos-delay="200"></div>
+
+                    <!-- Placement Form Section -->
+                    <div class="placement-form-section" data-aos="fade-up" data-aos-delay="300">
+                        <h3 class="section-title">
+                            <i class="fas fa-briefcase"></i>Placement Details
+                        </h3>
+                        
+                        <form method="post" novalidate class="row g-4">
+                            {% csrf_token %}
                             
-                            {% if field.name == 'student' %}
-                                <!-- Display Students Search Dropdown -->
-                                <select class="form-control" id="{{ field.id_for_label }}" name="{{ field.name }}">
+                            <!-- Student Selection -->
+                            <div class="col-md-12">
+                                <label class="form-label">
+                                    Student
+                                    <span class="required-star">*</span>
+                                </label>
+                                <select class="form-select custom-form-control" 
+                                        name="student" required>
+                                    <option value="">-- Select Student --</option>
                                     {% for student in students %}
-                                        <option value="{{ student.id }}" {% if form.student.value == student.id %} selected {% endif %}>{{ student.name }}</option>
+                                        <option value="{{ student.id }}" 
+                                            {% if form.student.value == student.id %}selected{% endif %}>
+                                            {{ student.name }}
+                                        </option>
                                     {% endfor %}
                                 </select>
-                            {% else %}
-                                {{ field }}
-                            {% endif %}
-                            
-                            {% if field.help_text %}
-                            <small class="form-text text-muted mt-1">{{ field.help_text }}</small>
-                            {% endif %}
-                            
-                            {% for error in field.errors %}
-                            <div class="error-message">
-                                {{ error }}
+                                {% for error in form.student.errors %}
+                                    <div class="error-message">{{ error }}</div>
+                                {% endfor %}
                             </div>
-                            {% endfor %}
-                        </div>
-                        {% endfor %}
 
-                        <div class="form-group text-center mt-5" data-aos="zoom-in" data-aos-delay="400">
-                            <button type="submit" class="btn btn-gradient btn-lg px-5">
-                                <i class="fas fa-paper-plane mr-2"></i>Submit
-                            </button>
-                        </div>
-                    </form>
+                            <!-- Other Form Fields -->
+                            {% for field in form %}
+                                {% if field.name != 'student' %}
+                                <div class="col-md-6">
+                                    <label class="form-label">
+                                        {{ field.label }}
+                                        {% if field.field.required %}<span class="required-star">*</span>{% endif %}
+                                    </label>
+                                    {{ field|safe }}
+                                    {% if field.help_text %}
+                                        <div class="form-hint">{{ field.help_text }}</div>
+                                    {% endif %}
+                                    {% for error in field.errors %}
+                                        <div class="error-message">{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+
+                            <div class="col-12 mt-4 d-flex justify-content-between" data-aos="fade-up" data-aos-delay="400">
+                                <button type="reset" class="btn btn-outline">
+                                    <i class="fas fa-undo me-2"></i>Reset Form
+                                </button>
+                                <button type="submit" class="btn btn-primary px-4">
+                                    <i class="fas fa-paper-plane me-2"></i>Submit Placement
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <!-- Animation Script -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 <script>
-    // Initialize AOS animations
     document.addEventListener('DOMContentLoaded', function() {
-        AOS.init();
-        
-        // Form field focus animation
-        const formControls = document.querySelectorAll('.form-control');
-        formControls.forEach(input => {
-            input.addEventListener('focus', function() {
-                this.parentElement.classList.add('focused');
-            });
-            
-            input.addEventListener('blur', function() {
-                this.parentElement.classList.remove('focused');
-            });
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100
         });
         
-        // Form validation
-        const forms = document.querySelectorAll('.needs-validation');
-        Array.from(forms).forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
+        // Form validation enhancement
+        const form = document.querySelector('form[method="post"]');
+        if (form) {
+            form.addEventListener('submit', function(event) {
+                const requiredFields = form.querySelectorAll('[required]');
+                let isValid = true;
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        isValid = false;
+                        field.classList.add('is-invalid');
+                        field.addEventListener('input', function() {
+                            if (this.value.trim()) {
+                                this.classList.remove('is-invalid');
+                            }
+                        });
+                    }
+                });
+                
+                if (!isValid) {
                     event.preventDefault();
-                    event.stopPropagation();
+                    const firstInvalid = form.querySelector('.is-invalid');
+                    if (firstInvalid) {
+                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        firstInvalid.focus();
+                    }
                 }
-                form.classList.add('was-validated');
-            }, false);
-        });
+            });
+        }
     });
 </script>
 {% endblock %}

@@ -1,0 +1,149 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Update Placement Status for {{ student.name }}</h2>
+
+    <form method="post" class="bg-light p-4 rounded shadow-sm">
+        {% csrf_token %}
+        
+        <!-- Internal Placement Section -->
+        <div class="placement-section mb-4">
+            <h3 class="h5 mb-3 text-primary">Internal Placement</h3>
+            
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="placement_type" value="internal" 
+                       {% if initial_type == 'internal' %}checked{% endif %} id="internalRadio">
+                <label class="form-check-label fw-bold" for="internalRadio">
+                    Mark as Internally Placed
+                </label>
+            </div>
+
+            {% if internal_reqs %}
+                <div class="requirements-list">
+                    <h4 class="h6 mb-3 text-muted">Select Company Requirement:</h4>
+                    <div class="row g-3">
+                        {% for req_student in internal_reqs %}
+                            <div class="col-md-6">
+                                <div class="card {% if req_student.status == 'selected' %}border-primary{% endif %} h-100">
+                                    <div class="card-body">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="selected_requirement" 
+                                                   value="{{ req_student.id }}" id="req{{ req_student.id }}"
+                                                   {% if req_student.status == 'selected' %}checked{% endif %}>
+                                            <label class="form-check-label" for="req{{ req_student.id }}">
+                                                <div class="requirement-info">
+                                                    <div class="company-name fw-bold">{{ req_student.requirement.company_name }}</div>
+                                                    <div class="text-muted small">
+                                                        <span class="requirement-code">{{ req_student.requirement.company_code }}</span>
+                                                        {% if req_student.requirement.requirement_date %}
+                                                        <span class="requirement-date">• {{ req_student.requirement.requirement_date|date:"M d, Y" }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                </div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning mt-2">
+                    No internal requirements found for this student.
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- External Placement Section -->
+        <div class="placement-section">
+            <h3 class="h5 mb-3 text-primary">External Placement</h3>
+            
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="placement_type" value="external" 
+                       {% if initial_type == 'external' %}checked{% endif %} id="externalRadio">
+                <label class="form-check-label fw-bold" for="externalRadio">
+                    Mark as Externally Placed
+                </label>
+            </div>
+
+            <div class="external-fields" {% if initial_type != 'external' %}style="display:none;"{% endif %}>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Company Name:</label>
+                        <input type="text" name="company_name" class="form-control"
+                               value="{{ external_placement.company_name|default:'' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Package (LPA):</label>
+                        <input type="number" step="0.01" name="package" class="form-control"
+                               value="{{ external_placement.package|default:'' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Role:</label>
+                        <input type="text" name="role" class="form-control"
+                               value="{{ external_placement.role|default:'' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Placed Date:</label>
+                        <input type="date" name="placed_date" class="form-control"
+                               value="{{ external_placement.placed_date|date:'Y-m-d'|default:'' }}">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary px-4">Update Placement</button>
+        </div>
+    </form>
+</div>
+
+<style>
+    .placement-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        margin-bottom: 2rem;
+    }
+
+    .requirement-info {
+        margin-left: 1rem;
+    }
+
+    .card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: pointer;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    }
+
+    .form-check-input:checked + .form-check-label .card {
+        border-color: #0d6efd;
+        background-color: #f8f9fa;
+    }
+</style>
+
+<script>
+document.querySelectorAll('input[name="placement_type"]').forEach(radio => {
+    radio.addEventListener('change', (e) => {
+        const externalFields = document.querySelector('.external-fields');
+        const internalList = document.querySelector('.requirements-list');
+        
+        if (e.target.value === 'external') {
+            externalFields.style.display = 'block';
+            if (internalList) internalList.style.display = 'none';
+        } else {
+            externalFields.style.display = 'none';
+            if (internalList) internalList.style.display = 'block';
+        }
+    });
+});
+</script>
+
+{% endblock %}

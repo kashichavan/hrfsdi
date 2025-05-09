@@ -115,5 +115,7 @@ urlpatterns = [
      path('tomorrow-requirements/', views.tomorrows_requirements, name='tomorrow_requirements'),
      path('tomorrow-students/', views.students_attending_tomorrow, name='tomorrow_students'),
      path('export/tomorrow-requirements/', views.export_tomorrow_scheduled_requirements, name='export_tomorrows_requirements'),
+     path('student/<int:student_id>/placement/', views.update_placement_status, name='update_placement'),
+     path('students/<int:student_id>/remove-placement/',views.remove_placement,name='remove_placement'),
 ]
 
