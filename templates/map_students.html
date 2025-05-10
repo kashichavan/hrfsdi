@@ -5,6 +5,12 @@
 <div class="container mt-4">
     <h2>Map Students to Requirements</h2>
     
+    <div class="mb-4">
+        <a href="{% url 'student_data:map_download_sample' %}" class="btn btn-success">
+            <i class="bi bi-download"></i> Download Sample Template
+        </a>
+    </div>
+
     <form method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         <div class="mb-3">

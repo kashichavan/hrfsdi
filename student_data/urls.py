@@ -117,5 +117,15 @@ urlpatterns = [
      path('export/tomorrow-requirements/', views.export_tomorrow_scheduled_requirements, name='export_tomorrows_requirements'),
      path('student/<int:student_id>/placement/', views.update_placement_status, name='update_placement'),
      path('students/<int:student_id>/remove-placement/',views.remove_placement,name='remove_placement'),
+     path('map_download-sample/', views.download_sample_excel_map, name='map_download_sample'),
+     path('ajax/search-students/', views.ajax_search_students, name='ajax_search_students'),
+    path('export/students-csv/', views.export_students_csv, name='export_students_csv'),
+
+ path('ajax/today-requirements/', views.TodaysRequirementsAjaxView.as_view(), name='ajax_todays_requirements'),
+    path('ajax/tomorrow-requirements/', views.TomorrowsRequirementsAjaxView.as_view(), name='ajax_tomorrow_requirements'),
+    path('ajax/today-students/', views.TodaysStudentsAjaxView.as_view(), name='ajax_today_students'),
+    path('ajax/tomorrow-students/', views.TomorrowsStudentsAjaxView.as_view(), name='ajax_tomorrow_students'),
 ]
+
+
 

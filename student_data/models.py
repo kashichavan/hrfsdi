@@ -5,7 +5,7 @@ from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from datetime import timedelta
 from django.db import transaction
-
+from django.urls import reverse
 class Subject(models.Model):
         """Model to represent fixed subjects that students will be rated on"""
         SUBJECT_CHOICES = [
@@ -107,6 +107,9 @@ class Requirement(models.Model):
     @property
     def is_scheduled_today(self):
         return self.schedule_date == timezone.now().date()
+    
+    def get_absolute_url(self):
+        return reverse('student_data:requirement_detail', args=[str(self.id)])
 
 
 
@@ -271,6 +274,9 @@ class Student(models.Model):
             return rating.get_rating_display()
         except StudentSubjectRating.DoesNotExist:
             return "Not Rated"
+        
+    def get_absolute_url(self):
+        return reverse('student_data:student_detail', args=[str(self.id)])
 
 class RequirementStudent(models.Model):
     STATUS_CHOICES = [

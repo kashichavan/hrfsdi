@@ -1,345 +1,313 @@
 {% extends "base.html" %}
-
 {% block title %}Add Placed Student{% endblock %}
-
 {% block extra_head %}
-<!-- Import modern fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet">
-<!-- Font Awesome -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-<!-- AOS Animation Library -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
-<!-- Custom CSS -->
+<!-- Fonts & Icons -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins :wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css " rel="stylesheet">
+
 <style>
     :root {
-        --orange-primary: #ff7a00;
-        --orange-secondary: #ff9f1c;
-        --orange-light: #ffbe0b;
-        --orange-ultra-light: rgba(255, 122, 0, 0.05);
-        --dark-text: #1e293b;
-        --light-text: #64748b;
-        --success: #10b981;
-        --white: #ffffff;
-        --border-radius: 12px;
+        --primary-color: #FF6B35;
+        --primary-light: #FF8C5A;
+        --primary-dark: #E05A2D;
+        --accent-color: #FFD166;
+        --text-dark: #333333;
+        --text-medium: #555555;
+        --text-light: #777777;
+        --bg-light: #FFF8F0;
+        --card-bg: #FFFFFF;
     }
-    
+
     body {
-        background-color: #f8fafc;
-        color: var(--dark-text);
-        font-family: 'Inter', sans-serif;
-        line-height: 1.6;
-    }
-    
-    .page-header {
-        padding: 2rem 0;
-        margin-bottom: 1.5rem;
-    }
-    
-    .header-title {
         font-family: 'Poppins', sans-serif;
+        background-color: var(--bg-light);
+    }
+
+    .page-header {
+        padding: 1.5rem 0;
+    }
+
+    .header-title {
+        font-family: 'Montserrat', sans-serif;
         font-weight: 700;
         font-size: 1.75rem;
-        color: var(--orange-primary);
-        margin-bottom: 0.75rem;
+        color: var(--primary-color);
     }
-    
-    .header-subtitle {
-        color: var(--light-text);
-        font-size: 1.05rem;
-        font-weight: 400;
-    }
-    
-    .card-placement {
+
+    .card {
         border: none;
-        border-radius: var(--border-radius);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.04);
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        background: var(--white);
+        border-radius: 12px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
     }
-    
-    .card-placement:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.07);
-    }
-    
+
     .card-header {
-        background: var(--white);
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        padding: 1.5rem 2rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1.5rem !important;
     }
-    
-    .card-header-tabs {
-        margin: 0;
-        border-bottom: 0;
-    }
-    
-    .nav-link {
-        font-weight: 500;
-        color: var(--light-text);
-        padding: 0.75rem 1.25rem;
-        border-radius: 8px;
-        margin-right: 0.5rem;
-        transition: all 0.2s ease;
-    }
-    
-    .nav-link.active {
-        background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
-        color: var(--white);
-        font-weight: 600;
-    }
-    
-    .placement-form-body {
-        padding: 2rem;
-        background-color: var(--white);
-    }
-    
-    .section-title {
-        font-family: 'Poppins', sans-serif;
-        font-weight: 600;
-        font-size: 1.1rem;
-        margin-bottom: 1.5rem;
-        color: var(--dark-text);
-        display: flex;
-        align-items: center;
-    }
-    
-    .section-title i {
-        font-size: 1.25rem;
-        margin-right: 0.75rem;
-        color: var(--orange-primary);
-        background: var(--orange-ultra-light);
-        padding: 0.5rem;
-        border-radius: 8px;
-    }
-    
-    .form-label {
-        font-weight: 500;
-        color: var(--dark-text);
-        margin-bottom: 0.5rem;
-        font-size: 0.875rem;
-    }
-    
-    .custom-form-control {
-        border-radius: 8px;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
-        transition: all 0.2s ease;
-        color: var(--dark-text);
-        background-color: #f9fafb;
-    }
-    
-    .custom-form-control:focus {
-        border-color: var(--orange-light);
-        box-shadow: 0 0 0 3px rgba(255, 159, 28, 0.15);
-        background-color: var(--white);
-    }
-    
+
     .btn-primary {
-        background: linear-gradient(45deg, var(--orange-primary), var(--orange-secondary));
-        border: none;
-        border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 600;
-        color: white;
+        background-color: var(--primary-color);
+        border-color: var(--primary-color);
         transition: all 0.3s ease;
-        box-shadow: 0 4px 12px rgba(255, 122, 0, 0.25);
     }
-    
+
     .btn-primary:hover {
+        background-color: var(--primary-dark);
         transform: translateY(-2px);
-        box-shadow: 0 6px 15px rgba(255, 122, 0, 0.35);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
     }
-    
-    .btn-outline {
-        background: transparent;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        color: var(--light-text);
+
+    .btn-outline-secondary {
+        transition: all 0.3s ease;
+    }
+
+    .btn-outline-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-control {
         border-radius: 8px;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        padding: 0.75rem 1rem;
+        border: 1px solid #ddd;
     }
-    
-    .btn-outline:hover {
-        border-color: var(--orange-light);
-        color: var(--orange-primary);
+
+    .form-control:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
     }
-    
+
     .search-container {
         position: relative;
-        margin-bottom: 1.5rem;
     }
-    
+
     .search-icon {
         position: absolute;
         top: 50%;
         left: 15px;
         transform: translateY(-50%);
-        color: var(--light-text);
-        pointer-events: none;
+        color: var(--text-light);
     }
-    
+
     .search-input {
         padding-left: 2.5rem;
-        background-color: #f9fafb;
     }
-    
-    .required-star {
-        color: var(--orange-primary);
-        margin-left: 0.25rem;
-    }
-    
-    .form-hint {
-        font-size: 0.75rem;
-        color: var(--light-text);
-        margin-top: 0.375rem;
-    }
-    
-    .error-message {
-        color: #ef4444;
-        font-size: 0.75rem;
-        margin-top: 0.375rem;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-    }
-    
-    .error-message:before {
-        content: "⚠️";
-        margin-right: 0.375rem;
-    }
-    
-    .form-section {
-        padding: 1.5rem;
-        border-radius: var(--border-radius);
-        background-color: #fafafa;
-        margin-bottom: 1.5rem;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-    }
-    
+
     .divider {
         height: 1px;
-        background: linear-gradient(90deg, rgba(0, 0, 0, 0.05), transparent);
-        margin: 2rem 0;
+        background: linear-gradient(to right, #eee, transparent);
+        margin-top: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        max-width: 350px;
+        opacity: 1;
+        animation: fadeOut 0.5s ease forwards;
+        animation-delay: 3s;
+    }
+
+    @keyframes fadeOut {
+        from { opacity: 1; }
+        to { opacity: 0; visibility: hidden; }
+    }
+
+    .toast-success {
+        background-color: #d4edda;
+        color: #155724;
+    }
+
+    .toast-error {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .toast-body {
+        padding: 1rem;
+        font-size: 0.95rem;
+    }
+
+    /* Hide student list by default */
+    #student-results {
+        display: none;
+    }
+
+    /* Show when results are present */
+    #student-results.show {
+        display: block;
+    }
+
+    .list-group-item {
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .form-section {
+        background-color: #fff;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-section h5 {
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+        color: var(--text-dark);
+    }
+
+    .form-row {
+        margin-bottom: 1rem;
+    }
+
+    .form-group {
+        margin-bottom: 1rem;
     }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="container py-5">
     <!-- Page Header -->
-    <div class="page-header text-center" data-aos="fade-down">
-        <h1 class="header-title">Student Placement Portal</h1>
-        <p class="header-subtitle">Register students who secured placements outside the campus</p>
+    <div class="page-header text-center">
+        <h1 class="header-title">Register Student Placement</h1>
+        <p class="header-subtitle">Add students who secured placements outside the campus</p>
     </div>
+
+    <!-- Toast Messages -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="toast toast-{{ message.tags }}" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-body">
+                    {{ message }}
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
 
     <div class="row justify-content-center">
         <div class="col-lg-10">
-            <div class="card card-placement" data-aos="fade-up" data-aos-duration="800">
-                <div class="card-header">
-                    <ul class="nav nav-tabs card-header-tabs">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="#">
-                                <i class="fas fa-user-graduate me-2"></i>Add Placement
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="#">
-                                <i class="fas fa-list me-2"></i>View Records
-                            </a>
-                        </li>
-                    </ul>
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Search Student</h4>
                 </div>
-                
-                <div class="placement-form-body">
+                <div class="card-body">
                     <!-- Search Section -->
-                    <div class="form-section" data-aos="fade-up" data-aos-delay="100">
-                        <h3 class="section-title">
-                            <i class="fas fa-search"></i>Find Student
-                        </h3>
-                        
-                        <form method="get" action="{% url 'student_data:add_got_placed_outside' %}">
-                            <div class="row align-items-end">
-                                <div class="col-md-8">
-                                    <div class="mb-0">
-                                        <label for="search_query" class="form-label">Student Name</label>
-                                        <div class="search-container">
-                                            <i class="fas fa-search search-icon"></i>
-                                            <input type="text" class="form-control custom-form-control search-input" 
-                                                id="search_query" name="search_query" 
-                                                placeholder="Enter student's name to search" value="{{ search_query }}">
-                                        </div>
-                                        <div class="form-hint">Search by full name or partial match</div>
-                                    </div>
+                    <form id="search-form" method="get" action="{% url 'student_data:add_got_placed_outside' %}" class="mb-4">
+                        <div class="row align-items-end">
+                            <div class="col-md-8 mb-3 mb-md-0">
+                                <label for="search_query" class="form-label">Student Name or Mobile Number</label>
+                                <div class="search-container">
+                                    <i class="fas fa-user search-icon"></i>
+                                    <input type="text" class="form-control search-input" id="search_query"
+                                           name="search_query"
+                                           placeholder="Enter student's name or mobile number"
+                                           value="{{ search_query }}">
                                 </div>
-                                <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-search me-2"></i>Search Student
-                                    </button>
-                                </div>
+                                <small class="form-text text-muted">You can search by full/partial name or 10-digit mobile number.</small>
                             </div>
-                        </form>
+                            <div class="col-md-4 text-md-end">
+                                <button type="submit" class="btn btn-primary w-100">
+                                    <i class="fas fa-search mr-2"></i>Search
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- CSV Export Button -->
+                    <div class="mb-4 d-flex justify-content-end">
+                        <a href="{% url 'student_data:export_students_csv' %}?search_query={{ search_query }}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-file-export mr-2"></i>Export Results
+                        </a>
                     </div>
 
-                    <div class="divider" data-aos="fade-right" data-aos-delay="200"></div>
+                    <hr class="divider">
+
+                    <!-- Student List -->
+                    <div id="student-list" class="mb-4">
+                        <h5 class="mb-3">Matching Students</h5>
+                        <ul class="list-group" id="student-results" {% if students %}class="show"{% endif %}>
+                            {% for student in students %}
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span>{{ student.name }} - {{ student.contact_number }}</span>
+                                </li>
+                            {% empty %}
+                                <li class="list-group-item text-center text-muted">
+                                    No matching students found.
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
 
                     <!-- Placement Form Section -->
-                    <div class="placement-form-section" data-aos="fade-up" data-aos-delay="300">
-                        <h3 class="section-title">
-                            <i class="fas fa-briefcase"></i>Placement Details
-                        </h3>
-                        
-                        <form method="post" novalidate class="row g-4">
+                    <div class="form-section">
+                        <form method="post" novalidate>
                             {% csrf_token %}
-                            
-                            <!-- Student Selection -->
-                            <div class="col-md-12">
-                                <label class="form-label">
-                                    Student
-                                    <span class="required-star">*</span>
-                                </label>
-                                <select class="form-select custom-form-control" 
-                                        name="student" required>
+                            <h5>Select Student for Placement</h5>
+                            <div class="mb-3">
+                                <select class="form-select form-control" name="student" required>
                                     <option value="">-- Select Student --</option>
                                     {% for student in students %}
-                                        <option value="{{ student.id }}" 
-                                            {% if form.student.value == student.id %}selected{% endif %}>
-                                            {{ student.name }}
+                                        <option value="{{ student.id }}"
+                                            {% if form.student.value|stringformat:"s" == student.id|stringformat:"s" %}selected{% endif %}>
+                                            {{ student.name }} - {{ student.contact_number }}
                                         </option>
                                     {% endfor %}
                                 </select>
                                 {% for error in form.student.errors %}
-                                    <div class="error-message">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             </div>
 
-                            <!-- Other Form Fields -->
-                            {% for field in form %}
-                                {% if field.name != 'student' %}
+                            <h5 class="mt-4">Placement Details</h5>
+                            <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">
-                                        {{ field.label }}
-                                        {% if field.field.required %}<span class="required-star">*</span>{% endif %}
-                                    </label>
-                                    {{ field|safe }}
-                                    {% if field.help_text %}
-                                        <div class="form-hint">{{ field.help_text }}</div>
-                                    {% endif %}
-                                    {% for error in field.errors %}
-                                        <div class="error-message">{{ error }}</div>
-                                    {% endfor %}
+                                    <div class="form-group">
+                                        <label for="id_company_name" class="form-label">Company Name</label>
+                                        {{ form.company_name }}
+                                        {% for error in form.company_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
                                 </div>
-                                {% endif %}
-                            {% endfor %}
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_package" class="form-label">Package (in LPA)</label>
+                                        {{ form.package }}
+                                        {% for error in form.package.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_role" class="form-label">Role</label>
+                                        {{ form.role }}
+                                        {% for error in form.role.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="id_placed_date" class="form-label">Placed Date</label>
+                                        {{ form.placed_date }}
+                                        {% for error in form.placed_date.errors %}
+                                            <div class="invalid-feedback d-block">{{ error }}</div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
 
-                            <div class="col-12 mt-4 d-flex justify-content-between" data-aos="fade-up" data-aos-delay="400">
-                                <button type="reset" class="btn btn-outline">
-                                    <i class="fas fa-undo me-2"></i>Reset Form
-                                </button>
+                            <div class="d-flex justify-content-between mt-4">
+                                <a href="#" class="btn btn-outline-secondary">Cancel</a>
                                 <button type="submit" class="btn btn-primary px-4">
-                                    <i class="fas fa-paper-plane me-2"></i>Submit Placement
+                                    <i class="fas fa-paper-plane mr-2"></i>Submit Placement
                                 </button>
                             </div>
                         </form>
@@ -349,46 +317,46 @@
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<!-- Animation Script -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        AOS.init({
-            duration: 800,
-            once: true,
-            offset: 100
-        });
-        
-        // Form validation enhancement
-        const form = document.querySelector('form[method="post"]');
-        if (form) {
-            form.addEventListener('submit', function(event) {
-                const requiredFields = form.querySelectorAll('[required]');
-                let isValid = true;
-                
-                requiredFields.forEach(field => {
-                    if (!field.value.trim()) {
-                        isValid = false;
-                        field.classList.add('is-invalid');
-                        field.addEventListener('input', function() {
-                            if (this.value.trim()) {
-                                this.classList.remove('is-invalid');
-                            }
-                        });
-                    }
-                });
-                
-                if (!isValid) {
-                    event.preventDefault();
-                    const firstInvalid = form.querySelector('.is-invalid');
-                    if (firstInvalid) {
-                        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        firstInvalid.focus();
-                    }
+    document.addEventListener('DOMContentLoaded', function () {
+        const searchInput = document.getElementById('search_query');
+        const resultsContainer = document.getElementById('student-results');
+
+        // Initially hide the student list
+        if (!resultsContainer.classList.contains("show")) {
+            resultsContainer.style.display = "none";
+        }
+
+        // Live Search with AJAX
+        if (searchInput && resultsContainer) {
+            searchInput.addEventListener('input', function () {
+                const query = this.value.trim();
+                if (query.length < 2) {
+                    resultsContainer.innerHTML = '<li class="list-group-item text-muted">Type at least 2 characters...</li>';
+                    resultsContainer.style.display = 'block';
+                    return;
                 }
+
+                fetch('{% url "student_data:ajax_search_students" %}' + '?q=' + encodeURIComponent(query))
+                    .then(res => res.json())
+                    .then(data => {
+                        resultsContainer.innerHTML = '';
+                        if (data.students.length === 0) {
+                            resultsContainer.innerHTML = '<li class="list-group-item text-muted">No matches found</li>';
+                            resultsContainer.style.display = 'block';
+                            return;
+                        }
+
+                        data.students.forEach(student => {
+                            const li = document.createElement('li');
+                            li.className = 'list-group-item d-flex justify-content-between align-items-center';
+                            li.innerHTML = `<span>${student.name} - ${student.contact_number}</span>`;
+                            resultsContainer.appendChild(li);
+                        });
+
+                        resultsContainer.style.display = 'block';
+                    });
             });
         }
     });

@@ -138,15 +138,48 @@ class StudentForm(forms.ModelForm):
 from django import forms
 from .models import GotPlacedOutside, Student
 
+from django import forms
+from .models import GotPlacedOutside, Student
+
+
 class GotPlacedOutsideForm(forms.ModelForm):
     class Meta:
         model = GotPlacedOutside
         fields = ['student', 'company_name', 'role', 'package', 'placed_date']
+        widgets = {
+            'company_name': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Enter company name',
+            }),
+            'role': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'E.g., Software Engineer',
+            }),
+            'package': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Annual package in LPA',
+                'step': '0.01',
+                'min': '0',
+            }),
+            'placed_date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date',
+            }),
+            'student': forms.Select(attrs={
+                'class': 'form-select form-control',
+                'aria-label': 'Select student',
+            })
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Show only students not already marked as placed
+
+        # Filter student queryset to only include unplaced students
         self.fields['student'].queryset = Student.objects.filter(is_placed=False)
+
+        # Optional: Add help text or customize labels if needed
+        self.fields['package'].help_text = "In Lakhs Per Annum (LPA)"
+        self.fields['placed_date'].help_text = "Date when student was placed"
 
 
 # forms.py

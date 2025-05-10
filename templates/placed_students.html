@@ -742,37 +742,80 @@
       grid-template-columns: 1fr;
     }
   }
+
+
+  .type-filters-container {
+  background: var(--white);
+  border-radius: 16px;
+  padding: 1rem 1.5rem;
+  margin-bottom: 20px;
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.1);
+}
+
+.type-filter-label {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--text-dark);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.type-filter-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.type-filter-btn {
+  background: var(--off-white);
+  border: 1px solid var(--accent-line);
+  border-radius: 50px;
+  padding: 8px 20px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text-medium);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.type-filter-btn.active {
+  background: var(--orange-bright);
+  color: var(--white);
+  border-color: var(--orange-bright);
+}
+
+.type-filter-btn:hover:not(.active) {
+  background: var(--orange-cream);
+  color: var(--orange-bright);
+}
+
+.type-count {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="placed-students-container">
   <div id="three-background" class="three-background"></div>
-  
-  <div class="celebration-header">
-    <h1 class="celebration-title">Student Placement Success</h1>
-    <span class="celebration-emoji">🎓</span>
-    <span class="celebration-emoji">🚀</span>
-    <span class="celebration-emoji">🎉</span>
-    <p class="celebration-subtitle">Congratulations to our talented students on their career journey</p>
-    
-    <div class="stats-container">
-      <div class="stats-badge">
-        <div class="stats-badge-number">{{ placed_students|length }}</div>
-        <div class="stats-badge-label">Successful Placements</div>
-      </div>
-      
-      <div class="stats-badge">
-        <div class="stats-badge-number" id="companies-count">0</div>
-        <div class="stats-badge-label">Hiring Companies</div>
-      </div>
-      
-      <div class="stats-badge">
-        <div class="stats-badge-number" id="avg-package">0</div>
-        <div class="stats-badge-label">Avg Package (LPA)</div>
-      </div>
-    </div>
+  <!-- Quick Type Filters -->
+
+  <!-- Quick Type of Data Filters -->
+<div class="type-filters-container">
+  <div class="type-filter-label">Type of Data:</div>
+  <div class="type-filter-buttons">
+    <button class="type-filter-btn active" data-type="all">
+      All <span class="type-count">({{ total_count }})</span>
+    </button>
+    {% for type, count in type_counts.items %}
+      <button class="type-filter-btn" data-type="{{ type|slugify }}">
+        {{ type }} <span class="type-count">({{ count }})</span>
+      </button>
+    {% endfor %}
   </div>
+</div>
   
   <div class="placement-buttons-container">
     <a href="{% url 'student_data:placed_outside' %}" class="placement-button">
@@ -827,7 +870,8 @@
           <div class="student-card" data-page="{{ forloop.counter0|intdiv:9|add:1 }}" 
                data-student="{{ entry.student.name|lower }}" 
                data-company="{{ entry.requirement.company_name|lower }}"
-               data-date="{{ entry.requirement.schedule_date|default:'' }}">
+               data-date="{{ entry.requirement.schedule_date|default:'' }}"
+               data-type="{{ entry.student.get_type_data|slugify }}">
             
             {% if entry.requirement.is_new %}
               <div class="notification-badge">New</div>
@@ -876,35 +920,7 @@
         <p class="no-results-hint">Try changing your search criteria or clear filters</p>
       </div>
       
-      <!-- Quick insights section -->
-      <div class="insights-container">
-        <h3 class="insights-title">Quick Insights</h3>
-        <div class="insights-grid">
-          <div class="insight-card">
-            <div class="insight-value" id="top-company-count">-</div>
-            <p class="insight-label">Students placed at <span id="top-company-name">-</span></p>
-            <div class="insight-icon">🏢</div>
-          </div>
-          
-          <div class="insight-card">
-            <div class="insight-value" id="recent-placements">0</div>
-            <p class="insight-label">Placements in last 30 days</p>
-            <div class="insight-icon">📅</div>
-          </div>
-          
-          <div class="insight-card">
-            <div class="insight-value" id="upcoming-interviews">0</div>
-            <p class="insight-label">Upcoming interviews</p>
-            <div class="insight-icon">📋</div>
-          </div>
-          
-          <div class="insight-card">
-            <div class="insight-value" id="completion-rate">0%</div>
-            <p class="insight-label">Placement completion rate</p>
-            <div class="insight-icon">📊</div>
-          </div>
-        </div>
-      </div>
+      
       
       <!-- Pagination -->
       <!-- Pagination -->
@@ -927,16 +943,21 @@
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function() {
+    let currentTypeFilter = 'all';
+    const itemsPerPage = 9;
+    let currentPage = 1;
+    let totalPages = 1;
+
     // GSAP animations for elements
     gsap.from(".celebration-title", {opacity: 0, y: -20, duration: 0.8, ease: "power2.out"});
     gsap.to(".celebration-emoji", {
-      opacity: 1, 
-      y: 0, 
-      duration: 0.6, 
-      ease: "back.out(1.7)",
-      stagger: 0.15,
-      delay: 0.3
+        opacity: 1, 
+        y: 0, 
+        duration: 0.6, 
+        ease: "back.out(1.7)",
+        stagger: 0.15,
+        delay: 0.3
     });
     gsap.to(".celebration-subtitle", {opacity: 1, duration: 0.8, delay: 0.7});
     gsap.to(".stats-container", {opacity: 1, duration: 0.8, delay: 0.9});
@@ -945,12 +966,12 @@
     gsap.to(".search-filter-container", {opacity: 1, y: 0, duration: 0.8, delay: 1.1});
     gsap.to(".showcase-header", {opacity: 1, duration: 0.8, delay: 1.2});
     gsap.to(".student-card", {
-      opacity: 1, 
-      y: 0, 
-      duration: 0.6, 
-      stagger: 0.05,
-      ease: "power2.out",
-      delay: 1.3
+        opacity: 1, 
+        y: 0, 
+        duration: 0.6, 
+        stagger: 0.05,
+        ease: "power2.out",
+        delay: 1.3
     });
     
     gsap.to(".pagination-container", {opacity: 1, y: 0, duration: 0.8, delay: 1.8});
@@ -974,342 +995,242 @@
     const colorsArray = new Float32Array(particlesCount * 3);
     
     for(let i = 0; i < particlesCount * 3; i++) {
-      // Position
-      posArray[i] = (Math.random() - 0.5) * 10;
-      
-      // Colors (orange to light orange)
-      if(i % 3 === 0) colorsArray[i] = Math.random() * (1 - 0.8) + 0.8; // R
-      if(i % 3 === 1) colorsArray[i] = Math.random() * (0.5 - 0.3) + 0.3; // G
-      if(i % 3 === 2) colorsArray[i] = Math.random() * (0.3 - 0.1) + 0.1; // B
+        posArray[i] = (Math.random() - 0.5) * 10;
+        
+        if(i % 3 === 0) colorsArray[i] = Math.random() * (1 - 0.8) + 0.8;
+        if(i % 3 === 1) colorsArray[i] = Math.random() * (0.5 - 0.3) + 0.3;
+        if(i % 3 === 2) colorsArray[i] = Math.random() * (0.3 - 0.1) + 0.1;
     }
     
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
     particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
     
     const particlesMaterial = new THREE.PointsMaterial({
-      size: 0.01,
-      transparent: true,
-      opacity: 0.5,
-      vertexColors: true,
-      blending: THREE.AdditiveBlending
+        size: 0.01,
+        transparent: true,
+        opacity: 0.5,
+        vertexColors: true,
+        blending: THREE.AdditiveBlending
     });
     
     const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particlesMesh);
-    
     camera.position.z = 5;
-    
+
     // Animation loop
     function animate() {
-      requestAnimationFrame(animate);
-      particlesMesh.rotation.x += 0.0003;
-      particlesMesh.rotation.y += 0.0002;
-      renderer.render(scene, camera);
+        requestAnimationFrame(animate);
+        particlesMesh.rotation.x += 0.0003;
+        particlesMesh.rotation.y += 0.0002;
+        renderer.render(scene, camera);
     }
-    
     animate();
-    
+
     // Handle window resize
     window.addEventListener('resize', function() {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
     });
-    
-    // Calculate and display statistics
+
+    // Student cards and filters
     const studentCards = document.querySelectorAll('.student-card');
-    const companies = new Set();
+    const searchInput = document.getElementById('student-search');
+    const companyFilter = document.getElementById('company-filter');
+    const dateFilter = document.getElementById('date-filter');
+
+    // Initialize statistics
+    let companies = new Set();
     let totalPackage = 0;
     let recentPlacements = 0;
     let upcomingInterviews = 0;
     const companyStudentCount = {};
     const now = new Date();
-    const thirtyDaysAgo = new Date(now);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    
+    const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
+
     studentCards.forEach(card => {
-      const company = card.getAttribute('data-company');
-      companies.add(company);
-      
-      // Count students per company
-      if (companyStudentCount[company]) {
-        companyStudentCount[company]++;
-      } else {
-        companyStudentCount[company] = 1;
-      }
-      
-      // Count recent placements
-      const dateStr = card.getAttribute('data-date');
-      if (dateStr) {
-        const cardDate = new Date(dateStr);
-        if (cardDate >= thirtyDaysAgo && cardDate <= now) {
-          recentPlacements++;
+        const company = card.dataset.company;
+        companies.add(company);
+        
+        // Count students per company
+        companyStudentCount[company] = (companyStudentCount[company] || 0) + 1;
+        
+        // Date calculations
+        const dateStr = card.dataset.date;
+        if (dateStr) {
+            const cardDate = new Date(dateStr);
+            if (cardDate >= thirtyDaysAgo && cardDate <= new Date()) recentPlacements++;
+            if (cardDate > new Date()) upcomingInterviews++;
         }
         
-        // Count upcoming interviews
-        if (cardDate > now) {
-          upcomingInterviews++;
-        }
-      }
-      
-      // For demonstration, we're generating random package values
-      // In a real scenario, this would come from your data
-      totalPackage += Math.floor(Math.random() * 10) + 3; // Random package between 3-12 LPA
+        // Demo package values
+        totalPackage += Math.floor(Math.random() * 10) + 3;
     });
-    
+
     // Populate company filter
-    const companyFilter = document.getElementById('company-filter');
     Array.from(companies).sort().forEach(company => {
-      const option = document.createElement('option');
-      option.value = company;
-      option.textContent = company.charAt(0).toUpperCase() + company.slice(1);
-      companyFilter.appendChild(option);
+        const option = document.createElement('option');
+        option.value = company;
+        option.textContent = company.charAt(0).toUpperCase() + company.slice(1);
+        companyFilter.appendChild(option);
     });
-    
-    // Update stats
+
+    // Update stats display
     document.getElementById('companies-count').textContent = companies.size;
     document.getElementById('avg-package').textContent = (totalPackage / studentCards.length).toFixed(1);
     document.getElementById('showing-count').textContent = studentCards.length;
     document.getElementById('recent-placements').textContent = recentPlacements;
     document.getElementById('upcoming-interviews').textContent = upcomingInterviews;
-    
-    // Find top company (with most placements)
-    let topCompany = '';
-    let topCount = 0;
-    
-    for (const company in companyStudentCount) {
-      if (companyStudentCount[company] > topCount) {
-        topCount = companyStudentCount[company];
-        topCompany = company.charAt(0).toUpperCase() + company.slice(1);
-      }
-    }
+
+    // Top company calculation
+    let [topCompany, topCount] = Object.entries(companyStudentCount)
+        .reduce(([maxCompany, maxCount], [company, count]) => 
+            count > maxCount ? [company, count] : [maxCompany, maxCount], ['', 0]);
     
     document.getElementById('top-company-count').textContent = topCount;
-    document.getElementById('top-company-name').textContent = topCompany;
-    
-    // Calculate completion rate (for demonstration)
-    // In a real scenario, you would calculate based on actual data
-    const targetPlacements = Math.floor(studentCards.length * 1.3); // Just for demonstration
-    const completionRate = Math.round((studentCards.length / targetPlacements) * 100);
-    document.getElementById('completion-rate').textContent = completionRate + '%';
-    
-    // Pagination implementation
-    const itemsPerPage = 9;
-    const totalPages = Math.ceil(studentCards.length / itemsPerPage);
-    let currentPage = 1;
-    
+    document.getElementById('top-company-name').textContent = topCompany.charAt(0).toUpperCase() + topCompany.slice(1);
+
+    // Pagination functions
     function setupPagination() {
-      const paginationInner = document.getElementById('pagination-inner');
-      const paginationIndicator = document.getElementById('pagination-indicator');
-      const prevBtn = document.getElementById('prev-page');
-      const nextBtn = document.getElementById('next-page');
-      
-      // Clear existing pagination buttons (except prev/next)
-      const existingButtons = document.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)');
-      existingButtons.forEach(btn => btn.remove());
-      
-      // Insert page buttons before the next button
-      for (let i = 1; i <= totalPages; i++) {
+    const paginationInner = document.getElementById('pagination-inner');
+    const paginationIndicator = document.getElementById('pagination-indicator');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+
+    // Remove old buttons except prev/next
+    paginationInner.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)').forEach(btn => btn.remove());
+
+    const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
+    totalPages = Math.ceil(visibleCards.length / itemsPerPage);
+
+    for (let i = 1; i <= totalPages; i++) {
         if (totalPages <= 7 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-          const pageBtn = document.createElement('button');
-          pageBtn.classList.add('pagination-button');
-          pageBtn.textContent = i;
-          pageBtn.setAttribute('data-page', i);
-          
-          if (i === currentPage) {
-            pageBtn.classList.add('active-page');
-            
-            // Position the active indicator
-            setTimeout(() => {
-              const activeBtnRect = pageBtn.getBoundingClientRect();
-              const containerRect = paginationInner.getBoundingClientRect();
-              paginationIndicator.style.width = activeBtnRect.width + 'px';
-              paginationIndicator.style.left = (activeBtnRect.left - containerRect.left) + 'px';
-            }, 0);
-          }
-          
-          paginationInner.insertBefore(pageBtn, nextBtn);
-        } else if ((i === 2 && currentPage > 3) || (i === totalPages - 1 && currentPage < totalPages - 2)) {
-          const dotSpan = document.createElement('span');
-          dotSpan.classList.add('pagination-dot');
-          dotSpan.textContent = '...';
-          paginationInner.insertBefore(dotSpan, nextBtn);
+            const pageBtn = document.createElement('button');
+            pageBtn.className = 'pagination-button' + (i === currentPage ? ' active-page' : '');
+            pageBtn.textContent = i;
+            pageBtn.dataset.page = i;
+            paginationInner.insertBefore(pageBtn, nextBtn);
+
+            // Set position of active indicator
+            if (i === currentPage) {
+                setTimeout(() => {
+                    const activeBtnRect = pageBtn.getBoundingClientRect();
+                    const containerRect = paginationInner.getBoundingClientRect();
+                    paginationIndicator.style.width = `${activeBtnRect.width}px`;
+                    paginationIndicator.style.left = `${activeBtnRect.left - containerRect.left}px`;
+                }, 0);
+            }
         }
-      }
-      
-      // Enable/disable prev/next buttons
-      prevBtn.disabled = currentPage === 1;
-      prevBtn.classList.toggle('disabled', currentPage === 1);
-      nextBtn.disabled = currentPage === totalPages;
-      nextBtn.classList.toggle('disabled', currentPage === totalPages);
-      
-      // Show/hide cards based on current page
-      studentCards.forEach(card => {
-        const cardPage = parseInt(card.dataset.page);
-        if (cardPage === currentPage) {
-          card.style.display = 'flex';
-        } else {
-          card.style.display = 'none';
-        }
-      });
-      
-      // Add click events to page buttons
-      document.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)').forEach(btn => {
-        btn.addEventListener('click', () => {
-          currentPage = parseInt(btn.getAttribute('data-page'));
-          setupPagination();
-          
-          // Animate page transition
-          const grid = document.getElementById('showcase-grid');
-          grid.classList.add('page-transition');
-          setTimeout(() => {
-            grid.classList.remove('page-transition');
-          }, 400);
-        });
-      });
     }
-    
-    // Initial pagination setup
-    setupPagination();
-    
-    // Previous page button
-    document.getElementById('prev-page').addEventListener('click', function() {
-      if (currentPage > 1) {
-        currentPage--;
-        setupPagination();
-        
-        // Animate page transition
-        const grid = document.getElementById('showcase-grid');
-        grid.classList.add('page-transition');
-        setTimeout(() => {
-          grid.classList.remove('page-transition');
-        }, 400);
-      }
+
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+
+    // Show current page's cards only
+    visibleCards.forEach((card, index) => {
+        card.style.display = (index >= (currentPage - 1) * itemsPerPage && index < currentPage * itemsPerPage)
+            ? 'flex'
+            : 'none';
     });
-    
-    // Next page button
-    document.getElementById('next-page').addEventListener('click', function() {
-      if (currentPage < totalPages) {
-        currentPage++;
-        setupPagination();
-        
-        // Animate page transition
-        const grid = document.getElementById('showcase-grid');
-        grid.classList.add('page-transition');
-        setTimeout(() => {
-          grid.classList.remove('page-transition');
-        }, 400);
-      }
-    });
-    
-    // Search functionality
-    const searchInput = document.getElementById('student-search');
+}
+
+    // Event listeners
+    document.getElementById('prev-page').addEventListener('click', () => navigatePages(-1));
+    document.getElementById('next-page').addEventListener('click', () => navigatePages(1));
     searchInput.addEventListener('input', filterStudents);
-    
-    // Company filter
     companyFilter.addEventListener('change', filterStudents);
-    
-    // Date filter
-    const dateFilter = document.getElementById('date-filter');
     dateFilter.addEventListener('change', filterStudents);
-    
-    // Sorting functionality
-    document.getElementById('sort-name-btn').addEventListener('click', function() {
-      sortStudents('name');
+    document.getElementById('sort-name-btn').addEventListener('click', () => sortStudents('name'));
+    document.getElementById('sort-date-btn').addEventListener('click', () => sortStudents('date'));
+
+    // Type filter event listeners
+    document.querySelectorAll('.type-filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentTypeFilter = this.dataset.type;
+            filterStudents();
+        });
     });
-    
-    document.getElementById('sort-date-btn').addEventListener('click', function() {
-      sortStudents('date');
-    });
-    
-    // Filter students based on search, company filter, and date filter
+
+    // Main filter function
     function filterStudents() {
-      const searchTerm = searchInput.value.toLowerCase();
-      const selectedCompany = companyFilter.value.toLowerCase();
-      const selectedDate = dateFilter.value;
-      
-      let visibleCount = 0;
-      let matchFound = false;
-      
-      studentCards.forEach(card => {
-        const studentName = card.getAttribute('data-student');
-        const companyName = card.getAttribute('data-company');
-        const cardDate = card.getAttribute('data-date');
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCompany = companyFilter.value.toLowerCase();
+        const selectedDate = dateFilter.value;
         
-        const matchesSearch = !searchTerm || 
-                             studentName.includes(searchTerm) || 
-                             companyName.includes(searchTerm);
+        let visibleCount = 0;
         
-        const matchesCompany = !selectedCompany || companyName === selectedCompany;
+        studentCards.forEach(card => {
+            const matchesSearch = !searchTerm || 
+                card.dataset.student.includes(searchTerm) || 
+                card.dataset.company.includes(searchTerm);
+            
+            const matchesCompany = !selectedCompany || card.dataset.company === selectedCompany;
+            const matchesDate = !selectedDate || card.dataset.date === selectedDate;
+            const matchesType = currentTypeFilter === 'all' || card.dataset.type === currentTypeFilter;
+            
+            if (matchesSearch && matchesCompany && matchesDate && matchesType) {
+                card.classList.remove('filtered-out');
+                visibleCount++;
+            } else {
+                card.classList.add('filtered-out');
+            }
+        });
         
-        const matchesDate = !selectedDate || cardDate === selectedDate;
-        
-        if (matchesSearch && matchesCompany && matchesDate) {
-          card.classList.remove('filtered-out');
-          visibleCount++;
-          matchFound = true;
-        } else {
-          card.classList.add('filtered-out');
-        }
-      });
-      
-      // Update the pagination
-      updatePaginationAfterFilter();
-      
-      // Update visible student count
-      document.getElementById('showing-count').textContent = visibleCount;
-      
-      // Toggle no results message
-      document.getElementById('no-results').style.display = matchFound ? 'none' : 'block';
-      document.getElementById('showcase-grid').style.display = matchFound ? 'grid' : 'none';
+        updateTypeFilterCounts();
+        updatePaginationAfterFilter();
+        document.getElementById('showing-count').textContent = visibleCount;
+        document.getElementById('no-results').style.display = visibleCount ? 'none' : 'block';
+        document.getElementById('showcase-grid').style.display = visibleCount ? 'grid' : 'none';
     }
-    
-    // Update pagination after filtering
+
+    // Helper functions
+    function updateTypeFilterCounts() {
+        document.querySelectorAll('.type-filter-btn').forEach(btn => {
+            const type = btn.dataset.type;
+            const count = type === 'all' ? 
+                document.querySelectorAll('.student-card:not(.filtered-out)').length :
+                document.querySelectorAll(`.student-card[data-type="${type}"]:not(.filtered-out)`).length;
+            
+            btn.querySelector('.type-count').textContent = `(${count})`;
+        });
+    }
+
     function updatePaginationAfterFilter() {
-      const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
-      
-      // Reassign page numbers to visible cards
-      visibleCards.forEach((card, index) => {
-        const newPage = Math.floor(index / itemsPerPage) + 1;
-        card.setAttribute('data-page', newPage);
-      });
-      
-      // Reset to first page and update pagination
-      currentPage = 1;
-      setupPagination();
+        const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
+        visibleCards.forEach((card, index) => card.dataset.page = Math.floor(index / itemsPerPage) + 1);
+        currentPage = 1;
+        setupPagination();
     }
-    
-    // Sort students by name or date
+
+    function navigatePages(direction) {
+        currentPage = Math.max(1, Math.min(totalPages, currentPage + direction));
+        setupPagination();
+        document.getElementById('showcase-grid').classList.add('page-transition');
+        setTimeout(() => document.getElementById('showcase-grid').classList.remove('page-transition'), 400);
+    }
+
     function sortStudents(sortBy) {
-      const grid = document.getElementById('showcase-grid');
-      const cards = Array.from(document.querySelectorAll('.student-card'));
-      
-      cards.sort((a, b) => {
-        if (sortBy === 'name') {
-          return a.getAttribute('data-student').localeCompare(b.getAttribute('data-student'));
-        } else if (sortBy === 'date') {
-          const dateA = a.getAttribute('data-date') || '9999-99-99'; // Cards without dates go last
-          const dateB = b.getAttribute('data-date') || '9999-99-99';
-          return dateA.localeCompare(dateB);
-        }
-        return 0;
-      });
-      
-      // Remove all cards
-      cards.forEach(card => grid.removeChild(card));
-      
-      // Add sorted cards back
-      cards.forEach((card, index) => {
-        // Update page number
-        const newPage = Math.floor(index / itemsPerPage) + 1;
-        card.setAttribute('data-page', newPage);
-        grid.appendChild(card);
-      });
-      
-      // Reset to first page and update pagination
-      currentPage = 1;
-      setupPagination();
+        const grid = document.getElementById('showcase-grid');
+        const cards = Array.from(grid.children);
+        
+        cards.sort((a, b) => sortBy === 'name' ? 
+            a.dataset.student.localeCompare(b.dataset.student) : 
+            (a.dataset.date || '9999-99-99').localeCompare(b.dataset.date || '9999-99-99')
+        );
+        
+        cards.forEach((card, index) => {
+            card.dataset.page = Math.floor(index / itemsPerPage) + 1;
+            grid.appendChild(card);
+        });
+        
+        currentPage = 1;
+        setupPagination();
     }
-  });
+
+    // Initial setup
+    setupPagination();
+});
 </script>
 {% endblock %}

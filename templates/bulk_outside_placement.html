@@ -1,10 +1,8 @@
 {% extends "base.html" %}
-
 {% block title %}Bulk Outside Placement | Student Management System{% endblock %}
-
 {% block extra_head %}
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins :wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js "></script>
 <style>
     :root {
         --primary-color: #FF6B35;
@@ -16,17 +14,20 @@
         --text-light: #777777;
         --bg-light: #FFF8F0;
         --card-bg: #FFFFFF;
+        --success-color: #28a745;
+        --warning-color: #ffc107;
+        --danger-color: #dc3545;
     }
-    
+
     body {
         font-family: 'Poppins', sans-serif;
         background-color: var(--bg-light);
     }
-    
+
     h1, h2, h3, h4, h5, h6 {
         font-family: 'Montserrat', sans-serif;
     }
-    
+
     .card {
         border: none;
         border-radius: 12px;
@@ -34,74 +35,74 @@
         transform: translateY(20px);
         opacity: 0;
     }
-    
+
     .card-header {
         background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
         border-radius: 12px 12px 0 0 !important;
         padding: 1.5rem !important;
     }
-    
+
     .btn-primary {
         background-color: var(--primary-color);
         border-color: var(--primary-color);
         transition: all 0.3s ease;
     }
-    
+
     .btn-primary:hover {
         background-color: var(--primary-dark);
         border-color: var(--primary-dark);
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
     }
-    
+
     .btn-outline-secondary {
         transition: all 0.3s ease;
     }
-    
+
     .btn-outline-secondary:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     }
-    
+
     .btn-light {
         background-color: white;
         color: var(--primary-color) !important;
         font-weight: 500;
         transition: all 0.3s ease;
     }
-    
+
     .btn-light:hover {
         background-color: white;
         transform: translateY(-2px);
         box-shadow: 0 4px 12px rgba(255, 255, 255, 0.3);
     }
-    
+
     .form-control {
         border-radius: 8px;
         padding: 0.75rem 1rem;
         border: 1px solid #ddd;
     }
-    
+
     .form-control:focus {
         border-color: var(--primary-light);
         box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
     }
-    
+
     .alert {
         border-radius: 8px;
     }
-    
+
     .alert-dismissible .close {
         padding: 0.5rem 1rem;
     }
-    
+
     .file-input-container {
         position: relative;
         overflow: hidden;
         display: inline-block;
         width: 100%;
     }
-    
+
     .file-input-btn {
         border: 2px dashed #ddd;
         border-radius: 8px;
@@ -111,12 +112,12 @@
         transition: all 0.3s ease;
         background-color: rgba(255, 255, 255, 0.5);
     }
-    
+
     .file-input-btn:hover {
         border-color: var(--primary-light);
         background-color: rgba(255, 107, 53, 0.05);
     }
-    
+
     .file-input {
         position: absolute;
         left: 0;
@@ -126,30 +127,53 @@
         height: 100%;
         cursor: pointer;
     }
-    
+
+    /* Progress Bar */
+    .progress-container {
+        margin-top: 20px;
+        display: none;
+    }
+
+    .progress-bar {
+        height: 8px;
+        background-color: var(--primary-light);
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    .progress-fill {
+        height: 100%;
+        width: 0%;
+        background-color: var(--primary-color);
+        transition: width 0.2s ease-in-out;
+    }
+
+    .time-remaining {
+        margin-top: 10px;
+        font-size: 0.9rem;
+        color: var(--text-medium);
+        text-align: right;
+    }
+
     @media (max-width: 768px) {
         .card-header {
             flex-direction: column;
             align-items: flex-start !important;
         }
-        
         .btn-light {
             margin-top: 1rem;
             width: 100%;
         }
-        
         .btn-lg {
             width: 100%;
             margin-bottom: 1rem;
         }
-        
         .btn-lg + .btn-lg {
             margin-left: 0 !important;
         }
     }
 </style>
 {% endblock %}
-
 {% block content %}
 <div class="container mt-5" id="bulk-upload-container">
     <div class="row justify-content-center">
@@ -164,7 +188,6 @@
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" id="bulk-upload-form">
                         {% csrf_token %}
-                        
                         <div class="form-group">
                             <label for="{{ form.excel_file.id_for_label }}">
                                 <strong>Upload Excel File</strong>
@@ -179,7 +202,7 @@
                                 {{ form.excel_file }}
                             </div>
                             <small class="form-text text-muted mt-2">
-                                Required columns: <code>mobile_number</code>, <code>company_name</code>, 
+                                Required columns: <code>mobile_number</code>, <code>company_name</code>,
                                 <code>package</code>, <code>role</code>, <code>placed_date</code>
                             </small>
                             {% if form.excel_file.errors %}
@@ -188,7 +211,8 @@
                                 </div>
                             {% endif %}
                         </div>
-                        
+
+                        <!-- Submit Button -->
                         <div class="form-group text-center mt-4">
                             <button type="submit" class="btn btn-primary btn-lg px-4" id="submit-btn">
                                 <i class="fas fa-upload mr-2"></i>Upload & Process
@@ -198,24 +222,34 @@
                             </a>
                         </div>
                     </form>
-                    
+
+                    <!-- Progress Bar -->
+                    <div class="progress-container mt-3" id="progress-container">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progress-fill"></div>
+                        </div>
+                        <div class="time-remaining" id="time-remaining">Estimated time remaining: -- sec</div>
+                    </div>
+
+                    <!-- Success/Error Messages -->
                     {% if messages %}
                         <div class="mt-4" id="messages-container">
                             {% for message in messages %}
-                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                                     {{ message }}
-                                    <button type="button" class="close" data-dismiss="alert">
+                                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
                                         <span>&times;</span>
                                     </button>
                                 </div>
                             {% endfor %}
                         </div>
                     {% endif %}
-                    
+
+                    <!-- Detailed Errors -->
                     {% if request.session.bulk_upload_errors %}
                         <div class="mt-4" id="errors-container">
                             <h5>Detailed Errors:</h5>
-                            <div class="alert alert-danger">
+                            <div class="alert alert-danger" role="alert">
                                 <ul class="mb-0">
                                     {% for error in request.session.bulk_upload_errors %}
                                         <li>{{ error }}</li>
@@ -223,8 +257,6 @@
                                 </ul>
                             </div>
                         </div>
-                        {% comment %} Clear errors after displaying {% endcomment %}
-                        {% with request.session.bulk_upload_errors as errors %}{% endwith %}
                     {% endif %}
                 </div>
             </div>
@@ -233,7 +265,7 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Animate card entrance
         gsap.to('.card', {
             y: 0,
@@ -242,33 +274,34 @@
             ease: "back.out(1.2)",
             delay: 0.2
         });
-        
-        // File input handling
+
         const fileInput = document.querySelector('.file-input');
         const fileNameDisplay = document.getElementById('file-name');
-        
-        fileInput.addEventListener('change', function() {
+        const fileInputBtn = document.querySelector('.file-input-btn');
+
+        // File input handling
+        fileInput.addEventListener('change', function () {
             if (this.files.length > 0) {
                 fileNameDisplay.textContent = this.files[0].name;
-                document.querySelector('.file-input-btn').style.borderColor = 'var(--primary-color)';
-                document.querySelector('.file-input-btn').style.backgroundColor = 'rgba(255, 107, 53, 0.1)';
+                fileInputBtn.style.borderColor = 'var(--primary-color)';
+                fileInputBtn.style.backgroundColor = 'rgba(255, 107, 53, 0.1)';
+            } else {
+                fileNameDisplay.textContent = '';
+                fileInputBtn.style.borderColor = '#ddd';
+                fileInputBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
             }
         });
-        
+
         // Drag and drop functionality
-        const fileInputBtn = document.querySelector('.file-input-btn');
-        
         fileInputBtn.addEventListener('dragover', (e) => {
             e.preventDefault();
-            fileInputBtn.style.borderColor = 'var(--primary-color)';
+            fileInputBtn.style.borderColor = 'var(--primary-light)';
             fileInputBtn.style.backgroundColor = 'rgba(255, 107, 53, 0.2)';
         });
-        
         fileInputBtn.addEventListener('dragleave', () => {
             fileInputBtn.style.borderColor = fileInput.files.length > 0 ? 'var(--primary-color)' : '#ddd';
             fileInputBtn.style.backgroundColor = fileInput.files.length > 0 ? 'rgba(255, 107, 53, 0.1)' : 'rgba(255, 255, 255, 0.5)';
         });
-        
         fileInputBtn.addEventListener('drop', (e) => {
             e.preventDefault();
             fileInput.files = e.dataTransfer.files;
@@ -278,12 +311,18 @@
                 fileInputBtn.style.backgroundColor = 'rgba(255, 107, 53, 0.1)';
             }
         });
-        
-        // Form submission animation
+
+        // Progress Bar Logic
+        const progressBarContainer = document.getElementById('progress-container');
+        const progressBarFill = document.getElementById('progress-fill');
+        const timeRemainingText = document.getElementById('time-remaining');
+
         const form = document.getElementById('bulk-upload-form');
         const submitBtn = document.getElementById('submit-btn');
-        
-        form.addEventListener('submit', function(e) {
+
+        let startTime;
+
+        form.addEventListener('submit', function (e) {
             if (!fileInput.files.length) {
                 e.preventDefault();
                 gsap.to(fileInputBtn, {
@@ -291,23 +330,44 @@
                     duration: 0.4,
                     ease: "power1.inOut"
                 });
-                fileInputBtn.style.borderColor = '#dc3545';
+                fileInputBtn.style.borderColor = 'var(--danger-color)';
                 return;
             }
-            
+
+            // Reset progress UI
+            progressBarContainer.style.display = 'block';
+            progressBarFill.style.width = '0%';
+            timeRemainingText.textContent = 'Estimated time remaining: Calculating...';
+
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
-            
-            // Animate button on submit
-            gsap.to(submitBtn, {
-                scale: 0.95,
-                duration: 0.2,
-                yoyo: true,
-                repeat: 1
-            });
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+
+            startTime = Date.now();
+
+            let progress = 0;
+            const totalSteps = 20; // Simulated steps
+            const interval = setInterval(() => {
+                progress += 5;
+                progressBarFill.style.width = progress + '%';
+
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    const endTime = Date.now();
+                    const durationSec = ((endTime - startTime) / 1000).toFixed(1);
+                    timeRemainingText.textContent = `Completed in ${durationSec} seconds`;
+                    setTimeout(() => {
+                        form.submit(); // Actually submit the form after animation
+                    }, 500);
+                } else {
+                    const elapsed = (Date.now() - startTime) / 1000;
+                    const estimatedTotal = (elapsed / progress) * 100;
+                    const remaining = Math.max(0, estimatedTotal - elapsed).toFixed(1);
+                    timeRemainingText.textContent = `Estimated time remaining: ${remaining} sec`;
+                }
+            }, 100);
         });
-        
-        // Animate messages if they exist
+
+        // Animate messages/errors if present
         if (document.getElementById('messages-container')) {
             gsap.from('#messages-container .alert', {
                 y: -20,
@@ -317,8 +377,7 @@
                 ease: "back.out(1.2)"
             });
         }
-        
-        // Animate errors if they exist
+
         if (document.getElementById('errors-container')) {
             gsap.from('#errors-container', {
                 y: -20,
@@ -327,7 +386,6 @@
                 delay: 0.3,
                 ease: "back.out(1.2)"
             });
-            
             gsap.from('#errors-container li', {
                 x: -20,
                 opacity: 0,

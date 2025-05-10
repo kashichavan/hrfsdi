@@ -2069,6 +2069,45 @@ def map_students_to_requirement_view(request):
 
     return render(request, 'map_students.html')
 
+from django.http import HttpResponse
+from openpyxl import Workbook
+from django.views.decorators.http import require_GET
+from django.utils.timezone import now
+
+@require_GET
+def download_sample_excel_map(request):
+    """Generate and return a sample Excel template for student-requirement mapping"""
+    # Create workbook and worksheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Mapping Template"
+    
+    # Create headers with exact expected naming
+    headers = ["Mobile number", "Company code"]
+    ws.append(headers)
+    
+    # Add example data rows
+    sample_data = [
+        ("9876543210", "COMPANY_123"),
+        ("9123456789", "COMPANY_456"),
+        ("9555512345", "CORP_2024"),
+    ]
+    for data_row in sample_data:
+        ws.append(data_row)
+    
+    # Format response
+    timestamp = now().strftime("%Y%m%d_%H%M")
+    filename = f"student_mapping_template_{timestamp}.xlsx"
+    
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': f'attachment; filename="{filename}"'},
+    )
+    
+    # Save workbook directly to response
+    wb.save(response)
+    return response
+
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
@@ -2152,22 +2191,28 @@ from django.shortcuts import render
 from .models import RequirementStudent
 
 def placed_students_view(request):
-    # Get internal placements through RequirementStudent relationships
     placed_students = RequirementStudent.objects.filter(
         status='selected',
         student__is_placed=True,
         student__is_dropout=False
     ).exclude(
         student__placed_outside__isnull=False
-    ).select_related(
-        'student', 
-        'requirement',
-        'student__placed_outside'
-    ).distinct().order_by('-created_at')
+    ).select_related('student').distinct().order_by('-created_at')
+
+    # Get unique student types and their counts
+    student_types = Student.objects.filter(
+        is_placed=True,
+        is_dropout=False
+    ).exclude(placed_outside__isnull=False).values_list('type_of_data', flat=True).distinct()
+
+    type_counts = {}
+    for stype in student_types:
+        type_counts[stype] = placed_students.filter(student__type_of_data=stype).count()
 
     return render(request, 'placed_students.html', {
         'placed_students': placed_students,
         'total_count': placed_students.count(),
+        'type_counts': type_counts,
     })
 
 def delete_requirement(request, pk):
@@ -2855,70 +2900,119 @@ class StudentUpdateView(UpdateView):
 
 from django.shortcuts import render, redirect
 from django.contrib import messages
+from django.http import JsonResponse, HttpResponse
+from django.core.serializers import serialize
+import csv
 from .models import GotPlacedOutside, Student
 from .forms import GotPlacedOutsideForm
 
 def add_got_placed_student(request):
     search_query = request.GET.get('search_query', '')
     students = Student.objects.filter(is_placed=False)
-    
+
     if search_query:
-        students = students.filter(name__icontains=search_query)
-    
+        # Search by name OR mobile number
+        students = students.filter(name__icontains=search_query) | students.filter(contact_number__icontains=search_query)
+
     form = GotPlacedOutsideForm(request.POST or None)
-    
+
     if request.method == 'POST' and form.is_valid():
         placement = form.save()
         student = placement.student
-        student.is_placed = True  # Update the student's placement status
+        student.is_placed = True
         student.save()
         messages.success(request, 'Student placement details have been added successfully.')
         return redirect('student_data:placed_students')
-    
-    return render(request, 'got_placed_outside.html', {
+
+    context = {
         'form': form,
         'students': students,
         'search_query': search_query
-    })
+    }
 
-# views.py
+    return render(request, 'got_placed_outside.html', context)
+
+
+# AJAX handler for live search
+def ajax_search_students(request):
+    query = request.GET.get('q', '')
+    students = Student.objects.filter(is_placed=False)
+    if query:
+        students = students.filter(name__icontains=query) | students.filter(contact_number__icontains=query)
+
+    data = list(students.values('id', 'name', 'contact_number'))
+    return JsonResponse({'students': data})
+
+
+# CSV Export of current search results
+def export_students_csv(request):
+    search_query = request.GET.get('search_query', '')
+    students = Student.objects.filter(is_placed=False)
+
+    if search_query:
+        students = students.filter(name__icontains=search_query) | students.filter(contact_number__icontains=search_query)
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="students.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow(['Name', 'Mobile Number'])
+
+    for student in students:
+        writer.writerow([student.name, student.contact_number])
+
+    return response
 import pandas as pd
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from django.views.generic import FormView
+from django.urls import reverse_lazy
+from django.core.exceptions import ObjectDoesNotExist
 from .models import Student, GotPlacedOutside
 from .forms import BulkOutsidePlacementForm
 from django.utils import timezone
+import re
+
 
 class BulkOutsidePlacementView(FormView):
     template_name = 'bulk_outside_placement.html'
     form_class = BulkOutsidePlacementForm
-    success_url = 'student_list:placed'
+    success_url = reverse_lazy('student_data:bulk_outside_placement')  # Use reverse_lazy if needed in class attr
+
+    def get(self, request, *args, **kwargs):
+        if 'bulk_upload_errors' in self.request.session:
+            del self.request.session['bulk_upload_errors']
+        return super().get(request, *args, **kwargs)
 
     def form_valid(self, form):
         excel_file = form.cleaned_data['excel_file']
-        
+
         try:
             df = pd.read_excel(excel_file)
-            df.columns = df.columns.str.lower()
-            
+            df.columns = df.columns.str.lower()  # Normalize column names
+
             success_count = 0
             error_count = 0
             errors = []
-            
+
             for index, row in df.iterrows():
                 try:
                     mobile_number = str(row.get('mobile_number', '')).strip()
+
                     if not mobile_number:
                         raise ValueError("Mobile number is required")
-                    
-                    student = Student.objects.get(contact_number=mobile_number)
-                    
-                    # Check if student is already placed internally
+
+                    if not re.fullmatch(r'\d{10}', mobile_number):
+                        raise ValueError(f"Invalid mobile number format: {mobile_number}. Must be a 10-digit number.")
+
+                    try:
+                        student = Student.objects.get(contact_number=mobile_number)
+                    except Student.DoesNotExist:
+                        raise ValueError(f"No student found with mobile number: {mobile_number}")
+
                     if student.is_placed and not GotPlacedOutside.objects.filter(student=student).exists():
                         raise ValueError(f"Student {student.name} is already placed internally and cannot be added externally.")
-                    
-                    # Create or update external placement
+
                     placement, created = GotPlacedOutside.objects.get_or_create(
                         student=student,
                         defaults={
@@ -2928,25 +3022,27 @@ class BulkOutsidePlacementView(FormView):
                             'placed_date': row.get('placed_date', timezone.now())
                         }
                     )
-                    
+
                     if not created:
                         placement.company_name = row.get('company_name', placement.company_name)
                         placement.package = row.get('package', placement.package)
                         placement.role = row.get('role', placement.role)
                         placement.placed_date = row.get('placed_date', placement.placed_date)
                         placement.save()
-                    
-                    # Update student's is_placed status if newly placed externally
+
                     if created:
                         student.is_placed = True
                         student.save()
-                    
+
                     success_count += 1
-                    
+
+                except ValueError as ve:
+                    error_count += 1
+                    errors.append(f"Row {index + 2}: {str(ve)}")
                 except Exception as e:
                     error_count += 1
-                    errors.append(f"Row {index + 2}: {str(e)}")
-            
+                    errors.append(f"Row {index + 2}: Unexpected error - {str(e)}")
+
             message = f"Successfully processed {success_count} records."
             if error_count > 0:
                 message += f" {error_count} records had errors."
@@ -2954,13 +3050,12 @@ class BulkOutsidePlacementView(FormView):
                 self.request.session['bulk_upload_errors'] = errors
             else:
                 messages.success(self.request, message)
-            
+
             return super().form_valid(form)
-        
+
         except Exception as e:
             messages.error(self.request, f"Error processing file: {str(e)}")
             return self.form_invalid(form)
-
 # views.py
 from django.http import HttpResponse
 import pandas as pd
@@ -3761,3 +3856,89 @@ def remove_placement(request, student_id):
     student.update_placement_status()
     
     return redirect('student_data:student_detail', student_id=student.id)
+
+from django.http import JsonResponse
+from django.views import View
+from django.utils import timezone
+from .models import Requirement, RequirementStudent, Student
+from django.urls import reverse
+
+
+# ---------------------------
+# AJAX Views
+# ---------------------------
+
+class TodaysRequirementsAjaxView(View):
+    def get(self, request, *args, **kwargs):
+        today = timezone.now().date()
+        requirements = Requirement.objects.filter(schedule_date=today)
+        data = [
+            {
+                "company_name": req.company_name,
+                "company_code": req.company_code or "",
+                "schedule_time": req.schedule_time.strftime("%I:%M %p") if req.schedule_time else "--",
+                "detail_url": request.build_absolute_uri(req.get_absolute_url()),
+            }
+            for req in requirements
+        ]
+        return JsonResponse({"requirements": data})
+
+
+class TomorrowsRequirementsAjaxView(View):
+    def get(self, request, *args, **kwargs):
+        tomorrow = timezone.now().date() + timezone.timedelta(days=1)
+        requirements = Requirement.objects.filter(schedule_date=tomorrow)
+        data = [
+            {
+                "company_name": req.company_name,
+                "company_code": req.company_code or "",
+                "schedule_time": req.schedule_time.strftime("%I:%M %p") if req.schedule_time else "--",
+                "detail_url": request.build_absolute_uri(req.get_absolute_url()),
+            }
+            for req in requirements
+        ]
+        return JsonResponse({"requirements": data})
+
+
+class TodaysStudentsAjaxView(View):
+    def get(self, request, *args, **kwargs):
+        today = timezone.now().date()
+        student_requirements = RequirementStudent.objects.filter(
+            requirement__schedule_date=today
+        ).select_related('student', 'requirement')
+
+        data = [
+            {
+                "student_name": sr.student.name,
+                "degree": sr.student.degree,
+                "stream": sr.student.stream,
+                "company_name": sr.requirement.company_name,
+                "student_detail_url": request.build_absolute_uri(sr.student.get_absolute_url()),
+                "requirement_detail_url": request.build_absolute_uri(sr.requirement.get_absolute_url()),
+            }
+            for sr in student_requirements
+        ]
+
+        return JsonResponse({"students": data})
+
+
+class TomorrowsStudentsAjaxView(View):
+    def get(self, request, *args, **kwargs):
+        tomorrow = timezone.now().date() + timezone.timedelta(days=1)
+        student_requirements = RequirementStudent.objects.filter(
+            requirement__schedule_date=tomorrow
+        ).select_related('student', 'requirement')
+
+        data = [
+            {
+                "student_name": sr.student.name,
+                "degree": sr.student.degree,
+                "stream": sr.student.stream,
+                "company_name": sr.requirement.company_name,
+                "student_detail_url": request.build_absolute_uri(sr.student.get_absolute_url()),
+                "requirement_detail_url": request.build_absolute_uri(sr.requirement.get_absolute_url()),
+            }
+            for sr in student_requirements
+        ]
+
+        return JsonResponse({"students": data})

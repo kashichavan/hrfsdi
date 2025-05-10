@@ -1,6 +1,5 @@
 {% extends 'base.html' %}
 {% load static %}
-
 {% block content %}
 <div class="container-fluid dashboard-container">
     <!-- Header Section -->
@@ -128,12 +127,12 @@
                 <div class="card-header content-header">
                     <ul class="nav nav-tabs card-header-tabs" id="requirementsTabs" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="today-req-tab" data-toggle="tab" href="#today-req" role="tab">
+                            <a class="nav-link active" id="today-req-tab" data-bs-toggle="tab" href="#today-req" role="tab">
                                 <i class="fas fa-calendar-day mr-1"></i> Today
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="tomorrow-req-tab" data-toggle="tab" href="#tomorrow-req" role="tab">
+                            <a class="nav-link" id="tomorrow-req-tab" data-bs-toggle="tab" href="#tomorrow-req" role="tab">
                                 <i class="fas fa-calendar-alt mr-1"></i> Tomorrow
                             </a>
                         </li>
@@ -143,24 +142,8 @@
                     <div class="tab-content" id="requirementsTabContent">
                         <!-- Today's Requirements Tab -->
                         <div class="tab-pane fade show active" id="today-req" role="tabpanel">
-                            <div class="content-list">
-                                {% for requirement in todays_requirements %}
-                                    <div class="content-item">
-                                        <div class="content-main">
-                                            <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="content-title">
-                                                {{ requirement.company_name }}
-                                            </a>
-                                            {% if requirement.company_code %}
-                                            <span class="content-badge">{{ requirement.company_code }}</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="content-time">
-                                            <i class="far fa-clock mr-1"></i> {{ requirement.schedule_time }}
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <div class="no-content">No requirements scheduled for today.</div>
-                                {% endfor %}
+                            <div class="content-list" id="today-requirements-ajax">
+                                <div class="no-content">Loading requirements...</div>
                             </div>
                             <div class="text-center mt-3">
                                 <a href="{% url 'student_data:export_todays_requirements' %}" class="btn btn-export">
@@ -168,27 +151,11 @@
                                 </a>
                             </div>
                         </div>
-                        
+
                         <!-- Tomorrow's Requirements Tab -->
                         <div class="tab-pane fade" id="tomorrow-req" role="tabpanel">
-                            <div class="content-list">
-                                {% for requirement in tomorrows_requirements %}
-                                    <div class="content-item">
-                                        <div class="content-main">
-                                            <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="content-title">
-                                                {{ requirement.company_name }}
-                                            </a>
-                                            {% if requirement.company_code %}
-                                            <span class="content-badge">{{ requirement.company_code }}</span>
-                                            {% endif %}
-                                        </div>
-                                        <div class="content-time">
-                                            <i class="far fa-clock mr-1"></i> {{ requirement.schedule_time }}
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <div class="no-content">No requirements scheduled for tomorrow.</div>
-                                {% endfor %}
+                            <div class="content-list" id="tomorrow-requirements-ajax">
+                                <div class="no-content">Loading requirements...</div>
                             </div>
                             <div class="text-center mt-3">
                                 <a href="{% url 'student_data:tomorrow_requirements' %}" class="btn btn-view-all">
@@ -200,19 +167,19 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Today & Tomorrow's Students Tabs -->
         <div class="col-md-6 mb-3">
             <div class="card dashboard-card content-card" id="attending-section">
                 <div class="card-header content-header">
                     <ul class="nav nav-tabs card-header-tabs" id="attendingTabs" role="tablist">
                         <li class="nav-item">
-                            <a class="nav-link active" id="today-students-tab" data-toggle="tab" href="{% url 'student_data:students_attending_today' %}" role="tab">
+                            <a class="nav-link active" id="today-students-tab" data-bs-toggle="tab" href="#today-students" role="tab">
                                 <i class="fas fa-user-graduate mr-1"></i> Today's Students
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" id="tomorrow-students-tab" data-toggle="tab" href="{% url 'student_data:tomorrow_students' %}" role="tab">
+                            <a class="nav-link" id="tomorrow-students-tab" data-bs-toggle="tab" href="#tomorrow-students" role="tab">
                                 <i class="fas fa-user-clock mr-1"></i> Tomorrow's Students
                             </a>
                         </li>
@@ -222,24 +189,8 @@
                     <div class="tab-content" id="attendingTabContent">
                         <!-- Today's Students Tab -->
                         <div class="tab-pane fade show active" id="today-students" role="tabpanel">
-                            <div class="content-list">
-                                {% for student in students_attending_today %}
-                                    <div class="content-item">
-                                        <div class="content-main">
-                                            <a href="{% url 'student_data:student_detail' student.id %}" class="content-title">
-                                                {{ student.name }}
-                                            </a>
-                                            <span class="content-badge">{{ student.degree }} - {{ student.stream }}</span>
-                                        </div>
-                                        <div class="content-time">
-                                            <a href="{% url 'student_data:requirement_detail' student.requirement.id %}" class="text-muted">
-                                                <i class="fas fa-briefcase mr-1"></i> {{ student.requirement.company_name }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <div class="no-content">No students scheduled for today.</div>
-                                {% endfor %}
+                            <div class="content-list" id="today-students-ajax">
+                                <div class="no-content">Loading students...</div>
                             </div>
                             <div class="text-center mt-3">
                                 <a href="{% url 'student_data:students_attending_today' %}" class="btn btn-view-all">
@@ -247,29 +198,13 @@
                                 </a>
                             </div>
                         </div>
-                        
+
                         <!-- Tomorrow's Students Tab -->
                         <div class="tab-pane fade" id="tomorrow-students" role="tabpanel">
-                            <div class="content-list">
-                                {% for student in students_attending_tomorrow %}
-                                    <div class="content-item">
-                                        <div class="content-main">
-                                            <a href="{% url 'student_data:student_detail' student.id %}" class="content-title">
-                                                {{ student.name }}
-                                            </a>
-                                            <span class="content-badge">{{ student.degree }} - {{ student.stream }}</span>
-                                        </div>
-                                        <div class="content-time">
-                                            <a href="{% url 'student_data:requirement_detail' student.requirement.id %}" class="text-muted">
-                                                <i class="fas fa-briefcase mr-1"></i> {{ student.requirement.company_name }}
-                                            </a>
-                                        </div>
-                                    </div>
-                                {% empty %}
-                                    <div class="no-content">No students scheduled for tomorrow.</div>
-                                {% endfor %}
+                            <div class="content-list" id="tomorrow-students-ajax">
+                                <div class="no-content">Loading students...</div>
                             </div>
-                            <div class="text-center mt-3">
+                            <div class="d-flex justify-content-between mt-3">
                                 <a href="{% url 'student_data:export_tomorrows_requirements' %}" class="btn btn-export mr-2">
                                     <i class="fas fa-download mr-1"></i> Export Data
                                 </a>
@@ -285,7 +220,7 @@
     </div>
 
     <!-- Recent Students Section -->
-    <div class="row" id="tomorrow-section">
+    <div class="row" id="recent-students-section">
         <div class="col-12 mb-3">
             <div class="card dashboard-card content-card">
                 <div class="card-header content-header">
@@ -330,6 +265,8 @@
         </div>
     </div>
 </div>
+
+
 {% block extra_css %}
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -679,87 +616,202 @@
     box-shadow: 0 4px 8px rgba(255, 90, 31, 0.2);
 }
 
-/* Responsive Adjustments */
-@media (max-width: 767px) {
+/* Same as before */
+    .content-list {
+        padding: 8px 0;
+    }
     .content-item {
-        flex-direction: column;
-        align-items: flex-start;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 14px 0;
+        border-bottom: 1px solid rgba(255, 126, 61, 0.15);
+        transition: background-color 0.2s;
     }
-    
-    .content-date, .content-time {
-        margin-top: 6px;
+    .content-item:hover {
+        background-color: #fff0e6;
     }
-    
-    .dashboard-title {
-        font-size: 1.8rem;
+    .content-item:last-child {
+        border-bottom: none;
     }
-    
-    .stats-number {
-        font-size: 1.8rem;
+    .content-title {
+        color: #ff7e3d;
+        font-weight: 500;
+        text-decoration: none;
+        font-size: 1rem;
+        transition: color 0.3s;
     }
-}
+    .content-title:hover {
+        color: #ff5a1f;
+    }
+    .content-badge {
+        background: linear-gradient(135deg, #ff5a1f, #ff9a5a);
+        color: white;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-left: 8px;
+        box-shadow: 0 3px 5px rgba(255, 90, 31, 0.2);
+    }
+    .content-time {
+        color: #6b7280;
+        font-size: 0.85rem;
+    }
+    .no-content {
+        text-align: center;
+        color: #6b7280;
+        padding: 20px 0;
+        font-size: 0.95rem;
+        font-style: italic;
+    }
 </style>
 {% endblock %}
 
+
+
 {% block extra_js %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js "></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap @5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
-// Initialize all Bootstrap tabs
-document.addEventListener('DOMContentLoaded', function() {
-    // Initialize Requirements Tabs
-    const requirementsTabs = new bootstrap.Tab(document.getElementById('today-req-tab'))
-    const tomorrowReqTab = document.getElementById('tomorrow-req-tab')
-    if (tomorrowReqTab) {
-        tomorrowReqTab.addEventListener('click', function(e) {
-            new bootstrap.Tab(e.target).show()
-        })
+document.addEventListener('DOMContentLoaded', function () {
+    const todayReqTab = document.getElementById('today-req-tab');
+    const tomorrowReqTab = document.getElementById('tomorrow-req-tab');
+    const todayStudentsTab = document.getElementById('today-students-tab');
+    const tomorrowStudentsTab = document.getElementById('tomorrow-students-tab');
+
+    // Helper to render requirements
+    function renderRequirements(containerId, requirements) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (!requirements.length) {
+            container.innerHTML = '<div class="no-content">No requirements found.</div>';
+            return;
+        }
+
+        requirements.forEach(req => {
+            const item = document.createElement('div');
+            item.className = 'content-item';
+            item.innerHTML = `
+                <div class="content-main">
+                    <a href="${req.detail_url}" class="content-title">${req.company_name}</a>
+                    ${req.company_code ? `<span class="content-badge">${req.company_code}</span>` : ''}
+                </div>
+                <div class="content-time">
+                    <i class="far fa-clock mr-1"></i> ${req.schedule_time || '--'}
+                </div>
+            `;
+            container.appendChild(item);
+        });
     }
 
-    // Initialize Students Tabs
-    const studentsTabs = new bootstrap.Tab(document.getElementById('today-students-tab'))
-    const tomorrowStudentsTab = document.getElementById('tomorrow-students-tab')
-    if (tomorrowStudentsTab) {
-        tomorrowStudentsTab.addEventListener('click', function(e) {
-            new bootstrap.Tab(e.target).show()
-        })
+    // Helper to render students
+    function renderStudents(containerId, students) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        if (!students.length) {
+            container.innerHTML = '<div class="no-content">No students found.</div>';
+            return;
+        }
+
+        students.forEach(student => {
+            const item = document.createElement('div');
+            item.className = 'content-item';
+            item.innerHTML = `
+                <div class="content-main">
+                    <a href="${student.student_detail_url}" class="content-title">${student.student_name}</a>
+                    <span class="content-badge">${student.degree} - ${student.stream}</span>
+                </div>
+                <div class="content-time">
+                    <a href="${student.requirement_detail_url}" class="text-muted">
+                        <i class="fas fa-briefcase mr-1"></i> ${student.company_name}
+                    </a>
+                </div>
+            `;
+            container.appendChild(item);
+        });
     }
 
-    // Handle deep linking
-    const url = new URL(window.location)
-    if (url.hash) {
-        const activeTab = document.querySelector(`[href="${url.hash}"]`)
-        if (activeTab) new bootstrap.Tab(activeTab).show()
+    // Load Today's Requirements
+    function loadTodaysRequirements(force = false) {
+        const container = document.getElementById('today-requirements-ajax');
+        if (container.dataset.loaded && !force) return;
+
+        container.innerHTML = '<div class="no-content"><i class="fas fa-spinner fa-spin mr-2"></i>Loading requirements...</div>';
+        fetch("{% url 'student_data:ajax_todays_requirements' %}")
+            .then(res => res.json())
+            .then(data => {
+                renderRequirements('today-requirements-ajax', data.requirements);
+                container.dataset.loaded = true;
+            })
+            .catch(() => {
+                container.innerHTML = '<div class="no-content">Failed to load data.</div>';
+            });
     }
 
-    // Update URL hash when tabs change
-    document.querySelectorAll('a[data-bs-toggle="tab"]').forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(e) {
-            window.history.replaceState(null, null, e.target.hash)
-        })
-    })
+    // Load Tomorrow's Requirements
+    function loadTomorrowsRequirements(force = false) {
+        const container = document.getElementById('tomorrow-requirements-ajax');
+        if (container.dataset.loaded && !force) return;
 
-    // GSAP animations (your existing code)
-    gsap.set('.dashboard-title, .dashboard-subtitle', { opacity: 0, y: -20 });
-    gsap.set('.dashboard-card', { opacity: 0, y: 20 });
-    
-    const tl = gsap.timeline();
-    tl.to('.dashboard-title', { opacity: 1, y: 0, duration: 0.5, ease: "power2.out" })
-      .to('.dashboard-subtitle', { opacity: 1, y: 0, duration: 0.4, ease: "power2.out" }, "-=0.3")
-      .to('.dashboard-card', { 
-          opacity: 1, 
-          y: 0,
-          duration: 0.5, 
-          stagger: 0.1,
-          ease: "power2.out" 
-      }, "-=0.2");
-})
+        container.innerHTML = '<div class="no-content"><i class="fas fa-spinner fa-spin mr-2"></i>Loading requirements...</div>';
+        fetch("{% url 'student_data:ajax_tomorrow_requirements' %}")
+            .then(res => res.json())
+            .then(data => {
+                renderRequirements('tomorrow-requirements-ajax', data.requirements);
+                container.dataset.loaded = true;
+            })
+            .catch(() => {
+                container.innerHTML = '<div class="no-content">Failed to load data.</div>';
+            });
+    }
+
+    // Load Today's Students
+    function loadTodaysStudents(force = false) {
+        const container = document.getElementById('today-students-ajax');
+        if (container.dataset.loaded && !force) return;
+
+        container.innerHTML = '<div class="no-content"><i class="fas fa-spinner fa-spin mr-2"></i>Loading students...</div>';
+        fetch("{% url 'student_data:ajax_today_students' %}")
+            .then(res => res.json())
+            .then(data => {
+                renderStudents('today-students-ajax', data.students);
+                container.dataset.loaded = true;
+            })
+            .catch(() => {
+                container.innerHTML = '<div class="no-content">Failed to load data.</div>';
+            });
+    }
+
+    // Load Tomorrow's Students
+    function loadTomorrowsStudents(force = false) {
+        const container = document.getElementById('tomorrow-students-ajax');
+        if (container.dataset.loaded && !force) return;
+
+        container.innerHTML = '<div class="no-content"><i class="fas fa-spinner fa-spin mr-2"></i>Loading students...</div>';
+        fetch("{% url 'student_data:ajax_tomorrow_students' %}")
+            .then(res => res.json())
+            .then(data => {
+                renderStudents('tomorrow-students-ajax', data.students);
+                container.dataset.loaded = true;
+            })
+            .catch(() => {
+                container.innerHTML = '<div class="no-content">Failed to load data.</div>';
+            });
+    }
+
+    // Event Listeners
+    todayReqTab.addEventListener('shown.bs.tab', () => loadTodaysRequirements());
+    tomorrowReqTab.addEventListener('shown.bs.tab', () => loadTomorrowsRequirements());
+    todayStudentsTab.addEventListener('shown.bs.tab', () => loadTodaysStudents());
+    tomorrowStudentsTab.addEventListener('shown.bs.tab', () => loadTomorrowsStudents());
+
+    // Auto-load today’s content on page load
+    loadTodaysRequirements();
+    loadTodaysStudents();
+});
 </script>
 {% endblock %}
 {% endblock %}
