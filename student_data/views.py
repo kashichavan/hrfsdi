@@ -1998,7 +1998,8 @@ from django.shortcuts import render, redirect
 from django.contrib import messages
 from .models import Requirement, Student, RequirementStudent
 
-# views.py
+# views.py\
+@login_required
 def map_students_to_requirement_view(request):
     if request.method == 'POST' and request.FILES.get('excel_file'):
         excel_file = request.FILES['excel_file']
@@ -2115,7 +2116,7 @@ from django.urls import reverse
 from django.utils.http import urlencode
 from .models import Student, Requirement, RequirementStudent
 
-
+@login_required
 def combined_view(request):
     student = None
     requirement = None
@@ -2189,7 +2190,7 @@ from django.shortcuts import render
 
 from django.shortcuts import render
 from .models import RequirementStudent
-
+@login_required
 def placed_students_view(request):
     placed_students = RequirementStudent.objects.filter(
         status='selected',
@@ -2215,6 +2216,26 @@ def placed_students_view(request):
         'type_counts': type_counts,
     })
 
+from django.http import HttpResponse
+import csv
+
+def export_placed_students_excel(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="placed_students.csv"'
+    
+    writer = csv.writer(response)
+    writer.writerow(['Student Name', 'Company', 'Requirements', 'Scheduled Requirements', 'Schedule Date'])
+    
+    for entry in RequirementStudent.objects.filter(status='selected'):
+        writer.writerow([
+            entry.student.name,
+            entry.requirement.company_name,
+            entry.student.total_requirements,
+            entry.student.scheduled_requirements,
+            entry.requirement.schedule_date or 'Not Scheduled'
+        ])
+    
+    return response
 def delete_requirement(request, pk):
     requirement = get_object_or_404(Requirement, pk=pk)
     
@@ -2236,6 +2257,7 @@ from django.db import transaction
 from .models import Student, Requirement, RequirementStudent
 from io import BytesIO
 from django.core.exceptions import ObjectDoesNotExist
+@login_required
 def update_selected_students(request):
     context = {
         'existing_companies': Requirement.objects.exclude(

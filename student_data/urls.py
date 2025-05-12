@@ -125,6 +125,7 @@ urlpatterns = [
     path('ajax/tomorrow-requirements/', views.TomorrowsRequirementsAjaxView.as_view(), name='ajax_tomorrow_requirements'),
     path('ajax/today-students/', views.TodaysStudentsAjaxView.as_view(), name='ajax_today_students'),
     path('ajax/tomorrow-students/', views.TomorrowsStudentsAjaxView.as_view(), name='ajax_tomorrow_students'),
+    path('export_placed/',views.export_placed_students_excel,name='export_placed_students_excel'),
 ]
 
 
