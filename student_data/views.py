@@ -804,19 +804,18 @@ def update_student_feedback(request, requirement_id):
         
         return redirect('student_data:requirement_detail',pk=requirement_id)
 
-from django.db import transaction
-from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from .models import Requirement
+from .forms import RequirementEditForm
 
 @login_required
 @transaction.atomic
 def requirement_edit(request, pk):
     requirement = get_object_or_404(Requirement, pk=pk)
-    
-    if not request.user.has_perm('student_data.change_requirement'):
-        messages.error(request, 'You do not have permission to edit requirements.')
-        return redirect('student_data:requirement_list')
 
     if request.method == 'POST':
         form = RequirementEditForm(request.POST, instance=requirement)
@@ -827,12 +826,10 @@ def requirement_edit(request, pk):
                 requirement.modified_by = request.user
                 requirement.save()
 
-                # Update students in bulk
                 students = list(requirement.students.all())
                 for student in students:
                     student.update_requirement_counts()
-                
-                # Bulk update without updating all fields
+
                 Student.objects.bulk_update(
                     students,
                     ['scheduled_count', 'not_scheduled_count', 'modified_at'],
@@ -844,10 +841,11 @@ def requirement_edit(request, pk):
 
             except Exception as e:
                 messages.error(request, f'Error updating requirement: {str(e)}')
-                # Consider logging the error here
+                # Optional: log error using logging module
+                # import logging; logging.exception(e)
     else:
         form = RequirementEditForm(instance=requirement)
-    
+
     return render(request, 'requirement_edit.html', {
         'form': form,
         'requirement': requirement,
@@ -1446,9 +1444,9 @@ def add_students_to_requirement(request, requirement_id):
 
     return render(request, 'add_student_to_requirement.html', context)
 
-
-# Dashboard views
+from django.utils import timezone
 from datetime import timedelta
+from .models import Requirement, Student
 
 @login_required
 def home_dashboard(request):
@@ -1460,12 +1458,11 @@ def home_dashboard(request):
         'total_requirements': Requirement.objects.count(),
         'scheduled_today': Requirement.objects.filter(
             schedule_status='scheduled',
-            schedule_date=today
+            schedule_date=today  # No __date needed for DateField
         ).count(),
-        # New entry for tomorrow's schedules
         'scheduled_tomorrow': Requirement.objects.filter(
             schedule_status='scheduled',
-            schedule_date=tomorrow
+            schedule_date=tomorrow  # Same here
         ).count(),
         'latest_requirements': Requirement.objects.all().order_by('-created_at')[:5],
         'todays_requirements': Requirement.objects.filter(
