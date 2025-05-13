@@ -833,6 +833,15 @@ def update_student_feedback(request, requirement_id):
         
         return redirect('student_data:requirement_detail',pk=requirement_id)
 
+# views.py
+from django.db import transaction
+from django.shortcuts import get_object_or_404
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from .models import Requirement, RequirementSubject, Subject
+from .forms import RequirementEditForm
+
+
 @login_required
 @transaction.atomic
 def requirement_edit(request, pk):
@@ -842,22 +851,39 @@ def requirement_edit(request, pk):
         form = RequirementEditForm(request.POST, instance=requirement)
         if form.is_valid():
             try:
+                # Save the main requirement first
                 requirement = form.save(commit=False)
                 requirement.schedule_status = 'scheduled' if requirement.is_scheduled else 'not_scheduled'
                 requirement.modified_by = request.user
                 requirement.save()
 
-                students = list(requirement.students.all())
-                for student in students:
-                    student.update_requirement_counts()  # This already saves the updated counts
+                # Now process subjects
+                selected_subjects = request.POST.getlist('subjects')
+
+                # Get existing subjects for this requirement
+                current_relations = RequirementSubject.objects.filter(requirement=requirement)
+                current_subject_ids = set(current_relations.values_list('subject_id', flat=True))
+
+                new_subject_ids = set(map(int, selected_subjects))
+
+                # Delete removed subjects
+                to_delete = current_subject_ids - new_subject_ids
+                RequirementSubject.objects.filter(requirement=requirement, subject_id__in=to_delete).delete()
+
+                # Add new subjects
+                for subject_id in new_subject_ids:
+                    if subject_id not in current_subject_ids:
+                        subject = Subject.objects.get(pk=subject_id)
+                        RequirementSubject.objects.create(
+                            requirement=requirement,
+                            subject=subject
+                        )
 
                 messages.success(request, 'Requirement updated successfully!')
                 return redirect('student_data:requirement_detail', pk=requirement.id)
 
             except Exception as e:
                 messages.error(request, f'Error updating requirement: {str(e)}')
-                # Optional: Log the exception
-                # import logging; logging.exception(e)
     else:
         form = RequirementEditForm(instance=requirement)
 
