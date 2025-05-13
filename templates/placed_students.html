@@ -943,68 +943,45 @@
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     let currentTypeFilter = 'all';
     const itemsPerPage = 9;
     let currentPage = 1;
-    let totalPages = 1;
 
-    // GSAP animations for elements
-    gsap.from(".celebration-title", {opacity: 0, y: -20, duration: 0.8, ease: "power2.out"});
-    gsap.to(".celebration-emoji", {
-        opacity: 1, 
-        y: 0, 
-        duration: 0.6, 
-        ease: "back.out(1.7)",
-        stagger: 0.15,
-        delay: 0.3
-    });
-    gsap.to(".celebration-subtitle", {opacity: 1, duration: 0.8, delay: 0.7});
-    gsap.to(".stats-container", {opacity: 1, duration: 0.8, delay: 0.9});
-    gsap.to(".stats-badge", {scale: 1, duration: 0.6, ease: "back.out(1.5)", stagger: 0.1, delay: 1});
-    
-    gsap.to(".search-filter-container", {opacity: 1, y: 0, duration: 0.8, delay: 1.1});
-    gsap.to(".showcase-header", {opacity: 1, duration: 0.8, delay: 1.2});
-    gsap.to(".student-card", {
-        opacity: 1, 
-        y: 0, 
-        duration: 0.6, 
-        stagger: 0.05,
-        ease: "power2.out",
-        delay: 1.3
-    });
-    
-    gsap.to(".pagination-container", {opacity: 1, y: 0, duration: 0.8, delay: 1.8});
-    gsap.to(".insights-container", {opacity: 1, y: 0, duration: 0.8, delay: 2});
-    gsap.to(".placement-buttons-container", {opacity: 1, duration: 0.8, delay: 1.5});
+    // GSAP Animations
+    gsap.from(".celebration-title", { opacity: 0, y: -20, duration: 0.8, ease: "power2.out" });
+    gsap.to(".celebration-emoji", { opacity: 1, y: 0, duration: 0.6, ease: "back.out(1.7)", stagger: 0.15, delay: 0.3 });
+    gsap.to(".celebration-subtitle", { opacity: 1, duration: 0.8, delay: 0.7 });
+    gsap.to(".stats-container", { opacity: 1, duration: 0.8, delay: 0.9 });
+    gsap.to(".stats-badge", { scale: 1, duration: 0.6, ease: "back.out(1.5)", stagger: 0.1, delay: 1 });
+    gsap.to(".search-filter-container", { opacity: 1, y: 0, duration: 0.8, delay: 1.1 });
+    gsap.to(".showcase-header", { opacity: 1, duration: 0.8, delay: 1.2 });
+    gsap.to(".student-card", { opacity: 1, y: 0, duration: 0.6, stagger: 0.05, ease: "power2.out", delay: 1.3 });
+    gsap.to(".pagination-container", { opacity: 1, y: 0, duration: 0.8, delay: 1.8 });
+    gsap.to(".insights-container", { opacity: 1, y: 0, duration: 0.8, delay: 2 });
+    gsap.to(".placement-buttons-container", { opacity: 1, duration: 0.8, delay: 1.5 });
 
-    // Three.js background animation
+    // THREE.js background
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    
     const renderer = new THREE.WebGLRenderer({ alpha: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     document.getElementById('three-background').appendChild(renderer.domElement);
-    
-    // Create particles
+
     const particlesGeometry = new THREE.BufferGeometry();
     const particlesCount = 500;
-    
     const posArray = new Float32Array(particlesCount * 3);
     const colorsArray = new Float32Array(particlesCount * 3);
-    
-    for(let i = 0; i < particlesCount * 3; i++) {
+    for (let i = 0; i < particlesCount * 3; i++) {
         posArray[i] = (Math.random() - 0.5) * 10;
-        
-        if(i % 3 === 0) colorsArray[i] = Math.random() * (1 - 0.8) + 0.8;
-        if(i % 3 === 1) colorsArray[i] = Math.random() * (0.5 - 0.3) + 0.3;
-        if(i % 3 === 2) colorsArray[i] = Math.random() * (0.3 - 0.1) + 0.1;
+        if (i % 3 === 0) colorsArray[i] = Math.random() * (1 - 0.8) + 0.8;
+        if (i % 3 === 1) colorsArray[i] = Math.random() * (0.5 - 0.3) + 0.3;
+        if (i % 3 === 2) colorsArray[i] = Math.random() * (0.3 - 0.1) + 0.1;
     }
-    
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
     particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colorsArray, 3));
-    
+
     const particlesMaterial = new THREE.PointsMaterial({
         size: 0.01,
         transparent: true,
@@ -1012,12 +989,11 @@ document.addEventListener('DOMContentLoaded', function() {
         vertexColors: true,
         blending: THREE.AdditiveBlending
     });
-    
+
     const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particlesMesh);
     camera.position.z = 5;
 
-    // Animation loop
     function animate() {
         requestAnimationFrame(animate);
         particlesMesh.rotation.x += 0.0003;
@@ -1026,48 +1002,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     animate();
 
-    // Handle window resize
-    window.addEventListener('resize', function() {
+    window.addEventListener('resize', function () {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
     });
 
-    // Student cards and filters
     const studentCards = document.querySelectorAll('.student-card');
     const searchInput = document.getElementById('student-search');
     const companyFilter = document.getElementById('company-filter');
     const dateFilter = document.getElementById('date-filter');
 
-    // Initialize statistics
     let companies = new Set();
     let totalPackage = 0;
     let recentPlacements = 0;
     let upcomingInterviews = 0;
     const companyStudentCount = {};
     const now = new Date();
-    const thirtyDaysAgo = new Date(now.setDate(now.getDate() - 30));
+    const thirtyDaysAgo = new Date(now.getTime() - (30 * 24 * 60 * 60 * 1000));
 
     studentCards.forEach(card => {
         const company = card.dataset.company;
         companies.add(company);
-        
-        // Count students per company
         companyStudentCount[company] = (companyStudentCount[company] || 0) + 1;
-        
-        // Date calculations
+
         const dateStr = card.dataset.date;
         if (dateStr) {
             const cardDate = new Date(dateStr);
             if (cardDate >= thirtyDaysAgo && cardDate <= new Date()) recentPlacements++;
             if (cardDate > new Date()) upcomingInterviews++;
         }
-        
-        // Demo package values
+
         totalPackage += Math.floor(Math.random() * 10) + 3;
     });
 
-    // Populate company filter
     Array.from(companies).sort().forEach(company => {
         const option = document.createElement('option');
         option.value = company;
@@ -1075,101 +1043,103 @@ document.addEventListener('DOMContentLoaded', function() {
         companyFilter.appendChild(option);
     });
 
-    // Update stats display
-    document.getElementById('companies-count').textContent = companies.size;
-    document.getElementById('avg-package').textContent = (totalPackage / studentCards.length).toFixed(1);
-    document.getElementById('showing-count').textContent = studentCards.length;
-    document.getElementById('recent-placements').textContent = recentPlacements;
-    document.getElementById('upcoming-interviews').textContent = upcomingInterviews;
+    function updateStatsDisplay() {
+        const updateText = (id, value) => {
+            const el = document.getElementById(id);
+            if (el) el.textContent = value;
+        };
+        updateText('companies-count', companies.size);
+        updateText('avg-package', (totalPackage / studentCards.length).toFixed(1));
+        updateText('recent-placements', recentPlacements);
+        updateText('upcoming-interviews', upcomingInterviews);
 
-    // Top company calculation
-    let [topCompany, topCount] = Object.entries(companyStudentCount)
-        .reduce(([maxCompany, maxCount], [company, count]) => 
-            count > maxCount ? [company, count] : [maxCompany, maxCount], ['', 0]);
-    
-    document.getElementById('top-company-count').textContent = topCount;
-    document.getElementById('top-company-name').textContent = topCompany.charAt(0).toUpperCase() + topCompany.slice(1);
-
-    // Pagination functions
-    function setupPagination() {
-    const paginationInner = document.getElementById('pagination-inner');
-    const paginationIndicator = document.getElementById('pagination-indicator');
-    const prevBtn = document.getElementById('prev-page');
-    const nextBtn = document.getElementById('next-page');
-
-    // Remove old buttons except prev/next
-    paginationInner.querySelectorAll('.pagination-button:not(.pagination-prev):not(.pagination-next)').forEach(btn => btn.remove());
-
-    const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
-    totalPages = Math.ceil(visibleCards.length / itemsPerPage);
-
-    for (let i = 1; i <= totalPages; i++) {
-        if (totalPages <= 7 || i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-            const pageBtn = document.createElement('button');
-            pageBtn.className = 'pagination-button' + (i === currentPage ? ' active-page' : '');
-            pageBtn.textContent = i;
-            pageBtn.dataset.page = i;
-            paginationInner.insertBefore(pageBtn, nextBtn);
-
-            // Set position of active indicator
-            if (i === currentPage) {
-                setTimeout(() => {
-                    const activeBtnRect = pageBtn.getBoundingClientRect();
-                    const containerRect = paginationInner.getBoundingClientRect();
-                    paginationIndicator.style.width = `${activeBtnRect.width}px`;
-                    paginationIndicator.style.left = `${activeBtnRect.left - containerRect.left}px`;
-                }, 0);
-            }
-        }
+        let [topCompany, topCount] = Object.entries(companyStudentCount).reduce(
+            ([maxC, maxN], [c, n]) => (n > maxN ? [c, n] : [maxC, maxN]), ['', 0]
+        );
+        updateText('top-company-count', topCount);
+        updateText('top-company-name', topCompany.charAt(0).toUpperCase() + topCompany.slice(1));
     }
 
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages;
+    function sortAndPaginateCards() {
+        const grid = document.getElementById('showcase-grid');
+        const visibleCards = Array.from(grid.querySelectorAll('.student-card:not(.filtered-out)'));
 
-    // Show current page's cards only
-    visibleCards.forEach((card, index) => {
-        card.style.display = (index >= (currentPage - 1) * itemsPerPage && index < currentPage * itemsPerPage)
-            ? 'flex'
-            : 'none';
-    });
-}
+        currentPage = 1;
 
-    // Event listeners
-    document.getElementById('prev-page').addEventListener('click', () => navigatePages(-1));
-    document.getElementById('next-page').addEventListener('click', () => navigatePages(1));
-    searchInput.addEventListener('input', filterStudents);
-    companyFilter.addEventListener('change', filterStudents);
-    dateFilter.addEventListener('change', filterStudents);
-    document.getElementById('sort-name-btn').addEventListener('click', () => sortStudents('name'));
-    document.getElementById('sort-date-btn').addEventListener('click', () => sortStudents('date'));
-
-    // Type filter event listeners
-    document.querySelectorAll('.type-filter-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            currentTypeFilter = this.dataset.type;
-            filterStudents();
+        visibleCards.forEach((card, index) => {
+            card.dataset.page = Math.floor(index / itemsPerPage) + 1;
+            grid.appendChild(card);
         });
-    });
 
-    // Main filter function
+        setupPagination();
+    }
+
+    function setupPagination() {
+        const paginationInner = document.getElementById('pagination-inner');
+        const paginationIndicator = document.getElementById('pagination-indicator');
+        const prevBtn = document.getElementById('prev-page');
+        const nextBtn = document.getElementById('next-page');
+
+        [...paginationInner.children].filter(el => !el.classList.contains('pagination-prev') && !el.classList.contains('pagination-next'))
+            .forEach(el => el.remove());
+
+        const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
+        const totalPages = Math.ceil(visibleCards.length / itemsPerPage);
+
+        for (let i = 1; i <= totalPages; i++) {
+            if (
+                totalPages <= 7 ||
+                i === 1 || i === totalPages ||
+                (i >= currentPage - 1 && i <= currentPage + 1)
+            ) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'pagination-button' + (i === currentPage ? ' active-page' : '');
+                pageBtn.textContent = i;
+                pageBtn.dataset.page = i;
+                paginationInner.insertBefore(pageBtn, nextBtn);
+
+                pageBtn.addEventListener('click', () => {
+                    currentPage = parseInt(pageBtn.dataset.page);
+                    setupPagination();
+                });
+
+                if (i === currentPage) {
+                    setTimeout(() => {
+                        const activeBtnRect = pageBtn.getBoundingClientRect();
+                        const containerRect = paginationInner.getBoundingClientRect();
+                        paginationIndicator.style.width = `${activeBtnRect.width}px`;
+                        paginationIndicator.style.left = `${activeBtnRect.left - containerRect.left}px`;
+                    }, 0);
+                }
+            }
+        }
+
+        prevBtn.disabled = currentPage === 1;
+        nextBtn.disabled = currentPage === totalPages;
+
+        visibleCards.forEach((card, index) => {
+            card.style.display = (index >= (currentPage - 1) * itemsPerPage && index < currentPage * itemsPerPage)
+                ? 'flex' : 'none';
+        });
+    }
+
     function filterStudents() {
-        const searchTerm = searchInput.value.toLowerCase();
+        const searchTerm = searchInput.value.trim().toLowerCase();
         const selectedCompany = companyFilter.value.toLowerCase();
         const selectedDate = dateFilter.value;
-        
         let visibleCount = 0;
-        
+
         studentCards.forEach(card => {
-            const matchesSearch = !searchTerm || 
-                card.dataset.student.includes(searchTerm) || 
-                card.dataset.company.includes(searchTerm);
-            
-            const matchesCompany = !selectedCompany || card.dataset.company === selectedCompany;
+            const cardStudent = (card.dataset.student || '').toLowerCase();
+            const cardCompany = (card.dataset.company || '').toLowerCase();
+            const cardType = card.dataset.type || 'all';
+
+            const matchesSearch = !searchTerm ||
+                cardStudent.includes(searchTerm) || cardCompany.includes(searchTerm);
+            const matchesCompany = !selectedCompany || cardCompany === selectedCompany;
             const matchesDate = !selectedDate || card.dataset.date === selectedDate;
-            const matchesType = currentTypeFilter === 'all' || card.dataset.type === currentTypeFilter;
-            
+            const matchesType = currentTypeFilter === 'all' || cardType === currentTypeFilter;
+
             if (matchesSearch && matchesCompany && matchesDate && matchesType) {
                 card.classList.remove('filtered-out');
                 visibleCount++;
@@ -1177,60 +1147,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 card.classList.add('filtered-out');
             }
         });
-        
-        updateTypeFilterCounts();
-        updatePaginationAfterFilter();
+
         document.getElementById('showing-count').textContent = visibleCount;
         document.getElementById('no-results').style.display = visibleCount ? 'none' : 'block';
         document.getElementById('showcase-grid').style.display = visibleCount ? 'grid' : 'none';
+
+        updateTypeFilterCounts();
+        sortAndPaginateCards();
     }
 
-    // Helper functions
     function updateTypeFilterCounts() {
         document.querySelectorAll('.type-filter-btn').forEach(btn => {
             const type = btn.dataset.type;
-            const count = type === 'all' ? 
-                document.querySelectorAll('.student-card:not(.filtered-out)').length :
-                document.querySelectorAll(`.student-card[data-type="${type}"]:not(.filtered-out)`).length;
-            
-            btn.querySelector('.type-count').textContent = `(${count})`;
+            const count = type === 'all'
+                ? document.querySelectorAll('.student-card:not(.filtered-out)').length
+                : document.querySelectorAll(`.student-card[data-type="${type}"]:not(.filtered-out)`).length;
+
+            btn.querySelector('.type-count').textContent = count;
         });
     }
 
-    function updatePaginationAfterFilter() {
+    searchInput.addEventListener('input', filterStudents);
+    companyFilter.addEventListener('change', filterStudents);
+    dateFilter.addEventListener('change', filterStudents);
+
+    document.querySelectorAll('.type-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentTypeFilter = btn.dataset.type;
+            document.querySelectorAll('.type-filter-btn').forEach(b => b.classList.remove('active-type'));
+            btn.classList.add('active-type');
+            filterStudents();
+        });
+    });
+
+    document.getElementById('prev-page').addEventListener('click', () => {
+        if (currentPage > 1) {
+            currentPage--;
+            setupPagination();
+        }
+    });
+
+    document.getElementById('next-page').addEventListener('click', () => {
         const visibleCards = document.querySelectorAll('.student-card:not(.filtered-out)');
-        visibleCards.forEach((card, index) => card.dataset.page = Math.floor(index / itemsPerPage) + 1);
-        currentPage = 1;
-        setupPagination();
-    }
+        const totalPages = Math.ceil(visibleCards.length / itemsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            setupPagination();
+        }
+    });
 
-    function navigatePages(direction) {
-        currentPage = Math.max(1, Math.min(totalPages, currentPage + direction));
-        setupPagination();
-        document.getElementById('showcase-grid').classList.add('page-transition');
-        setTimeout(() => document.getElementById('showcase-grid').classList.remove('page-transition'), 400);
-    }
-
-    function sortStudents(sortBy) {
-        const grid = document.getElementById('showcase-grid');
-        const cards = Array.from(grid.children);
-        
-        cards.sort((a, b) => sortBy === 'name' ? 
-            a.dataset.student.localeCompare(b.dataset.student) : 
-            (a.dataset.date || '9999-99-99').localeCompare(b.dataset.date || '9999-99-99')
-        );
-        
-        cards.forEach((card, index) => {
-            card.dataset.page = Math.floor(index / itemsPerPage) + 1;
-            grid.appendChild(card);
-        });
-        
-        currentPage = 1;
-        setupPagination();
-    }
-
-    // Initial setup
-    setupPagination();
+    updateStatsDisplay();
+    filterStudents(); // Initialize
 });
 </script>
+
 {% endblock %}
+

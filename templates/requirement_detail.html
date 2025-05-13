@@ -655,7 +655,9 @@ body, p, table, .btn, .form-control {
         height: 60px;
         font-size: 1.5rem;
     }
+
 }
+
 /* Skill badge styling */
 .skill-badge {
         background: linear-gradient(145deg, rgba(255, 119, 0, 0.1), rgba(255, 158, 64, 0.15));
@@ -687,6 +689,8 @@ body, p, table, .btn, .form-control {
             background-position: 0% 50%;
         }
     }
+
+    
 </style>
 {% endblock %}
 
@@ -933,98 +937,129 @@ class="btn btn-danger btn-action delete-requirement-btn">
     </div>
 </div>
 
-
-    <!-- Students Table Card -->
-    <div class="card fade-in" style="animation-delay: 0.3s">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="d-flex align-items-center">
-                <span class="card-icon"><i class="fas fa-users"></i></span>
-                Assigned Students
-            </div>
-            <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" class="btn btn-primary btn-sm btn-action">
-                <i class="fas fa-plus"></i> Add Students
-            </a>
+<!-- Students Table Card -->
+<div class="card fade-in" style="animation-delay: 0.3s">
+    <!-- Card Header with Search and Add Button -->
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="d-flex align-items-center">
+            <span class="card-icon"><i class="fas fa-users"></i></span>
+            Assigned Students
         </div>
 
-        <div class="student-table-container">
-            <div class="table-responsive">
-                <table class="table table-hover student-table" id="studentsTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Degree/Stream</th>
-                            <th>Contact</th>
-                            <th>Status</th>
-                            <th>Feedback</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for rs in requirement_students %}
-                        <tr class="table-row">
-                            <td class="fw-medium">{{ rs.student.name }}</td>
-                            <td>{{ rs.student.degree }} - {{ rs.student.stream }}</td>
-                            <td>{{ rs.student.contact_number }}</td>
-                            <td>
-                                <select class="status-select" 
-                                        onchange="updateStudentStatus(this, '{{ requirement.id }}', '{{ rs.student.id }}')">
-                                    <option value="pending" {% if rs.status == 'pending' %}selected{% endif %}>Pending</option>
-                                    <option value="selected" {% if rs.status == 'selected' %}selected{% endif %}>Selected</option>
-                                    <option value="rejected" {% if rs.status == 'rejected' %}selected{% endif %}>Rejected</option>
-                                </select>
-                            </td>
-                            <td>
-                                {% if rs.feedback %}
-                                    <div>
-                                        <div class="feedback-view">
-                                            {{ rs.feedback }}
-                                        </div>
-                                        <button type="button" class="btn btn-sm btn-link text-primary mt-2" 
-                                                data-bs-toggle="modal" data-bs-target="#feedbackModal"
-                                                data-student-id="{{ rs.student.id }}"
-                                                data-current-feedback="{{ rs.feedback }}">
-                                            <i class="fas fa-edit"></i> Edit
-                                        </button>
+        <!-- Search Bar -->
+        <div class="input-group input-group-sm w-auto ms-auto me-2">
+            <span class="input-group-text bg-white border-primary">
+                <i class="fas fa-search text-primary"></i>
+            </span>
+            <input type="text"
+                   id="studentSearchInput"
+                   class="form-control border-primary"
+                   placeholder="Search by name or contact..."
+                   oninput="filterStudents(this.value)"
+                   aria-label="Search students">
+        </div>
+
+        <!-- Add Students Button -->
+        <a href="{% url 'student_data:add-student-to-requirement' requirement.id %}" 
+           class="btn btn-primary btn-sm btn-action">
+            <i class="fas fa-plus"></i> Add Students
+        </a>
+    </div>
+
+    <!-- Student Table -->
+    <div class="student-table-container">
+        <div class="table-responsive">
+            <table class="table table-hover student-table" id="studentsTable">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Degree/Stream</th>
+                        <th>Contact</th>
+                        <th>Status</th>
+                        <th>Feedback</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rs in requirement_students %}
+                    <tr class="table-row" 
+                        data-name="{{ rs.student.name|lower }}" 
+                        data-contact="{{ rs.student.contact_number|default:''|lower }}">
+                        <td class="fw-medium">{{ rs.student.name }}</td>
+                        <td>{{ rs.student.degree }} - {{ rs.student.stream }}</td>
+                        <td>{{ rs.student.contact_number|default:'N/A' }}</td>
+                        <td>
+                            <select class="status-select" 
+                                    onchange="updateStudentStatus(this, '{{ requirement.id }}', '{{ rs.student.id }}')">
+                                <option value="pending" {% if rs.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="selected" {% if rs.status == 'selected' %}selected{% endif %}>Selected</option>
+                                <option value="rejected" {% if rs.status == 'rejected' %}selected{% endif %}>Rejected</option>
+                            </select>
+                        </td>
+                        <td>
+                            {% if rs.feedback %}
+                                <div>
+                                    <div class="feedback-view">
+                                        {{ rs.feedback }}
                                     </div>
-                                {% else %}
-                                    <button type="button" class="btn btn-sm feedback-btn" 
+                                    <button type="button" class="btn btn-sm btn-link text-primary mt-2" 
                                             data-bs-toggle="modal" data-bs-target="#feedbackModal"
                                             data-student-id="{{ rs.student.id }}"
-                                            data-current-feedback="">
-                                        <i class="fas fa-comment-dots"></i> Add Feedback
+                                            data-current-feedback="{{ rs.feedback }}">
+                                        <i class="fas fa-edit"></i> Edit
                                     </button>
-                                {% endif %}
-                            </td>
-                            <td>
-                                <div class="dropdown">
-                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" id="dropdownMenuButton{{ rs.student.id }}" data-bs-toggle="dropdown" aria-expanded="false">
-                                        Actions
-                                    </button>
-                                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton{{ rs.student.id }}">
-                                        <li><a class="dropdown-item" href="{% url 'student_data:student_detail' rs.student.id %}"><i class="fas fa-eye me-2"></i> View</a></li>
-                                        <li><hr class="dropdown-divider"></li>
-                                        <li>
-                                            <button class="dropdown-item text-danger remove-student-btn"
-                                                    data-student-id="{{ rs.student.id }}"
-                                                    data-student-name="{{ rs.student.name }}"
-                                                    data-remove-url="{% url 'student_data:remove_student' requirement.id rs.student.id %}">
-                                                <i class="fas fa-trash-alt me-2"></i> Remove
-                                            </button>
-                                        </li>
-                                    </ul>
                                 </div>
-                            </td>
-                        </tr>
-                        {% empty %}
-                        <tr><td colspan="6" class="text-center py-4 text-muted">No students assigned to this requirement yet.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+                            {% else %}
+                                <button type="button" class="btn btn-sm feedback-btn" 
+                                        data-bs-toggle="modal" data-bs-target="#feedbackModal"
+                                        data-student-id="{{ rs.student.id }}"
+                                        data-current-feedback="">
+                                    <i class="fas fa-comment-dots"></i> Add Feedback
+                                </button>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                        type="button" 
+                                        id="dropdownMenuButton{{ rs.student.id }}" 
+                                        data-bs-toggle="dropdown" 
+                                        aria-expanded="false">
+                                    Actions
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end" 
+                                    aria-labelledby="dropdownMenuButton{{ rs.student.id }}">
+                                    <li>
+                                        <a class="dropdown-item" 
+                                           href="{% url 'student_data:student_detail' rs.student.id %}">
+                                            <i class="fas fa-eye me-2"></i> View
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li>
+                                        <button class="dropdown-item text-danger remove-student-btn"
+                                                data-student-id="{{ rs.student.id }}"
+                                                data-student-name="{{ rs.student.name }}"
+                                                data-remove-url="{% url 'student_data:remove_student' requirement.id rs.student.id %}">
+                                            <i class="fas fa-trash-alt me-2"></i> Remove
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            No students assigned to this requirement yet.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
     </div>
 </div>
-
 <!-- Remove Student Modal -->
 <div class="modal fade" id="removeStudentModal" tabindex="-1" aria-labelledby="removeStudentModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -1114,7 +1149,7 @@ class="btn btn-danger btn-action delete-requirement-btn">
 </div>
 <!-- Drive Result Modal -->
 <div class="modal fade" id="driveResultModal" tabindex="-1" aria-labelledby="driveResultModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <form id="driveResultForm" method="post" action="{% url 'student_data:update_drive_result' requirement.id %}">
                 {% csrf_token %}
@@ -1125,6 +1160,7 @@ class="btn btn-danger btn-action delete-requirement-btn">
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-4">
+                    <!-- Result Status -->
                     <div class="mb-3">
                         <label for="resultStatus" class="form-label">Result:</label>
                         <select class="form-select" id="resultStatus" name="result_status" required>
@@ -1136,21 +1172,49 @@ class="btn btn-danger btn-action delete-requirement-btn">
                             <option value="postponed" {% if requirement.scheduled_details and requirement.scheduled_details.result == 'postponed' %}selected{% endif %}>Drive Postponed</option>
                         </select>
                     </div>
+
+                    <!-- Feedback -->
                     <div class="mb-3">
                         <label for="driveFeedback" class="form-label">Feedback:</label>
                         <textarea class="form-control" id="driveFeedback" name="feedback" rows="4">{% if requirement.scheduled_details %}{{ requirement.scheduled_details.feedback }}{% endif %}</textarea>
                     </div>
+
+                    <!-- Student Selection -->
                     <div class="mb-3" id="selectedStudentsContainer">
                         <label class="form-label">Selected Students:</label>
-                        <select class="form-select" multiple name="selected_students" id="selectedStudents">
+                        
+                        <!-- Search Bar -->
+                        <div class="input-group input-group-sm mb-2">
+                            <span class="input-group-text bg-white border-primary">
+                                <i class="fas fa-user-search text-primary"></i>
+                            </span>
+                            <input type="text"
+                                   id="studentSearchModal"
+                                   class="form-control border-primary"
+                                   placeholder="Search by name/contact..."
+                                   oninput="filterStudentOptions(this.value)"
+                                   style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                        </div>
+
+                        <!-- Enhanced Student Select -->
+                        <select class="form-select border-primary" 
+                                multiple 
+                                name="selected_students" 
+                                id="selectedStudents"
+                                style="height: 200px; font-size: 0.95rem;">
                             {% for student in requirement.students.all %}
                             <option value="{{ student.id }}" 
+                                    data-name="{{ student.name|lower }}"
+                                    data-contact="{{ student.contact_number|default:''|lower }}"
                                     {% if requirement.scheduled_details and student in requirement.scheduled_details.students_appeared.all %}selected{% endif %}>
-                                {{ student.name }} ({{ student.degree }})
+                                {{ student.name }} ({{ student.degree }}) | 📱 {{ student.contact_number|default:'N/A' }}
                             </option>
                             {% endfor %}
                         </select>
-                        <small class="text-muted">Hold Ctrl/Cmd to select multiple students who were selected</small>
+                        <small class="text-muted d-block mt-1">
+                            <i class="fas fa-mouse-pointer me-1"></i>
+                            Hold Ctrl/Cmd to select multiple students
+                        </small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -1371,6 +1435,49 @@ document.addEventListener("DOMContentLoaded", function () {
         stagger: 0.1
     });
 });
+function filterStudentOptions(query) {
+    const select = document.getElementById("selectedStudents");
+    const options = Array.from(select.options);
+
+    const lowerQuery = query.toLowerCase().trim();
+
+    options.forEach(option => {
+        const name = option.dataset.name || "";
+        const contact = option.dataset.contact || "";
+        
+        if (
+            name.includes(lowerQuery) || 
+            contact.includes(lowerQuery) ||
+            !lowerQuery
+        ) {
+            option.style.display = "";
+        } else {
+            option.style.display = "none";
+        }
+    });
+}
+
+function filterStudents(query) {
+    const table = document.getElementById("studentsTable");
+    const rows = Array.from(table.querySelectorAll("tbody tr"));
+
+    const lowerQuery = query.toLowerCase().trim();
+
+    rows.forEach(row => {
+        const name = row.dataset.name || "";
+        const contact = row.dataset.contact || "";
+
+        if (
+            name.includes(lowerQuery) || 
+            contact.includes(lowerQuery) ||
+            !query
+        ) {
+            row.style.display = "";
+        } else {
+            row.style.display = "none";
+        }
+    });
+}
 </script>
 
 {% endblock %}

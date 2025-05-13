@@ -3,9 +3,13 @@
 {% block extra_head %}
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <!-- Google Fonts - Trending Modern Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-orange: #ff6b35;
+            --primary-orange-hover: #ff5a1f;
+            --primary-orange-light: #fff0eb;
             --secondary-blue: #3498db;
             --secondary-teal: #2ecc71;
             --secondary-purple: #9b59b6;
@@ -14,6 +18,18 @@
             --text-dark: #2c3e50;
             --text-light: #ecf0f1;
             --bg-gray: #f8f9fa;
+            --border-light: #e9ecef;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            color: var(--text-dark);
+            background-color: #f8f9fa;
+        }
+        
+        h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
         }
         
         .section-title {
@@ -22,16 +38,112 @@
             padding-bottom: 0.5rem;
             display: inline-block;
             margin-bottom: 1rem;
+            font-weight: 600;
         }
         
         /* Card styling */
+        .card {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-light);
+            border-top-left-radius: 0.75rem !important;
+            border-top-right-radius: 0.75rem !important;
+            padding: 1rem 1.25rem;
+        }
+
+        .card-header h5 {
+            margin-bottom: 0;
+            font-weight: 600;
+        }
+        
+        .card-body {
+            padding: 1.25rem;
+        }
+        
+        /* Button styles */
+        .btn {
+            font-weight: 500;
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-orange);
+            border-color: var(--primary-orange);
+        }
+        
+        .btn-primary:hover, .btn-primary:focus, .btn-primary:active {
+            background-color: var(--primary-orange-hover) !important;
+            border-color: var(--primary-orange-hover) !important;
+        }
+        
+        .btn-outline-primary {
+            color: var(--primary-orange);
+            border-color: var(--primary-orange);
+        }
+        
+        .btn-outline-primary:hover, .btn-outline-primary:focus, .btn-outline-primary:active {
+            background-color: var(--primary-orange);
+            border-color: var(--primary-orange);
+            color: white;
+        }
+        
+        .btn-escalate {
+            background-color: transparent;
+            color: var(--primary-orange);
+            border: none;
+            padding: 0.25rem 0.5rem;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-escalate:hover {
+            background-color: var(--primary-orange-light);
+            color: var(--primary-orange);
+            border-radius: 0.25rem;
+        }
+        
+        .btn-escalate i {
+            font-size: 1rem;
+        }
+        
+        /* Stats cards */
         .stat-card {
-            transition: transform 0.3s ease;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
             height: 100%;
+            border-radius: 0.75rem;
+            border-left: 4px solid transparent;
         }
         
         .stat-card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .stat-card:nth-child(1) {
+            border-left-color: var(--primary-orange);
+        }
+        
+        .stat-card:nth-child(2) {
+            border-left-color: var(--secondary-teal);
+        }
+        
+        .stat-card:nth-child(3) {
+            border-left-color: var(--secondary-blue);
+        }
+        
+        .stat-card:nth-child(4) {
+            border-left-color: var(--warning-yellow);
         }
         
         .stat-value {
@@ -40,7 +152,22 @@
             color: var(--text-dark);
         }
         
+        .icon-wrapper {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+        }
+        
         /* Badge styles */
+        .badge {
+            font-weight: 500;
+            padding: 0.35em 0.65em;
+            font-size: 0.75em;
+        }
+        
         .badge-scheduled {
             background-color: var(--secondary-blue);
         }
@@ -64,12 +191,35 @@
         /* Table styling */
         .table-card {
             border: none;
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05);
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.05);
+            border-radius: 0.75rem;
+            overflow: hidden;
         }
         
-        .table-card .card-header {
-            background-color: white;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        .table {
+            margin-bottom: 0;
+        }
+        
+        .table td, .table th {
+            padding: 0.75rem 1rem;
+            vertical-align: middle;
+        }
+        
+        .table thead th {
+            border-bottom: 1px solid var(--border-light);
+            font-weight: 600;
+            color: #6c757d;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background-color: rgba(255, 107, 53, 0.05);
         }
         
         .table-responsive {
@@ -77,21 +227,140 @@
             overflow: hidden;
         }
         
+        /* DataTables customization */
         .dataTables_wrapper .dataTables_filter input {
-            border-radius: 0.25rem;
+            border-radius: 0.5rem;
             border: 1px solid #dee2e6;
             padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
         }
         
-        /* Button styles */
-        .btn-escalate {
+        .dataTables_wrapper .dataTables_length select {
+            border-radius: 0.5rem;
+            border: 1px solid #dee2e6;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button {
+            border-radius: 0.5rem !important;
+            border: 1px solid transparent !important;
+            background: transparent !important;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+            background: var(--primary-orange-light) !important;
+            border-color: var(--primary-orange) !important;
+            color: var(--primary-orange) !important;
+        }
+        
+        .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+            background: var(--primary-orange-light) !important;
+            border-color: var(--primary-orange) !important;
+            color: var(--primary-orange) !important;
+        }
+        
+        /* Form styling */
+        .form-control, .form-select {
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #dee2e6;
+            font-size: 0.875rem;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-orange);
+            box-shadow: 0 0 0 0.25rem rgba(255, 107, 53, 0.25);
+        }
+        
+        .form-label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+        
+        .form-check-input:checked {
             background-color: var(--primary-orange);
-            color: white;
+            border-color: var(--primary-orange);
         }
         
-        .btn-escalate:hover {
-            background-color: #e55a2b;
-            color: white;
+        /* Modal styling */
+        .modal-content {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid var(--border-light);
+            padding: 1rem 1.5rem;
+        }
+        
+        .modal-header .modal-title {
+            font-weight: 600;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid var(--border-light);
+            padding: 1rem 1.5rem;
+        }
+        
+        /* Alert styling */
+        .alert {
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1rem;
+        }
+        
+        /* Tooltips */
+        .tooltip-inner {
+            background-color: var(--text-dark);
+            border-radius: 0.5rem;
+            padding: 0.5rem 1rem;
+        }
+        
+        .bs-tooltip-auto[x-placement^=top] .arrow::before, 
+        .bs-tooltip-top .arrow::before {
+            border-top-color: var(--text-dark);
+        }
+        
+        /* Student counts styling */
+        .student-count {
+            display: inline-flex;
+            gap: 0.25rem;
+            align-items: center;
+            font-size: 0.875rem;
+        }
+        
+        .student-count .text-primary {
+            font-weight: 600;
+        }
+        
+        .student-count .text-success {
+            font-weight: 600;
+        }
+        
+        /* Popover styling for escalation */
+        .popover {
+            border: none;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        
+        .popover-header {
+            background-color: white;
+            border-bottom: 1px solid var(--border-light);
+            border-top-left-radius: 0.75rem;
+            border-top-right-radius: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .popover-body {
+            padding: 1rem;
         }
         
         /* Responsive adjustments */
@@ -103,6 +372,10 @@
             .table-responsive {
                 overflow-x: auto;
                 -webkit-overflow-scrolling: touch;
+            }
+            
+            .btn {
+                padding: 0.375rem 0.75rem;
             }
         }
     </style>
@@ -172,7 +445,7 @@
                             <h6 class="text-muted mb-2">Total Requirements</h6>
                             <h3 class="stat-value mb-0">{{ total_requirements|default:"0" }}</h3>
                         </div>
-                        <div class="bg-primary bg-opacity-10 p-3 rounded">
+                        <div class="icon-wrapper bg-primary bg-opacity-10">
                             <i class="fas fa-building text-primary"></i>
                         </div>
                     </div>
@@ -188,7 +461,7 @@
                             <h6 class="text-muted mb-2">Scheduled</h6>
                             <h3 class="stat-value mb-0">{{ scheduled_companies|default:"0" }}</h3>
                         </div>
-                        <div class="bg-success bg-opacity-10 p-3 rounded">
+                        <div class="icon-wrapper bg-success bg-opacity-10">
                             <i class="fas fa-calendar-check text-success"></i>
                         </div>
                     </div>
@@ -204,7 +477,7 @@
                             <h6 class="text-muted mb-2">Completed</h6>
                             <h3 class="stat-value mb-0">{{ all_rounds_completed|default:"0" }}</h3>
                         </div>
-                        <div class="bg-info bg-opacity-10 p-3 rounded">
+                        <div class="icon-wrapper bg-info bg-opacity-10">
                             <i class="fas fa-check-circle text-info"></i>
                         </div>
                     </div>
@@ -220,7 +493,7 @@
                             <h6 class="text-muted mb-2">Placements</h6>
                             <h3 class="stat-value mb-0">{{ placements|default:"0" }}</h3>
                         </div>
-                        <div class="bg-warning bg-opacity-10 p-3 rounded">
+                        <div class="icon-wrapper bg-warning bg-opacity-10">
                             <i class="fas fa-user-graduate text-warning"></i>
                         </div>
                     </div>
@@ -273,23 +546,28 @@
                                 </span>
                             </td>
                             <td>
-                                <small>
+                                <div class="student-count">
                                     <span class="text-primary">{{ company.students_appeared|default:"0" }}</span> / 
                                     <span class="text-success">{{ company.students_selected|default:"0" }}</span>
-                                </small>
+                                </div>
                             </td>
                             <td>
                                 <div class="d-flex">
                                     {% if company.escalation %}
-                                        <span class="badge rounded-pill badge-escalated me-2">
-                                            {{ company.escalation }}
+                                        <span class="badge rounded-pill badge-escalated me-2" 
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="top" 
+                                            title="{{ company.escalation }}">
+                                            Escalated
                                         </span>
                                     {% else %}
-                                        <button class="btn btn-sm btn-escalate me-2" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#escalationModal"
-                                                data-requirement-id="{{ company.id }}"
-                                                data-company-name="{{ company.company }}">
+                                        <button class="btn btn-escalate me-2" 
+                                                data-bs-toggle="popover" 
+                                                data-bs-trigger="click"
+                                                data-bs-placement="top"
+                                                data-bs-html="true"
+                                                data-bs-content='<form id="escalationForm-{{ company.id }}" class="escalation-form" action="/update-escalation/{{ company.id }}/" method="post">{% csrf_token %}<input type="hidden" name="requirement_id" value="{{ company.id }}"><div class="mb-3"><label class="form-label">Reason</label><textarea class="form-control" name="reason" required></textarea></div><div class="mb-3"><label class="form-label">Priority</label><select class="form-select" name="priority" required><option value="">Select</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div><button type="submit" class="btn btn-primary btn-sm w-100">Submit</button></form>'
+                                                title="Raise Escalation">
                                             <i class="fas fa-exclamation-triangle"></i>
                                         </button>
                                     {% endif %}
@@ -350,15 +628,20 @@
                             <td>
                                 <div class="d-flex">
                                     {% if req.escalation %}
-                                        <span class="badge rounded-pill badge-escalated me-2">
-                                            {{ req.escalation }}
+                                        <span class="badge rounded-pill badge-escalated me-2" 
+                                            data-bs-toggle="tooltip" 
+                                            data-bs-placement="top" 
+                                            title="{{ req.escalation }}">
+                                            Escalated
                                         </span>
                                     {% else %}
-                                        <button class="btn btn-sm btn-escalate me-2" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#escalationModal"
-                                                data-requirement-id="{{ req.id }}"
-                                                data-company-name="{{ req.company_name }}">
+                                        <button class="btn btn-escalate me-2" 
+                                                data-bs-toggle="popover" 
+                                                data-bs-trigger="click"
+                                                data-bs-placement="top"
+                                                data-bs-html="true"
+                                                data-bs-content='<form id="escalationForm-{{ req.id }}" class="escalation-form" action="/update-escalation/{{ req.id }}/" method="post">{% csrf_token %}<input type="hidden" name="requirement_id" value="{{ req.id }}"><div class="mb-3"><label class="form-label">Reason</label><textarea class="form-control" name="reason" required></textarea></div><div class="mb-3"><label class="form-label">Priority</label><select class="form-select" name="priority" required><option value="">Select</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div><button type="submit" class="btn btn-primary btn-sm w-100">Submit</button></form>'
+                                                title="Raise Escalation">
                                             <i class="fas fa-exclamation-triangle"></i>
                                         </button>
                                     {% endif %}
@@ -465,34 +748,39 @@
             <div class="table-responsive">
                 <table class="table table-hover" id="monthlySummaryTable" style="width:100%">
                     <thead class="table-light">
-                        <tr>
-                            <th>Month</th>
-                            <th>Total</th>
+                        <tr><th>Month</th>
+                            <th>Requirements</th>
                             <th>Scheduled</th>
-                            <th>Not Scheduled</th>
                             <th>Completed</th>
                             <th>Placements</th>
+                            <th>Conversion Rate</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for month in monthly_summary %}
+                        {% for summary in monthly_summary %}
                         <tr>
-                            <td>{{ month.month|date:"F Y" }}</td>
-                            <td>{{ month.total }}</td>
-                            <td>{{ month.scheduled }}</td>
-                            <td>{{ month.not_scheduled }}</td>
-                            <td>{{ month.completed_rounds }}</td>
-                            <td>{{ month.placed }}</td>
+                            <td>{{ summary.month|date:"F Y" }}</td>
+                            <td>{{ summary.total_requirements|default:"0" }}</td>
+                            <td>{{ summary.scheduled_count|default:"0" }}</td>
+                            <td>{{ summary.completed_count|default:"0" }}</td>
+                            <td>{{ summary.placement_count|default:"0" }}</td>
                             <td>
-                                <a href="?month={{ month.month|date:'Y-m' }}" class="btn btn-sm btn-outline-primary">
+                                {% if summary.scheduled_count > 0 %}
+                                    {{ summary.conversion_rate|floatformat:1 }}%
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{% url 'student_data:monthly_reports' %}?month={{ summary.month|date:'Y-m' }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-search"></i>
                                 </a>
                             </td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="7" class="text-center py-4">No data available</td>
+                            <td colspan="7" class="text-center py-4">No monthly summary data available</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -504,252 +792,230 @@
 
 <!-- Filter Modal -->
 <div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="filterModalLabel">Filter Reports</h5>
+                <h5 class="modal-title" id="filterModalLabel">Filter Report</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="filterForm">
+                <form id="filterForm" method="get">
                     <div class="mb-3">
-                        <label for="companyName" class="form-label">Company Name</label>
-                        <input type="text" class="form-control" id="companyName" placeholder="Enter company name">
+                        <label for="companyFilter" class="form-label">Company</label>
+                        <select class="form-select" id="companyFilter" name="company">
+                            <option value="">All Companies</option>
+                            {% for company in all_companies %}
+                            <option value="{{ company.id }}" {% if selected_company == company.id %}selected{% endif %}>
+                                {{ company.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
                     </div>
                     
                     <div class="mb-3">
-                        <label for="companyCode" class="form-label">Company Code</label>
-                        <input type="text" class="form-control" id="companyCode" placeholder="Enter company code">
+                        <label for="statusFilter" class="form-label">Status</label>
+                        <select class="form-select" id="statusFilter" name="status">
+                            <option value="">All Statuses</option>
+                            <option value="scheduled" {% if selected_status == 'scheduled' %}selected{% endif %}>Scheduled</option>
+                            <option value="not_scheduled" {% if selected_status == 'not_scheduled' %}selected{% endif %}>Not Scheduled</option>
+                            <option value="completed" {% if selected_status == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="ongoing" {% if selected_status == 'ongoing' %}selected{% endif %}>Ongoing</option>
+                        </select>
                     </div>
                     
-                    <div class="row g-2 mb-3">
-                        <div class="col-md-6">
-                            <label for="status" class="form-label">Status</label>
-                            <select class="form-select" id="status">
-                                <option value="">All Status</option>
-                                <option value="scheduled">Scheduled</option>
-                                <option value="not_scheduled">Not Scheduled</option>
-                                <option value="pending">Pending</option>
-                            </select>
+                    <div class="mb-3">
+                        <label for="dateRangeFilter" class="form-label">Date Range</label>
+                        <div class="input-group">
+                            <input type="date" class="form-control" id="startDateFilter" name="start_date" 
+                                value="{{ start_date|date:'Y-m-d' }}">
+                            <span class="input-group-text">to</span>
+                            <input type="date" class="form-control" id="endDateFilter" name="end_date" 
+                                value="{{ end_date|date:'Y-m-d' }}">
                         </div>
-                        <div class="col-md-6">
-                            <label for="result" class="form-label">Result</label>
-                            <select class="form-select" id="result">
-                                <option value="">All Results</option>
-                                <option value="selected">Selected</option>
-                                <option value="no_selects">No Selects</option>
-                                <option value="ongoing">Ongoing</option>
-                            </select>
-                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="resultFilter" class="form-label">Result</label>
+                        <select class="form-select" id="resultFilter" name="result">
+                            <option value="">All Results</option>
+                            <option value="selected" {% if selected_result == 'selected' %}selected{% endif %}>Selected</option>
+                            <option value="no_selects" {% if selected_result == 'no_selects' %}selected{% endif %}>No Selects</option>
+                            <option value="awaiting" {% if selected_result == 'awaiting' %}selected{% endif %}>Awaiting Results</option>
+                        </select>
                     </div>
                     
                     <div class="mb-3">
                         <div class="form-check">
-                            <input class="form-check-input" type="checkbox" id="escalatedOnly">
-                            <label class="form-check-label" for="escalatedOnly">
-                                Show escalated cases only
+                            <input class="form-check-input" type="checkbox" id="showEscalatedFilter" name="show_escalated" 
+                                {% if show_escalated %}checked{% endif %}>
+                            <label class="form-check-label" for="showEscalatedFilter">
+                                Show only escalated requirements
                             </label>
                         </div>
                     </div>
+                    
+                    <input type="hidden" name="month" value="{{ selected_month|date:'Y-m' }}">
                 </form>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-outline-danger" id="resetFilterBtn">Reset</button>
-                <button type="button" class="btn btn-primary" id="applyFilterBtn">Apply Filters</button>
+                <button type="button" class="btn btn-outline-secondary" id="resetFiltersBtn">Reset</button>
+                <button type="submit" form="filterForm" class="btn btn-primary">Apply Filters</button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Escalation Modal -->
-<div class="modal fade" id="escalationModal" tabindex="-1" aria-labelledby="escalationModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="escalationModalLabel">Raise Escalation</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <form id="escalationForm" method="post" action="">
-                {% csrf_token %}
-                <div class="modal-body">
-                    <input type="hidden" name="requirement_id" id="escalationRequirementId">
-                    <div class="mb-3">
-                        <label for="escalationCompany" class="form-label">Company</label>
-                        <input type="text" class="form-control" id="escalationCompany" readonly>
-                    </div>
-                    <div class="mb-3">
-                        <label for="escalationReason" class="form-label">Reason</label>
-                        <textarea class="form-control" id="escalationReason" name="reason" rows="3" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="escalationPriority" class="form-label">Priority</label>
-                        <select class="form-select" id="escalationPriority" name="priority" required>
-                            <option value="">Select priority</option>
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Submit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
 {% endblock %}
 
-{% block extra_js %}
+{% block extra_scripts %}
 <!-- DataTables JS -->
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
 
 <script>
     $(document).ready(function() {
-        // Initialize DataTables with consistent settings
-        const tableOptions = {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+        
+        // Initialize popovers
+        var popoverTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="popover"]'))
+        var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
+            return new bootstrap.Popover(popoverTriggerEl, {
+                sanitize: false
+            })
+        });
+        
+        // Initialize DataTables
+        $('#scheduledTable').DataTable({
+            paging: true,
             responsive: true,
+            ordering: true,
+            info: true,
+            pageLength: 10,
             language: {
                 search: "_INPUT_",
-                searchPlaceholder: "Search...",
-                lengthMenu: "Show _MENU_ entries",
-                info: "Showing _START_ to _END_ of _TOTAL_ entries",
-                infoEmpty: "No entries found",
-                infoFiltered: "(filtered from _MAX_ total entries)"
+                searchPlaceholder: "Search requirements...",
+                zeroRecords: "No requirements found",
+                info: "Showing _START_ to _END_ of _TOTAL_ requirements",
+                infoEmpty: "Showing 0 to 0 of 0 requirements",
+                infoFiltered: "(filtered from _MAX_ total requirements)"
             },
-            dom: '<"top"f>rt<"bottom"lip><"clear">',
-            pageLength: 10
-        };
+            columnDefs: [
+                { orderable: false, targets: 6 }
+            ]
+        });
         
-        // Initialize all tables
-        const scheduledTable = $('#scheduledTable').DataTable(tableOptions);
-        const nonScheduledTable = $('#nonScheduledTable').DataTable(tableOptions);
-        const monthlySummaryTable = $('#monthlySummaryTable').DataTable(tableOptions);
+        $('#nonScheduledTable').DataTable({
+            paging: true,
+            responsive: true,
+            ordering: true,
+            info: true,
+            pageLength: 10,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search requirements...",
+                zeroRecords: "No requirements found",
+                info: "Showing _START_ to _END_ of _TOTAL_ requirements",
+                infoEmpty: "Showing 0 to 0 of 0 requirements",
+                infoFiltered: "(filtered from _MAX_ total requirements)"
+            },
+            columnDefs: [
+                { orderable: false, targets: 5 }
+            ]
+        });
         
-        if ($('#crossMonthTable').length) {
-            $('#crossMonthTable').DataTable(tableOptions);
-        }
+        $('#crossMonthTable').DataTable({
+            paging: true,
+            responsive: true,
+            ordering: true,
+            info: true,
+            pageLength: 10,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search requirements...",
+                zeroRecords: "No requirements found",
+                info: "Showing _START_ to _END_ of _TOTAL_ requirements",
+                infoEmpty: "Showing 0 to 0 of 0 requirements",
+                infoFiltered: "(filtered from _MAX_ total requirements)"
+            },
+            columnDefs: [
+                { orderable: false, targets: 6 }
+            ]
+        });
         
-        // Month select change handler
+        $('#monthlySummaryTable').DataTable({
+            paging: true,
+            responsive: true,
+            ordering: true,
+            info: true,
+            pageLength: 12,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search months...",
+                zeroRecords: "No data found",
+                info: "Showing _START_ to _END_ of _TOTAL_ months",
+                infoEmpty: "Showing 0 to 0 of 0 months",
+                infoFiltered: "(filtered from _MAX_ total months)"
+            },
+            columnDefs: [
+                { orderable: false, targets: 6 }
+            ],
+            order: [[0, 'desc']]
+        });
+        
+        // Handle month selection
         $('#monthSelect').on('change', function() {
-            $('#monthForm').submit();
+            if (this.value) {
+                $('#monthForm').submit();
+            }
         });
         
-        // Auto-submit if current month is selected by default
-        if ($('#monthSelect').val() === '{{ current_month|date:"Y-m" }}' && !window.location.search.includes('month=')) {
-            $('#monthForm').submit();
-        }
-        
-        // Filter functionality
-        $('#applyFilterBtn').on('click', function() {
-            const company = $('#companyName').val().toLowerCase();
-            const code = $('#companyCode').val().toLowerCase();
-            const status = $('#status').val();
-            const result = $('#result').val();
-            const escalatedOnly = $('#escalatedOnly').is(':checked');
-            
-            // Apply filters to all tables
-            [scheduledTable, nonScheduledTable, $('#crossMonthTable').DataTable()].forEach(table => {
-                if (!table) return;
-                
-                table.search('').columns().search('').draw();
-                
-                // Custom filtering function
-                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                    const row = table.row(dataIndex).nodes().to$();
-                    
-                    // Company name filter
-                    if (company && !data[0].toLowerCase().includes(company)) {
-                        return false;
-                    }
-                    
-                    // Company code filter
-                    if (code && !data[1].toLowerCase().includes(code)) {
-                        return false;
-                    }
-                    
-                    // Status filter
-                    if (status) {
-                        const statusText = row.find('td:eq(2) .badge').text().trim().toLowerCase();
-                        if (status === 'scheduled' && !statusText.includes('scheduled')) return false;
-                        if (status === 'not_scheduled' && !statusText.includes('not scheduled')) return false;
-                        if (status === 'pending' && !statusText.includes('pending')) return false;
-                    }
-                    
-                    // Result filter
-                    if (result && data.length > 4) { // Check if result column exists
-                        const resultText = row.find('td:eq(4) .badge').text().trim().toLowerCase();
-                        if (result === 'selected' && !resultText.includes('selected')) return false;
-                        if (result === 'no_selects' && !resultText.includes('no selects')) return false;
-                        if (result === 'ongoing' && !resultText.includes('ongoing')) return false;
-                    }
-                    
-                    // Escalation filter
-                    if (escalatedOnly) {
-                        const hasEscalation = row.find('.badge-escalated').length > 0;
-                        if (!hasEscalation) return false;
-                    }
-                    
-                    return true;
-                });
-                
-                table.draw();
-                $.fn.dataTable.ext.search.pop();
-            });
-            
-            $('#filterModal').modal('hide');
+        // Reset filters
+        $('#resetFiltersBtn').on('click', function() {
+            $('#companyFilter').val('');
+            $('#statusFilter').val('');
+            $('#startDateFilter').val('');
+            $('#endDateFilter').val('');
+            $('#resultFilter').val('');
+            $('#showEscalatedFilter').prop('checked', false);
         });
         
-        // Reset filter button
-        $('#resetFilterBtn').on('click', function() {
-            $('#filterForm')[0].reset();
-            [scheduledTable, nonScheduledTable, $('#crossMonthTable').DataTable()].forEach(table => {
-                if (table) {
-                    table.search('').columns().search('').draw();
+        // Close popover when clicking outside
+        $('body').on('click', function (e) {
+            if ($(e.target).data('bs-toggle') !== 'popover'
+                && $(e.target).parents('.popover').length === 0) {
+                $('[data-bs-toggle="popover"]').popover('hide');
+            }
+        });
+        
+        // Handle escalation form submissions
+        $(document).on('submit', '.escalation-form', function(e) {
+            e.preventDefault();
+            var form = $(this);
+            
+            $.ajax({
+                type: form.attr('method'),
+                url: form.attr('action'),
+                data: form.serialize(),
+                success: function(response) {
+                    $('[data-bs-toggle="popover"]').popover('hide');
+                    if (response.status === 'success') {
+                        alert('Escalation submitted successfully!');
+                        location.reload();
+                    } else {
+                        alert('Error: ' + response.message);
+                    }
+                },
+                error: function() {
+                    alert('An error occurred. Please try again.');
+                    $('[data-bs-toggle="popover"]').popover('hide');
                 }
             });
         });
-        
-        // Handle escalation modal
-        $('#escalationModal').on('show.bs.modal', function(event) {
-            const button = $(event.relatedTarget);
-            const requirementId = button.data('requirement-id');
-            const companyName = button.data('company-name');
-            
-            $('#escalationRequirementId').val(requirementId);
-            $('#escalationCompany').val(companyName);
-            
-            // Update form action URL
-            const form = $('#escalationForm');
-             $('#escalationForm').attr('action', `/update-escalation/${requirementId}/`);
-        });
-        
-        // Export report with filters
-        $('#exportReportBtn').on('click', function(e) {
-            e.preventDefault();
-            
-            const exportUrl = $(this).attr('href');
-            const month = $('#monthSelect').val();
-            const company = $('#companyName').val();
-            const code = $('#companyCode').val();
-            const status = $('#status').val();
-            const result = $('#result').val();
-            
-            const params = new URLSearchParams();
-            if (month) params.append('month', month);
-            if (company) params.append('company', company);
-            if (code) params.append('code', code);
-            if (status) params.append('status', status);
-            if (result) params.append('result', result);
-            
-            window.location.href = exportUrl + (params.toString() ? '?' + params.toString() : '');
-        });
-        
-        // Add tooltips
-        $('[data-bs-toggle="tooltip"]').tooltip();
     });
 </script>
-{% endblock %}  
+{% endblock %}

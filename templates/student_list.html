@@ -491,6 +491,11 @@
                         <a href="{% url 'student_data:student_list' %}?type_filter=dropout&sort=scheduled_requirements&order=desc" class="btn quick-filter-btn btn-outline-dark {% if type_filter == 'dropout' %}active bg-dark text-white{% endif %}">
                             <i class="fas fa-user-slash me-1"></i> Dropout (<span class="filter-count">{{ type_counts.dropout|default:0 }}</span>)
                         </a>
+
+                        <a href="{% url 'student_data:student_list' %}?type_filter=others&sort=scheduled_requirements" 
+   class="btn quick-filter-btn btn-outline-secondary {% if type_filter|lower == 'others' %}active bg-secondary text-white{% endif %}">
+    Others (<span class="filter-count">{{ type_counts.others|default:0 }}</span>)
+</a>
                     </div>
                 </div>
             </div>

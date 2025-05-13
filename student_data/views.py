@@ -243,6 +243,7 @@ from django.db.models import Q, Count
 from django.contrib.auth.decorators import login_required
 from .models import Student, RequirementStudent
 
+
 @login_required
 def student_list(request):
     # Get filter parameters from request
@@ -264,6 +265,13 @@ def student_list(request):
     students = students.exclude(requirementstudent__status='selected')
     students = students.exclude(is_placed=True)
 
+    # Known types for "others" filtering
+    known_types = [
+        'fsdi', 'super100', 'tuition', 'legend',
+        'placement_activity', 'placement activity',
+        'early_placement', 'early placement'
+    ]
+
     # Apply type_of_data filter
     if type_filter:
         type_filter_lower = type_filter.lower()
@@ -280,6 +288,16 @@ def student_list(request):
                 )
             elif type_filter_lower == 'dropout':
                 students = students.filter(is_dropout=True)
+            elif type_filter_lower == 'others':
+                students = students.exclude(type_of_data__iexact='fsdi') \
+                                   .exclude(type_of_data__iexact='super100') \
+                                   .exclude(type_of_data__iexact='tuition') \
+                                   .exclude(type_of_data__iexact='legend') \
+                                   .exclude(Q(type_of_data__iexact='placement_activity') |
+                                            Q(type_of_data__iexact='placement activity')) \
+                                   .exclude(Q(type_of_data__iexact='early_placement') |
+                                            Q(type_of_data__iexact='early placement')) \
+                                   .exclude(is_dropout=True)
             else:
                 students = students.filter(type_of_data__iexact=type_filter_lower)
 
@@ -381,6 +399,17 @@ def student_list(request):
 
     # Type counts for quick filters
     base_query = Student.objects.exclude(requirementstudent__status='selected').exclude(is_placed=True)
+
+    others_count = base_query.exclude(type_of_data__iexact='fsdi') \
+                             .exclude(type_of_data__iexact='super100') \
+                             .exclude(type_of_data__iexact='tuition') \
+                             .exclude(type_of_data__iexact='legend') \
+                             .exclude(Q(type_of_data__iexact='placement_activity') |
+                                      Q(type_of_data__iexact='placement activity')) \
+                             .exclude(Q(type_of_data__iexact='early_placement') |
+                                      Q(type_of_data__iexact='early placement')) \
+                             .exclude(is_dropout=True).count()
+
     type_counts = {
         'all': base_query.count(),
         'fsdi': base_query.filter(type_of_data__iexact='fsdi').count(),
@@ -396,6 +425,7 @@ def student_list(request):
             Q(type_of_data__iexact='early placement')
         ).count(),
         'dropout': base_query.filter(is_dropout=True).count(),
+        'others': others_count,
     }
 
     # Context data
@@ -436,7 +466,6 @@ def student_list(request):
     }
 
     return render(request, 'student_list.html', context)
-
 @login_required
 def student_detail(request, student_id):
     student = get_object_or_404(
@@ -804,14 +833,6 @@ def update_student_feedback(request, requirement_id):
         
         return redirect('student_data:requirement_detail',pk=requirement_id)
 
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.db import transaction
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib import messages
-from .models import Requirement
-from .forms import RequirementEditForm
-
 @login_required
 @transaction.atomic
 def requirement_edit(request, pk):
@@ -828,20 +849,14 @@ def requirement_edit(request, pk):
 
                 students = list(requirement.students.all())
                 for student in students:
-                    student.update_requirement_counts()
-
-                Student.objects.bulk_update(
-                    students,
-                    ['scheduled_count', 'not_scheduled_count', 'modified_at'],
-                    batch_size=100
-                )
+                    student.update_requirement_counts()  # This already saves the updated counts
 
                 messages.success(request, 'Requirement updated successfully!')
                 return redirect('student_data:requirement_detail', pk=requirement.id)
 
             except Exception as e:
                 messages.error(request, f'Error updating requirement: {str(e)}')
-                # Optional: log error using logging module
+                # Optional: Log the exception
                 # import logging; logging.exception(e)
     else:
         form = RequirementEditForm(instance=requirement)
