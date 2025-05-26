@@ -116,3 +116,12 @@ def url_replace(context, **kwargs):
     for k, v in kwargs.items():
         query[k] = v
     return query.urlencode()
+
+
+from django import template
+
+register = template.Library()
+
+@register.filter
+def zip(a, b):
+    return zip(a, b)

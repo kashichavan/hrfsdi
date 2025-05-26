@@ -2451,72 +2451,83 @@ def download_student_selection_template(request):
     response['Content-Disposition'] = 'attachment; filename=student_selection_template.xlsx'
     return response
 
+# views.py
+
+# views.py
+
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from .models import Student
+from .forms import StudentForm, StudentSubjectRatingFormSet
 
 class StudentCreateView(CreateView):
     model = Student
-    fields = [
-        'name', 
-        'contact_number', 
-        'degree', 
-        'stream', 
-        'yop',
-        'tenth_percent', 
-        'twelfth_percent', 
-        'degree_percent',
-        'gender', 
-        'type_of_data',
-        'is_dropout',
-        'dropout_date',
-        'dropout_reason',
-        'overall_technical_rating',
-    ]
+    form_class = StudentForm
     template_name = 'student_add.html'
     success_url = reverse_lazy('student_data:add')
-    
-    def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-        # Add placeholders or help text if needed
-        form.fields['name'].help_text = "Enter full name"
-        form.fields['contact_number'].help_text = "Include country code if international"
-        form.fields['yop'].label = "Year of Passing"
-        form.fields['tenth_percent'].label = "10th Percentage"
-        form.fields['twelfth_percent'].label = "12th Percentage"
-        form.fields['degree_percent'].label = "Degree Percentage"
-        
-        # Make dropout fields conditional
-        if not self.object or not self.object.is_dropout:
-            form.fields['dropout_date'].widget.attrs['disabled'] = True
-            form.fields['dropout_reason'].widget.attrs['disabled'] = True
-            
-        return form
-    
-    def form_valid(self, form):
-        # Clean and process data before saving
-        instance = form.save(commit=False)
-        
-        # Handle dropout fields logic
-        if not instance.is_dropout:
-            instance.dropout_date = None
-            instance.dropout_reason = None
-            
-        instance.save()
-        form.save_m2m()  # In case there are many-to-many fields added later
-        
-        messages.success(self.request, 'Student added successfully!')
-        return super().form_valid(form)
-    
-    def form_invalid(self, form):
-        messages.error(self.request, 'Please correct the errors below.')
-        return super().form_invalid(form)
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = "Add New Student"
+        context['subjects'] = Subject.objects.all()
+    
+        rating_field = StudentSubjectRating._meta.get_field('rating')
+        context['rating_choices'] = rating_field.choices
+
+        if 'rating_formset' not in kwargs:
+        # Initialize formset with request-aware forms
+            rating_formset = StudentSubjectRatingFormSet()
+        
+            for form in rating_formset.forms:
+                form.request = self.request
+                if not form.initial.get('evaluated_by'):
+                    form.initial['evaluated_by'] = self.request.user.get_full_name() if self.request.user.is_authenticated else ''
+
+            context['rating_formset'] = rating_formset
+
         return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        rating_formset = StudentSubjectRatingFormSet(request.POST)
+
+        if form.is_valid() and rating_formset.is_valid():
+            return self.form_valid(form, rating_formset)
+        else:
+            return self.form_invalid(form, rating_formset)
+
+    # views.py
+    def form_valid(self, form, rating_formset):
+    # Step 1: Save Student first
+        instance = form.save()  # This assigns an ID to the student
+
+    # Step 2: Update dropout fields if needed
+        is_dropout = form.cleaned_data.get('is_dropout')
+        if not is_dropout:
+            instance.dropout_date = None
+            instance.dropout_reason = None
+
+    # Step 3: Save the student again if dropout fields changed
+        instance.save()
+
+    # Step 4: Assign student to each rating and set evaluated_by
+        for rating_form in rating_formset.forms:
+            if rating_form.has_changed():  # Only save forms with changes
+                rating = rating_form.save(commit=False)
+                rating.student = instance  # Now student has an ID
+                if self.request.user.is_authenticated:
+                    rating.evaluated_by = self.request.user.get_full_name() or self.request.user.username
+                rating.save()
+
+        messages.success(self.request, 'Student added successfully!')
+        return super().form_valid(form)
+
+
+    def form_invalid(self, form, rating_formset):
+        messages.error(self.request, 'Please correct the errors below.')
+        return self.render_to_response(self.get_context_data(form=form, rating_formset=rating_formset))
+
 
 
 from django.http import HttpResponse

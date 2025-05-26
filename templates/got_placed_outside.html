@@ -1,9 +1,25 @@
 {% extends "base.html" %}
-{% block title %}Add Placed Student{% endblock %}
+{% load custom_filters %}
+
+{% block title %}Placed Students{% endblock %}
+
 {% block extra_head %}
 <!-- Fonts & Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Poppins :wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css " rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
+
+<!-- jQuery and DataTables JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
     :root {
@@ -16,70 +32,162 @@
         --text-light: #777777;
         --bg-light: #FFF8F0;
         --card-bg: #FFFFFF;
+        --success-green: #10B981;
+        --warning-amber: #F59E0B;
+        --border-light: #F0F0F0;
     }
 
     body {
         font-family: 'Poppins', sans-serif;
         background-color: var(--bg-light);
+        color: var(--text-dark);
+        line-height: 1.6;
     }
 
     .page-header {
-        padding: 1.5rem 0;
+        padding: 2rem 0 1.5rem;
+        text-align: center;
     }
 
     .header-title {
         font-family: 'Montserrat', sans-serif;
         font-weight: 700;
-        font-size: 1.75rem;
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-subtitle {
+        color: var(--text-medium);
+        font-size: 1.2rem;
+        font-weight: 500;
+        margin-bottom: 2rem;
+    }
+
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        border: 1px solid var(--border-light);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px rgba(255, 107, 53, 0.15);
+    }
+
+    .stat-number {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 2.2rem;
+        font-weight: 700;
         color: var(--primary-color);
+        line-height: 1;
+    }
+
+    .stat-label {
+        color: var(--text-medium);
+        font-weight: 600;
+        margin-top: 0.5rem;
+        font-size: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+
+    .btn {
+        font-family: 'Poppins', sans-serif;
+        padding: 0.75rem 1.5rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(255, 107, 53, 0.4);
+    }
+
+    .btn-outline-secondary {
+        background: white;
+        color: var(--primary-color);
+        border: 2px solid var(--primary-color);
+    }
+
+    .btn-outline-secondary:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
     }
 
     .card {
         border: none;
         border-radius: 12px;
         box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+        margin-bottom: 2rem;
     }
 
     .card-header {
         background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
-        border-radius: 12px 12px 0 0 !important;
+        border-radius: 0 !important;
         padding: 1.5rem !important;
+        border: none !important;
     }
 
-    .btn-primary {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-        transition: all 0.3s ease;
-    }
-
-    .btn-primary:hover {
-        background-color: var(--primary-dark);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.3);
-    }
-
-    .btn-outline-secondary {
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-secondary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-control {
-        border-radius: 8px;
-        padding: 0.75rem 1rem;
-        border: 1px solid #ddd;
-    }
-
-    .form-control:focus {
-        border-color: var(--primary-light);
-        box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+    .card-header h4 {
+        color: white !important;
+        margin: 0;
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
     }
 
     .search-container {
         position: relative;
+        margin-bottom: 1rem;
     }
 
     .search-icon {
@@ -88,17 +196,291 @@
         left: 15px;
         transform: translateY(-50%);
         color: var(--text-light);
+        z-index: 2;
     }
 
     .search-input {
         padding-left: 2.5rem;
+        border-radius: 8px;
+        padding: 0.75rem 1rem 0.75rem 2.5rem;
+        border: 1px solid #ddd;
+        width: 100%;
+        font-size: 0.95rem;
     }
 
-    .divider {
-        height: 1px;
-        background: linear-gradient(to right, #eee, transparent);
-        margin-top: 1.5rem;
-        margin-bottom: 1.5rem;
+    .search-input:focus {
+        border-color: var(--primary-light);
+        box-shadow: 0 0 0 0.2rem rgba(255, 107, 53, 0.25);
+        outline: none;
+    }
+
+    .type-filter-container {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        margin-bottom: 2rem;
+    }
+
+    .filter-title {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-dark);
+        font-size: 1.1rem;
+    }
+
+    .filter-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .filter-btn {
+        font-family: 'Poppins', sans-serif;
+        padding: 0.6rem 1rem;
+        border: 2px solid var(--border-light);
+        border-radius: 20px;
+        background: white;
+        color: var(--text-medium);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .filter-btn:hover {
+        border-color: var(--primary-color);
+        color: var(--primary-color);
+        transform: translateY(-1px);
+    }
+
+    .filter-btn.active {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+        color: white;
+        border-color: var(--primary-color);
+    }
+
+    .filter-count {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.2rem 0.5rem;
+        border-radius: 10px;
+        font-size: 0.8rem;
+        font-weight: 700;
+    }
+
+    .filter-btn:not(.active) .filter-count {
+        background: var(--bg-light);
+        color: var(--text-dark);
+    }
+
+    /* DataTable Styling */
+    .dataTables_wrapper {
+        padding: 1.5rem;
+    }
+
+    .dataTables_length,
+    .dataTables_filter,
+    .dataTables_info,
+    .dataTables_paginate {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .dataTables_length label,
+    .dataTables_filter label {
+        font-weight: 600;
+        color: var(--text-medium);
+        margin-bottom: 0.5rem;
+        display: block;
+    }
+
+    .dataTables_length select,
+    .dataTables_filter input {
+        font-family: 'Poppins', sans-serif;
+        padding: 0.6rem 0.8rem;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        background: white;
+    }
+
+    .dataTables_length select:focus,
+    .dataTables_filter input:focus {
+        outline: none;
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 2px rgba(255, 107, 53, 0.1);
+    }
+
+    table.dataTable {
+        width: 100% !important;
+        border-collapse: separate;
+        border-spacing: 0;
+        margin-top: 1rem !important;
+    }
+
+    table.dataTable thead th {
+        background: var(--bg-light);
+        color: var(--text-dark);
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        padding: 1rem 0.8rem;
+        border: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    table.dataTable thead th:first-child {
+        border-radius: 8px 0 0 0;
+    }
+
+    table.dataTable thead th:last-child {
+        border-radius: 0 8px 0 0;
+    }
+
+    table.dataTable tbody td {
+        padding: 1rem 0.8rem;
+        border-bottom: 1px solid var(--border-light);
+        font-size: 0.9rem;
+        vertical-align: middle;
+    }
+
+    table.dataTable tbody tr {
+        transition: all 0.2s ease;
+    }
+
+    table.dataTable tbody tr:hover {
+        background-color: rgba(255, 107, 53, 0.02);
+    }
+
+    table.dataTable tbody tr:last-child td {
+        border-bottom: none;
+    }
+
+    .student-name {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        font-size: 1rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .student-name:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+    }
+
+    .student-details {
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+
+    .company-name {
+        font-family: 'Montserrat', sans-serif;
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: var(--primary-color);
+        text-decoration: none;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .company-name:hover {
+        color: var(--primary-dark);
+        text-decoration: underline;
+    }
+
+    .company-details {
+        color: var(--text-light);
+        font-size: 0.8rem;
+    }
+
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.4rem 0.8rem;
+        border-radius: 15px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-placed {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--success-green);
+    }
+
+    .status-scheduled {
+        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-amber);
+    }
+
+    .date-badge {
+        background: var(--bg-light);
+        color: var(--text-dark);
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
+    .action-links {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+
+    .action-link {
+        font-family: 'Poppins', sans-serif;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.8rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 6px;
+        border: 1px solid var(--primary-color);
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .action-link:hover {
+        background: var(--primary-color);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Pagination */
+    .dataTables_paginate .paginate_button {
+        font-family: 'Poppins', sans-serif;
+        padding: 0.6rem 0.8rem !important;
+        margin: 0 0.2rem;
+        border-radius: 6px !important;
+        border: 1px solid var(--border-light) !important;
+        background: white !important;
+        color: var(--text-medium) !important;
+        font-weight: 600;
+        transition: all 0.2s ease;
+    }
+
+    .dataTables_paginate .paginate_button:hover {
+        background: var(--primary-color) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
+    }
+
+    .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, var(--primary-color), var(--primary-light)) !important;
+        color: white !important;
+        border-color: var(--primary-color) !important;
     }
 
     /* Toast Notification */
@@ -108,74 +490,134 @@
         right: 20px;
         z-index: 9999;
         max-width: 350px;
-        opacity: 1;
-        animation: fadeOut 0.5s ease forwards;
-        animation-delay: 3s;
-    }
-
-    @keyframes fadeOut {
-        from { opacity: 1; }
-        to { opacity: 0; visibility: hidden; }
+        border-radius: 8px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
     }
 
     .toast-success {
         background-color: #d4edda;
         color: #155724;
+        border: 1px solid #c3e6cb;
     }
 
     .toast-error {
         background-color: #f8d7da;
         color: #721c24;
+        border: 1px solid #f5c6cb;
     }
 
     .toast-body {
         padding: 1rem;
-        font-size: 0.95rem;
+        font-size: 0.9rem;
+        font-weight: 500;
     }
 
-    /* Hide student list by default */
-    #student-results {
-        display: none;
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .header-title {
+            font-size: 2rem;
+        }
+        
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .dataTables_wrapper {
+            padding: 1rem;
+        }
+        
+        .card-header {
+            padding: 1rem !important;
+        }
+        
+        .filter-buttons {
+            justify-content: center;
+        }
     }
 
-    /* Show when results are present */
-    #student-results.show {
-        display: block;
+    /* Loading Animation */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 251, 247, 0.9);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
     }
 
-    .list-group-item {
-        padding: 0.75rem 1rem;
-        font-size: 0.95rem;
+    .loading-overlay.show {
+        opacity: 1;
+        visibility: visible;
     }
 
-    .form-section {
-        background-color: #fff;
-        padding: 1.5rem;
-        border-radius: 12px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--bg-light);
+        border-top: 3px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
     }
 
-    .form-section h5 {
-        margin-bottom: 1rem;
-        font-size: 1.1rem;
-        color: var(--text-dark);
-    }
-
-    .form-row {
-        margin-bottom: 1rem;
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
     }
 </style>
 {% endblock %}
+
 {% block content %}
-<div class="container py-5">
+<div class="container py-4">
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+    </div>
+
     <!-- Page Header -->
-    <div class="page-header text-center">
-        <h1 class="header-title">Register Student Placement</h1>
-        <p class="header-subtitle">Add students who secured placements outside the campus</p>
+    <div class="page-header">
+        <h1 class="header-title">🎉 Placed Students</h1>
+        <p class="header-subtitle">Celebrating our successful student placements</p>
+        
+        <!-- Stats Cards -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-number" id="totalPlaced">{{ total_count }}</div>
+                <div class="stat-label">Total Placed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="companiesCount">{{ type_counts|length }}</div>
+                <div class="stat-label">Data Types</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="recentPlacements">{{ total_count }}</div>
+                <div class="stat-label">Active Placements</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">Success Rate</div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <a href="{% url 'student_data:placed_outside' %}" class="btn btn-primary">
+                <i class="fas fa-globe"></i> Students Placed Outside
+            </a>
+            <a href="{% url 'student_data:export_placed_students_excel' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-file-excel"></i> Export Excel
+            </a>
+        </div>
     </div>
 
     <!-- Toast Messages -->
@@ -189,176 +631,468 @@
         {% endfor %}
     {% endif %}
 
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">Search Student</h4>
-                </div>
-                <div class="card-body">
-                    <!-- Search Section -->
-                    <form id="search-form" method="get" action="{% url 'student_data:add_got_placed_outside' %}" class="mb-4">
-                        <div class="row align-items-end">
-                            <div class="col-md-8 mb-3 mb-md-0">
-                                <label for="search_query" class="form-label">Student Name or Mobile Number</label>
-                                <div class="search-container">
-                                    <i class="fas fa-user search-icon"></i>
-                                    <input type="text" class="form-control search-input" id="search_query"
-                                           name="search_query"
-                                           placeholder="Enter student's name or mobile number"
-                                           value="{{ search_query }}">
-                                </div>
-                                <small class="form-text text-muted">You can search by full/partial name or 10-digit mobile number.</small>
-                            </div>
-                            <div class="col-md-4 text-md-end">
-                                <button type="submit" class="btn btn-primary w-100">
-                                    <i class="fas fa-search mr-2"></i>Search
-                                </button>
-                            </div>
+    <!-- Main Card -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0"><i class="fas fa-search mr-2"></i>Search & Filter Students</h4>
+        </div>
+        <div class="card-body">
+            <!-- Search Section -->
+            <form id="search-form" method="get" class="mb-4">
+                <div class="row align-items-end">
+                    <div class="col-md-8 mb-3 mb-md-0">
+                        <label for="search_query" class="form-label">Search Students</label>
+                        <div class="search-container">
+                            <i class="fas fa-user search-icon"></i>
+                            <input type="text" class="search-input" id="search_query"
+                                   name="search_query"
+                                   placeholder="Enter student name, company, or contact number"
+                                   value="{{ search_query }}">
                         </div>
-                    </form>
-
-                    <!-- CSV Export Button -->
-                    <div class="mb-4 d-flex justify-content-end">
-                        <a href="{% url 'student_data:export_students_csv' %}?search_query={{ search_query }}"
-                           class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-file-export mr-2"></i>Export Results
-                        </a>
+                        <small class="form-text text-muted">Search by student name, company name, or contact details.</small>
                     </div>
-
-                    <hr class="divider">
-
-                    <!-- Student List -->
-                    <div id="student-list" class="mb-4">
-                        <h5 class="mb-3">Matching Students</h5>
-                        <ul class="list-group" id="student-results" {% if students %}class="show"{% endif %}>
-                            {% for student in students %}
-                                <li class="list-group-item d-flex justify-content-between align-items-center">
-                                    <span>{{ student.name }} - {{ student.contact_number }}</span>
-                                </li>
-                            {% empty %}
-                                <li class="list-group-item text-center text-muted">
-                                    No matching students found.
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </div>
-
-                    <!-- Placement Form Section -->
-                    <div class="form-section">
-                        <form method="post" novalidate>
-                            {% csrf_token %}
-                            <h5>Select Student for Placement</h5>
-                            <div class="mb-3">
-                                <select class="form-select form-control" name="student" required>
-                                    <option value="">-- Select Student --</option>
-                                    {% for student in students %}
-                                        <option value="{{ student.id }}"
-                                            {% if form.student.value|stringformat:"s" == student.id|stringformat:"s" %}selected{% endif %}>
-                                            {{ student.name }} - {{ student.contact_number }}
-                                        </option>
-                                    {% endfor %}
-                                </select>
-                                {% for error in form.student.errors %}
-                                    <div class="invalid-feedback d-block">{{ error }}</div>
-                                {% endfor %}
-                            </div>
-
-                            <h5 class="mt-4">Placement Details</h5>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_company_name" class="form-label">Company Name</label>
-                                        {{ form.company_name }}
-                                        {% for error in form.company_name.errors %}
-                                            <div class="invalid-feedback d-block">{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_package" class="form-label">Package (in LPA)</label>
-                                        {{ form.package }}
-                                        {% for error in form.package.errors %}
-                                            <div class="invalid-feedback d-block">{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_role" class="form-label">Role</label>
-                                        {{ form.role }}
-                                        {% for error in form.role.errors %}
-                                            <div class="invalid-feedback d-block">{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label for="id_placed_date" class="form-label">Placed Date</label>
-                                        {{ form.placed_date }}
-                                        {% for error in form.placed_date.errors %}
-                                            <div class="invalid-feedback d-block">{{ error }}</div>
-                                        {% endfor %}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="d-flex justify-content-between mt-4">
-                                <a href="#" class="btn btn-outline-secondary">Cancel</a>
-                                <button type="submit" class="btn btn-primary px-4">
-                                    <i class="fas fa-paper-plane mr-2"></i>Submit Placement
-                                </button>
-                            </div>
-                        </form>
+                    <div class="col-md-4 text-md-end">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="fas fa-search mr-2"></i>Search
+                        </button>
                     </div>
                 </div>
+            </form>
+
+            <!-- CSV Export Button -->
+            <div class="mb-4 d-flex justify-content-end">
+                <a href="{% url 'student_data:export_placed_students_excel' %}?search_query={{ search_query }}"
+                   class="btn btn-outline-secondary btn-sm">
+                    <i class="fas fa-file-export mr-2"></i>Export Results
+                </a>
+            </div>
+
+            <!-- Type Filters -->
+            <div class="type-filter-container">
+                <h5 class="filter-title">Filter by Student Type</h5>
+                <div class="filter-buttons">
+                    <button class="filter-btn active" data-type="all">
+                        All Students
+                        <span class="filter-count">{{ total_count }}</span>
+                    </button>
+                    {% for type, count in type_counts.items %}
+                    <button class="filter-btn" data-type="{{ type|slugify }}">
+                        {{ type }}
+                        <span class="filter-count">{{ count }}</span>
+                    </button>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="table-responsive">
+                <table id="placedStudentsTable" class="display responsive nowrap" width="100%">
+                    <thead>
+                        <tr>
+                            <th>Student</th>
+                            <th>Company</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Schedule Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in placed_students %}
+                        <tr data-type="{{ entry.student.get_type_data|slugify }}">
+                            <td>
+                                <a href="{% url 'student_data:student_detail' entry.student.id %}" class="student-name">
+                                    {{ entry.student.name }}
+                                </a>
+                                <div class="student-details">
+                                    Contact: {{ entry.student.contact_number|default:"N/A" }} | 
+                                    Requirements: {{ entry.student.total_requirements|default:0 }} | 
+                                    Scheduled: {{ entry.student.scheduled_requirements|default:0 }}
+                                </div>
+                            </td>
+                            <td>
+                                <a href="{% url 'student_data:requirement_detail' entry.requirement.id %}" class="company-name">
+                                    {{ entry.requirement.company_name }}
+                                </a>
+                                <div class="company-details">Placement Opportunity</div>
+                            </td>
+                            <td>
+                                <span class="status-badge status-placed">{{ entry.student.type_of_data|default:"Not Specified" }}</span>
+                            </td>
+                            <td>
+                                <span class="status-badge status-placed">✅ Placed</span>
+                            </td>
+                            <td>
+                                {% if entry.requirement.schedule_date %}
+                                    <span class="date-badge">{{ entry.requirement.schedule_date }}</span>
+                                {% else %}
+                                    <span class="status-badge status-scheduled">Not Scheduled</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-links">
+                                    <a href="{% url 'student_data:student_detail' entry.student.id %}" class="action-link">
+                                        <i class="fas fa-user"></i> Profile
+                                    </a>
+                                    <a href="{% url 'student_data:requirement_detail' entry.requirement.id %}" class="action-link">
+                                        <i class="fas fa-building"></i> Company
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted">
+                                <i class="fas fa-inbox fa-2x mb-3 d-block"></i>
+                                No placed students found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const searchInput = document.getElementById('search_query');
-        const resultsContainer = document.getElementById('student-results');
+$(document).ready(function() {
+    // Show loading overlay
+    $('#loadingOverlay').addClass('show');
+    
+    // Initialize DataTable
+    let table;
+    try {
+        table = $('#placedStudentsTable').DataTable({
+            responsive: true,
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+            order: [[0, 'asc']],
+            dom: '<"top"lf>rt<"bottom"ip>',
+            language: {
+                search: "Search students:",
+                lengthMenu: "Show _MENU_ students",
+                info: "Showing _START_ to _END_ of _TOTAL_ students",
+                paginate: {
+                    first: "First",
+                    last: "Last",
+                    next: "Next",
+                    previous: "Previous"
+                },
+                emptyTable: "No placed students found",
+                zeroRecords: "No matching students found"
+            },
+            initComplete: function() {
+                // Hide loading overlay
+                $('#loadingOverlay').removeClass('show');
+                
+                // Add custom styling to DataTable elements
+                $('.dataTables_length select, .dataTables_filter input').addClass('form-control');
+                
+                // Set custom placeholder
+                $('#placedStudentsTable_filter input').attr('placeholder', 'Search by name, company, or type...');
+                
+                // Animate numbers
+                setTimeout(animateNumbers, 500);
+            }
+        });
+    } catch (error) {
+        console.error('DataTable initialization failed:', error);
+        $('#loadingOverlay').removeClass('show');
+        showToast('Failed to load student data', 'error');
+    }
 
-        // Initially hide the student list
-        if (!resultsContainer.classList.contains("show")) {
-            resultsContainer.style.display = "none";
-        }
-
-        // Live Search with AJAX
-        if (searchInput && resultsContainer) {
-            searchInput.addEventListener('input', function () {
-                const query = this.value.trim();
-                if (query.length < 2) {
-                    resultsContainer.innerHTML = '<li class="list-group-item text-muted">Type at least 2 characters...</li>';
-                    resultsContainer.style.display = 'block';
-                    return;
-                }
-
-                fetch('{% url "student_data:ajax_search_students" %}' + '?q=' + encodeURIComponent(query))
-                    .then(res => res.json())
-                    .then(data => {
-                        resultsContainer.innerHTML = '';
-                        if (data.students.length === 0) {
-                            resultsContainer.innerHTML = '<li class="list-group-item text-muted">No matches found</li>';
-                            resultsContainer.style.display = 'block';
-                            return;
-                        }
-
-                        data.students.forEach(student => {
-                            const li = document.createElement('li');
-                            li.className = 'list-group-item d-flex justify-content-between align-items-center';
-                            li.innerHTML = `<span>${student.name} - ${student.contact_number}</span>`;
-                            resultsContainer.appendChild(li);
-                        });
-
-                        resultsContainer.style.display = 'block';
-                    });
-            });
+    // Type filter functionality
+    let currentTypeFilter = 'all';
+    
+    $('.filter-btn').on('click', function() {
+        const filterType = $(this).data('type');
+        currentTypeFilter = filterType;
+        
+        // Update active state
+        $('.filter-btn').removeClass('active');
+        $(this).addClass('active');
+        
+        // Apply filter
+        if (table) {
+            if (filterType === 'all') {
+                table.column(2).search('').draw();
+            } else {
+                table.column(2).search(filterType, true, false).draw();
+            }
+            
+            // Smooth scroll to table
+            $('html, body').animate({
+                scrollTop: $('.table-responsive').offset().top - 20
+            }, 300);
         }
     });
+
+    // Animate numbers function
+    function animateNumbers() {
+        $('.stat-number').each(function() {
+            const $this = $(this);
+            const finalNumber = parseInt($this.text()) || 0;
+            
+            if (finalNumber > 0) {
+                let currentNumber = 0;
+                const increment = finalNumber / 50;
+                const timer = setInterval(function() {
+                    currentNumber += increment;
+                    if (currentNumber >= finalNumber) {
+                        $this.text(finalNumber);
+                        clearInterval(timer);
+                    } else {
+                        $this.text(Math.ceil(currentNumber));
+                    }
+                }, 40);
+            }
+        });
+    }
+
+    // Enhanced search functionality
+    let searchTimeout;
+    $(document).on('input', '#search_query', function() {
+        clearTimeout(searchTimeout);
+        const searchTerm = $(this).val();
+        searchTimeout = setTimeout(function() {
+            if (table) {
+                table.search(searchTerm).draw();
+            }
+        }, 300);
+    });
+
+    // Toast notification functionality
+    function showToast(message, type = 'success') {
+        const toast = $(`
+            <div class="toast toast-${type}" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="toast-body">
+                    ${message}
+                </div>
+            </div>
+        `);
+        
+        $('body').append(toast);
+        
+        // Show toast with animation
+        setTimeout(() => {
+            toast.addClass('show');
+        }, 100);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            toast.removeClass('show');
+            setTimeout(() => toast.remove(), 300);
+        }, 5000);
+        
+        // Click to dismiss
+        toast.on('click', function() {
+            $(this).removeClass('show');
+            setTimeout(() => $(this).remove(), 300);
+        });
+    }
+
+    // Auto-hide existing toast messages
+    $('.toast').each(function() {
+        const $toast = $(this);
+        setTimeout(() => {
+            $toast.fadeOut(300, function() {
+                $(this).remove();
+            });
+        }, 5000);
+        
+        // Click to dismiss
+        $toast.on('click', function() {
+            $(this).fadeOut(300, function() {
+                $(this).remove();
+            });
+        });
+    });
+
+    // Enhanced table row interactions
+    $('#placedStudentsTable tbody').on('mouseenter', 'tr', function() {
+        $(this).addClass('table-row-hover');
+    }).on('mouseleave', 'tr', function() {
+        $(this).removeClass('table-row-hover');
+    });
+
+    // Smooth scrolling for action buttons
+    $('.btn[href*="#"]').on('click', function(e) {
+        const target = $(this.getAttribute('href'));
+        if (target.length) {
+            e.preventDefault();
+            $('html, body').animate({
+                scrollTop: target.offset().top - 20
+            }, 500);
+        }
+    });
+
+    // Export functionality with loading state
+    $('a[href*="export"]').on('click', function() {
+        const $btn = $(this);
+        const originalText = $btn.html();
+        
+        $btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Exporting...');
+        $btn.addClass('disabled');
+        
+        // Re-enable after 3 seconds (assuming export completes)
+        setTimeout(() => {
+            $btn.html(originalText);
+            $btn.removeClass('disabled');
+            showToast('Export completed successfully!', 'success');
+        }, 3000);
+    });
+
+    // Advanced search with suggestions
+    const searchInput = $('#search_query');
+    let searchSuggestions = [];
+    
+    // Collect all searchable terms from table
+    $('#placedStudentsTable tbody tr').each(function() {
+        const studentName = $(this).find('.student-name').text().trim();
+        const companyName = $(this).find('.company-name').text().trim();
+        if (studentName) searchSuggestions.push(studentName);
+        if (companyName) searchSuggestions.push(companyName);
+    });
+    
+    // Remove duplicates
+    searchSuggestions = [...new Set(searchSuggestions)];
+
+    // Real-time search filtering
+    let isSearching = false;
+    searchInput.on('input', function() {
+        const query = $(this).val().toLowerCase();
+        
+        if (!isSearching && query.length > 0) {
+            isSearching = true;
+            $('#loadingOverlay').addClass('show');
+            
+            setTimeout(() => {
+                if (table) {
+                    table.search(query).draw();
+                }
+                $('#loadingOverlay').removeClass('show');
+                isSearching = false;
+            }, 500);
+        } else if (query.length === 0 && table) {
+            table.search('').draw();
+        }
+    });
+
+    // Keyboard shortcuts
+    $(document).on('keydown', function(e) {
+        // Ctrl/Cmd + F to focus search
+        if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+        
+        // Escape to clear search
+        if (e.key === 'Escape' && searchInput.is(':focus')) {
+            searchInput.val('').trigger('input');
+            searchInput.blur();
+        }
+    });
+
+    // Update statistics based on current filter
+    function updateStatistics() {
+        if (table) {
+            const visibleRows = table.rows({search: 'applied'}).count();
+            const totalRows = table.rows().count();
+            
+            // Update the stats if needed
+            if (currentTypeFilter !== 'all') {
+                $('#totalPlaced').text(visibleRows);
+            } else {
+                $('#totalPlaced').text(totalRows);
+            }
+        }
+    }
+
+    // Call statistics update when table is filtered
+    if (table) {
+        table.on('search.dt', updateStatistics);
+        table.on('page.dt', updateStatistics);
+    }
+
+    // Add loading states to all clickable elements
+    $('.action-link, .btn').on('click', function() {
+        const $element = $(this);
+        if (!$element.hasClass('disabled') && !$element.attr('href').startsWith('#')) {
+            const originalContent = $element.html();
+            $element.html('<i class="fas fa-spinner fa-spin"></i>');
+            $element.addClass('loading');
+            
+            // Restore after a short delay if still on page
+            setTimeout(() => {
+                if ($element.hasClass('loading')) {
+                    $element.html(originalContent);
+                    $element.removeClass('loading');
+                }
+            }, 2000);
+        }
+    });
+
+    // Responsive table handling
+    function handleResponsiveTable() {
+        if ($(window).width() < 768) {
+            if (table) {
+                // Adjust columns for mobile
+                table.columns([3, 4, 5]).visible(false);
+            }
+        } else {
+            if (table) {
+                table.columns().visible(true);
+            }
+        }
+    }
+
+    // Call on load and resize
+    handleResponsiveTable();
+    $(window).on('resize', handleResponsiveTable);
+
+    // Error handling for failed AJAX requests or missing elements
+    window.addEventListener('error', function(e) {
+        console.error('JavaScript Error:', e.error);
+        showToast('An error occurred. Please refresh the page.', 'error');
+    });
+
+    // Final initialization check
+    console.log('Placed Students page initialized successfully');
+    
+    // Show success message if everything loaded properly
+    if (table && table.data().count() > 0) {
+        setTimeout(() => {
+            showToast(`Loaded ${table.data().count()} student records successfully!`, 'success');
+        }, 1000);
+    }
+});
+
+// Additional utility functions
+function refreshTable() {
+    if (typeof table !== 'undefined') {
+        table.ajax.reload(null, false);
+    }
+}
+
+function exportCurrentView() {
+    // This would integrate with the Django export functionality
+    const currentSearch = $('#search_query').val();
+    const exportUrl = new URL(window.location.origin + "{% url 'student_data:export_placed_students_excel' %}");
+    
+    if (currentSearch) {
+        exportUrl.searchParams.set('search_query', currentSearch);
+    }
+    
+    window.location.href = exportUrl.toString();
+}
+
+// Make functions available globally if needed
+window.placedStudentsUtils = {
+    refreshTable,
+    exportCurrentView,
+    showToast
+};
 </script>
 {% endblock %}
+

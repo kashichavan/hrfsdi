@@ -1,931 +1,1171 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load widget_tweaks %}
 
-{% block title %}Add Student - Student Management System{% endblock %}
+{% block title %}Add Student - {{ block.super }}{% endblock %}
 
 {% block extra_head %}
-<!-- Modern trending fonts for 2025 -->
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 <style>
-    .student-registration-page {
-        --primary-orange: #ff7700;
-        --secondary-orange: #ff9933;
-        --light-orange: #FFF3E6;
-        --ultra-light-orange: #FFF9F5;
-        --dark-orange: #E55620;
-        --form-bg: #FFF9F5;
-        --success-green: #10B981;
-        --error-red: #EF4444;
-        --accent-purple: #8B5CF6;
-        --accent-blue: #3B82F6;
-        background-color: var(--ultra-light-orange);
+    .student-form-container {
+        background: linear-gradient(135deg, #fff5eb 0%, #ffffff 50%, #fef3e2 100%);
+        min-height: calc(100vh - 200px);
         padding: 2rem 0;
-        min-height: 100vh;
-    }
-
-    .student-registration-page .form-container {
-        background: white;
-        border-radius: 24px;
-        box-shadow: 0 25px 50px -12px rgba(255, 107, 53, 0.15);
-        border: 1px solid rgba(255, 153, 51, 0.1);
-        overflow: hidden;
-        position: relative;
-        margin: 0 auto;
-        max-width: 960px;
-        z-index: 1;
-    }
-
-    .student-registration-page .form-header {
-        background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
-        padding: 2.5rem 2rem;
-        color: white;
-        text-align: center;
         position: relative;
         overflow: hidden;
     }
 
-    .student-registration-page .form-header h2 {
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 700;
-        letter-spacing: 0.5px;
-        margin: 0;
-        position: relative;
-        z-index: 2;
-        font-size: 2.5rem;
-        color: white;
-    }
-
-    .student-registration-page .form-header::before {
+    .student-form-container::before {
         content: '';
         position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.25) 0%, rgba(255, 255, 255, 0) 60%);
-        z-index: 1;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(255, 119, 0, 0.1) 0%, transparent 70%);
+        border-radius: 50%;
     }
 
-    .student-registration-page .header-subtitle {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 400;
-        font-size: 1.1rem;
-        opacity: 0.9;
-        margin-top: 0.5rem;
+    .student-form-container::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -10%;
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(255, 153, 51, 0.08) 0%, transparent 70%);
+        border-radius: 50%;
+    }
+
+    .form-card {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 119, 0, 0.1);
+        border-radius: 24px;
+        box-shadow: 
+            0 20px 25px -5px rgba(255, 119, 0, 0.1),
+            0 10px 10px -5px rgba(255, 119, 0, 0.04),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        padding: 3rem;
         position: relative;
-        z-index: 2;
+        z-index: 10;
+        max-width: 1000px;
+        margin: 0 auto;
     }
 
-    .student-registration-page .form-body {
-        padding: 2.5rem;
-        font-family: 'Outfit', sans-serif;
-    }
-
-    .student-registration-page .form-section {
-        background-color: white;
-        border-radius: 16px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 4px 12px rgba(255, 107, 53, 0.08);
-        border: 1px solid var(--light-orange);
+    .form-header {
+        text-align: center;
+        margin-bottom: 3rem;
         position: relative;
-        overflow: hidden;
     }
 
-    .student-registration-page .section-title {
+    .form-title {
         font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 1.3rem;
-        color: var(--dark-orange);
-        margin-bottom: 1.5rem;
+        font-weight: 700;
+        font-size: 2.5rem;
+        background: linear-gradient(135deg, #ff7700, #ff9933);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.02em;
+    }
+
+    .form-subtitle {
+        font-family: 'Inter', sans-serif;
+        font-weight: 400;
+        color: #64748b;
+        font-size: 1.1rem;
+        opacity: 0.8;
+    }
+
+    .section-divider {
         display: flex;
         align-items: center;
-    }
-
-    .student-registration-page .section-title svg {
-        margin-right: 10px;
-    }
-
-    .student-registration-page .form-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .student-registration-page .form-label {
-        color: #2D3748;
+        margin: 2.5rem 0 2rem 0;
+        font-family: 'Space Grotesk', sans-serif;
         font-weight: 600;
-        margin-bottom: 0.5rem;
-        display: block;
-        font-size: 0.95rem;
-        transition: transform 0.2s, color 0.2s;
+        color: #374151;
+        font-size: 1.1rem;
     }
 
-    .student-registration-page .form-control {
-        border: 2px solid #E2E8F0;
-        border-radius: 12px;
-        padding: 0.875rem 1rem;
-        font-family: 'Outfit', sans-serif;
-        font-size: 1rem;
-        width: 100%;
-        transition: all 0.3s ease;
-        background-color: white;
+    .section-divider::before,
+    .section-divider::after {
+        content: '';
+        flex: 1;
+        height: 2px;
+        background: linear-gradient(90deg, transparent, #ff7700, transparent);
+        margin: 0 1rem;
     }
 
-    .student-registration-page .form-control:focus {
-        outline: none;
-        border-color: var(--primary-orange);
-        box-shadow: 0 0 0 3px rgba(255, 119, 0, 0.15);
-        transform: translateY(-2px);
-    }
-
-    .student-registration-page .input-group:focus-within .form-label {
-        color: var(--primary-orange);
-    }
-
-    .student-registration-page .input-group {
-        margin-bottom: 1rem;
+    .form-group {
+        margin-bottom: 1.5rem;
         position: relative;
     }
 
-    .student-registration-page .checkbox-group {
+    .form-label {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+        display: block;
+        position: relative;
+    }
+
+    .required::after {
+        content: '*';
+        color: #ef4444;
+        margin-left: 4px;
+        font-weight: 500;
+    }
+
+    .form-control,
+    .form-select {
+        font-family: 'Inter', sans-serif;
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 0.875rem 1.25rem;
+        font-size: 0.95rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(10px);
+        position: relative;
+        width: 100%;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #ff7700;
+        box-shadow: 
+            0 0 0 4px rgba(255, 119, 0, 0.1),
+            0 4px 6px -1px rgba(255, 119, 0, 0.1);
+        background: rgba(255, 255, 255, 1);
+        outline: none;
+        transform: translateY(-1px);
+    }
+
+    .form-control.is-valid {
+        border-color: #10b981;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%2310b981' d='m2.3 6.73.94-.94 1.93 1.93 3.15-3.15.94.94-4.09 4.09z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+
+    .form-control.is-invalid,
+    .form-select.is-invalid {
+        border-color: #ef4444;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23ef4444'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath d='M5.8 4.6L6.2 7.4'/%3e%3cpath d='M6 8.2v.01'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 16px 12px;
+    }
+
+    .validation-message {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.85rem;
+        margin-top: 0.5rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        margin: 1rem 0;
+        opacity: 0;
+        transform: translateY(-10px);
+        transition: all 0.3s ease;
     }
 
-    .student-registration-page .checkbox-group input[type="checkbox"] {
-        appearance: none;
-        -webkit-appearance: none;
-        width: 22px;
-        height: 22px;
-        border: 2px solid #E2E8F0;
-        border-radius: 6px;
-        background-color: white;
-        display: inline-flex;
+    .validation-message.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .validation-message.error {
+        color: #ef4444;
+    }
+
+    .validation-message.success {
+        color: #10b981;
+    }
+
+    .validation-message i {
+        font-size: 0.9rem;
+    }
+
+    .checkbox-container {
+        display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 0.75rem;
+        padding: 1rem;
+        background: rgba(255, 247, 235, 0.6);
+        border: 2px solid #fed7aa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
         cursor: pointer;
-        transition: all 0.2s ease;
-        position: relative;
     }
 
-    .student-registration-page .checkbox-group input[type="checkbox"]:checked {
-        background-color: var(--primary-orange);
-        border-color: var(--primary-orange);
+    .checkbox-container:hover {
+        background: rgba(255, 247, 235, 0.8);
+        border-color: #fb923c;
     }
 
-    .student-registration-page .checkbox-group input[type="checkbox"]:checked::after {
-        content: '✓';
-        color: white;
-        font-size: 14px;
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
+    .form-check-input {
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #d1d5db;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.3s ease;
     }
 
-    .student-registration-page .checkbox-group label {
-        font-size: 1rem;
+    .form-check-input:checked {
+        background-color: #ff7700;
+        border-color: #ff7700;
+    }
+
+    .form-check-label {
+        font-family: 'Inter', sans-serif;
+        font-weight: 500;
+        color: #374151;
         cursor: pointer;
         user-select: none;
     }
 
-    .student-registration-page .checkbox-group:hover input[type="checkbox"] {
-        border-color: var(--primary-orange);
-    }
-
-    .student-registration-page .submit-btn {
-        background: linear-gradient(135deg, var(--primary-orange), var(--secondary-orange));
-        border: none;
-        border-radius: 14px;
-        padding: 1rem 2rem;
-        color: white;
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 1.1rem;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 8px 15px rgba(255, 119, 0, 0.25);
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-width: 220px;
-    }
-
-    .student-registration-page .submit-btn:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 12px 20px rgba(255, 119, 0, 0.3);
-    }
-
-    .student-registration-page .submit-btn:active {
-        transform: translateY(1px);
-    }
-
-    .student-registration-page .submit-btn svg {
-        margin-right: 10px;
-    }
-
-    .student-registration-page .cancel-btn {
-        background: transparent;
-        border: 2px solid #E2E8F0;
-        border-radius: 14px;
-        padding: 1rem 2rem;
-        color: #64748B;
-        font-family: 'Space Grotesk', sans-serif;
-        font-weight: 600;
-        font-size: 1.1rem;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .student-registration-page .cancel-btn:hover {
-        background-color: #F8FAFC;
-        color: #334155;
-    }
-
-    .student-registration-page .btn-group {
-        display: flex;
-        gap: 1rem;
-        justify-content: center;
-        margin-top: 2rem;
-    }
-
-    .student-registration-page .error-list {
-        color: var(--error-red);
-        font-size: 0.85rem;
-        margin-top: 0.5rem;
-        list-style: none;
-        padding-left: 0;
-    }
-
-    .student-registration-page .help-text {
-        color: #64748B;
-        font-size: 0.85rem;
-        margin-top: 0.3rem;
-    }
-
-    .student-registration-page .alert {
+    .conditional-fields {
+        margin-top: 1rem;
+        padding: 1.5rem;
+        background: rgba(254, 243, 226, 0.5);
+        border: 2px dashed #fed7aa;
         border-radius: 12px;
-        padding: 1rem 1.25rem;
-        margin-bottom: 2rem;
-        font-weight: 500;
+        display: none;
+        animation: slideDown 0.3s ease;
+    }
+
+    .conditional-fields.show {
+        display: block;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .rating-row {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    .rating-row:hover {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: #ff7700;
+        box-shadow: 0 4px 6px -1px rgba(255, 119, 0, 0.1);
+    }
+
+    .add-rating-btn {
+        background: linear-gradient(135deg, #ff7700, #ff9933);
+        border: none;
+        border-radius: 12px;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
         display: flex;
         align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
     }
 
-    .student-registration-page .alert svg {
-        margin-right: 10px;
-        flex-shrink: 0;
+    .add-rating-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px -3px rgba(255, 119, 0, 0.3);
     }
 
-    .student-registration-page .alert-success {
-        background-color: rgba(16, 185, 129, 0.1);
-        border: 1px solid rgba(16, 185, 129, 0.2);
-        color: var(--success-green);
+    .submit-section {
+        margin-top: 3rem;
+        padding-top: 2rem;
+        border-top: 2px solid #f1f5f9;
+        text-align: center;
     }
 
-    .student-registration-page .alert-error {
-        background-color: rgba(239, 68, 68, 0.1);
-        border: 1px solid rgba(239, 68, 68, 0.2);
-        color: var(--error-red);
-    }
-
-    .student-registration-page select.form-control {
-        appearance: none;
-        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23FF7700' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
-        background-repeat: no-repeat;
-        background-position: right 1rem center;
-        background-size: 16px 12px;
-        padding-right: 2.5rem;
-    }
-
-    /* Conditional display for dropout fields */
-    .student-registration-page .dropout-fields {
-        max-height: 0;
+    .submit-btn {
+        background: linear-gradient(135deg, #ff7700, #ff9933);
+        border: none;
+        border-radius: 16px;
+        color: white;
+        padding: 1rem 3rem;
+        font-family: 'Space Grotesk', sans-serif;
+        font-weight: 600;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
         overflow: hidden;
-        transition: max-height 0.5s ease-out;
-        opacity: 0.5;
+        min-width: 200px;
     }
 
-    .student-registration-page .dropout-fields.active {
-        max-height: 300px;
-        opacity: 1;
-    }
-
-    .student-registration-page .required-mark::after {
-        content: '*';
-        color: var(--error-red);
-        margin-left: 4px;
-    }
-
-    .student-registration-page .bg-pattern {
+    .submit-btn::before {
+        content: '';
         position: absolute;
-        opacity: 0.04;
-    }
-
-    .student-registration-page .pattern-1 {
         top: 0;
-        right: 0;
-        width: 300px;
-        height: 300px;
-        background-image: radial-gradient(var(--primary-orange) 2px, transparent 2px);
-        background-size: 30px 30px;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+        transition: left 0.5s;
     }
 
-    .student-registration-page .pattern-2 {
-        bottom: 0;
-        left: 0;
-        width: 200px;
-        height: 200px;
-        background-image: repeating-linear-gradient(45deg, var(--primary-orange) 0, var(--primary-orange) 1px, transparent 0, transparent 50%);
-        background-size: 20px 20px;
+    .submit-btn:hover::before {
+        left: 100%;
+    }
+
+    .submit-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 20px -5px rgba(255, 119, 0, 0.4);
+    }
+
+    .submit-btn:active {
+        transform: translateY(-1px);
+    }
+
+    .submit-btn:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    .form-help-text {
+        font-family: 'Inter', sans-serif;
+        font-size: 0.8rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+        font-style: italic;
+    }
+
+    .progress-indicator {
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        padding: 1rem 0;
+        margin-bottom: 2rem;
+        border-radius: 0 0 16px 16px;
+    }
+
+    .progress-bar-custom {
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ff7700, #ff9933);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+        width: 0%;
+    }
+
+    .remove-rating-btn {
+        background: #ef4444;
+        border: none;
+        border-radius: 8px;
+        color: white;
+        padding: 0.5rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .remove-rating-btn:hover {
+        background: #dc2626;
+        transform: scale(1.1);
     }
 
     @media (max-width: 768px) {
-        .student-registration-page .form-row {
-            grid-template-columns: 1fr;
+        .form-card {
+            padding: 2rem 1.5rem;
+            border-radius: 16px;
+            margin: 1rem;
         }
         
-        .student-registration-page .form-section {
-            padding: 1.5rem;
+        .form-title {
+            font-size: 2rem;
         }
         
-        .student-registration-page .form-body {
-            padding: 1.5rem;
+        .rating-row {
+            padding: 0.75rem;
         }
         
-        .student-registration-page .btn-group {
-            flex-direction: column;
-        }
-        
-        .student-registration-page .submit-btn,
-        .student-registration-page .cancel-btn {
+        .submit-btn {
             width: 100%;
+            padding: 1rem;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="student-registration-page">
+<div class="student-form-container">
     <div class="container">
-        <div class="form-container">
-            <div class="form-header">
-                <h2>{{ title }}</h2>
-                <p class="header-subtitle">Enter student information to add to the system</p>
+        <div class="form-card">
+            <!-- Progress Indicator -->
+            <div class="progress-indicator">
+                <div class="progress-bar-custom">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                <div class="text-center mt-2">
+                    <small class="text-muted">Form Completion: <span id="progressText">0%</span></small>
+                </div>
             </div>
-            
-            <div class="form-body">
-                {% if messages %}
-                    {% for message in messages %}
-                        <div class="alert alert-{% if message.tags == 'error' %}error{% else %}{{ message.tags }}{% endif %}" id="alertMessage">
-                            {% if message.tags == 'success' %}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                </svg>
-                            {% else %}
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                                </svg>
-                            {% endif %}
-                            {{ message }}
+
+            <!-- Form Header -->
+            <div class="form-header">
+                <h1 class="form-title">Add New Student</h1>
+                <p class="form-subtitle">Enter student details to add them to the system</p>
+            </div>
+
+            <form method="post" id="studentForm" novalidate>
+                {% csrf_token %}
+
+                <!-- Basic Information Section -->
+                <div class="section-divider">
+                    <i class="fas fa-user"></i>
+                    Basic Information
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_name">Full Name</label>
+                            {% render_field form.name class+="form-control" id="id_name" placeholder="Enter full name" %}
+                            <div class="validation-message" id="name-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                            <div class="form-help-text">Only alphabets and spaces allowed</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_contact_number">Contact Number</label>
+                            {% render_field form.contact_number class+="form-control" id="id_contact_number" placeholder="Enter 10-digit mobile number" %}
+                            <div class="validation-message" id="contact-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                            <div class="form-help-text">10-digit mobile number required</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Academic Information Section -->
+                <div class="section-divider">
+                    <i class="fas fa-graduation-cap"></i>
+                    Academic Information
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_degree">Degree</label>
+                            {% render_field form.degree class+="form-select" id="id_degree" %}
+                            <div class="validation-message" id="degree-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_stream">Stream</label>
+                            {% render_field form.stream class+="form-select" id="id_stream" %}
+                            <div class="validation-message" id="stream-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_yop">Year of Passing</label>
+                            {% render_field form.yop class+="form-control" id="id_yop" placeholder="YYYY" %}
+                            <div class="validation-message" id="yop-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_tenth_percent">10th Percentage</label>
+                            {% render_field form.tenth_percent class+="form-control" id="id_tenth_percent" placeholder="0-100" %}
+                            <div class="validation-message" id="tenth-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_twelfth_percent">12th Percentage</label>
+                            {% render_field form.twelfth_percent class+="form-control" id="id_twelfth_percent" placeholder="0-100" %}
+                            <div class="validation-message" id="twelfth-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_degree_percent">Degree Percentage</label>
+                            {% render_field form.degree_percent class+="form-control" id="id_degree_percent" placeholder="0-100" %}
+                            <div class="validation-message" id="degree-percent-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Information Section -->
+                <div class="section-divider">
+                    <i class="fas fa-info-circle"></i>
+                    Personal Information
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_gender">Gender</label>
+                            {% render_field form.gender class+="form-select" id="id_gender" %}
+                            <div class="validation-message" id="gender-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label required" for="id_type_of_data">Type of Data</label>
+                            {% render_field form.type_of_data class+="form-select" id="id_type_of_data" %}
+                            <div class="validation-message" id="type-validation">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dropout Information Section -->
+                <div class="section-divider">
+                    <i class="fas fa-user-times"></i>
+                    Dropout Information
+                </div>
+
+                <div class="form-group">
+                    <div class="checkbox-container" id="dropoutCheckbox">
+                        {% render_field form.is_dropout class+="form-check-input" id="id_is_dropout" %}
+                        <label class="form-check-label" for="id_is_dropout">This student is a dropout</label>
+                    </div>
+                    
+                    <div class="conditional-fields" id="dropoutFields">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="id_dropout_date">Dropout Date</label>
+                                    {% render_field form.dropout_date class+="form-control" id="id_dropout_date" %}
+                                    <div class="validation-message" id="dropout-date-validation">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" for="id_dropout_reason">Dropout Reason</label>
+                                    {% render_field form.dropout_reason class+="form-control" id="id_dropout_reason" placeholder="Reason for dropout" %}
+                                    <div class="validation-message" id="dropout-reason-validation">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subject Ratings Section -->
+                <div class="section-divider">
+                    <i class="fas fa-star"></i>
+                    Subject-wise Ratings
+                </div>
+
+                <div id="ratingsContainer">
+                    {{ rating_formset.management_form }}
+                    {% for rating_form in rating_formset %}
+                        <div class="rating-row" data-form-index="{{ forloop.counter0 }}">
+                            <div class="row align-items-end">
+                                <div class="col-md-4">
+                                    <label class="form-label">Subject</label>
+                                    {{ rating_form.subject|add_class:"form-select" }}
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Rating</label>
+                                    {{ rating_form.rating|add_class:"form-select" }}
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Remarks</label>
+                                    {% render_field rating_form.remarks class+="form-control" placeholder="Optional remarks" %}
+                                </div>
+                                <div class="col-md-1 text-center">
+                                    <button type="button" class="remove-rating-btn" onclick="removeRatingRow(this)">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                    {{ rating_form.DELETE|add_class:"d-none" }}
+                                </div>
+                            </div>
                         </div>
                     {% endfor %}
-                {% endif %}
+                </div>
 
-                <form method="post" class="student-form" novalidate>
-                    {% csrf_token %}
-                    
-                    {% if form.non_field_errors %}
-                        <div class="alert alert-error">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <line x1="12" y1="8" x2="12" y2="12"></line>
-                                <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                            </svg>
-                            {% for error in form.non_field_errors %}
-                                {{ error }}
-                            {% endfor %}
-                        </div>
-                    {% endif %}
+                <button type="button" class="add-rating-btn" id="addRatingBtn">
+                    <i class="fas fa-plus"></i>
+                    Add More Subjects
+                </button>
 
-                    <!-- Personal Information Section -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            Personal Information
-                        </h3>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="{{ form.name.id_for_label }}" class="form-label required-mark">
-                                    {{ form.name.label }}
-                                </label>
-                                {{ form.name }}
-                                {% if form.name.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.name.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                                {% if form.name.help_text %}
-                                    <small class="help-text">{{ form.name.help_text }}</small>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="{{ form.contact_number.id_for_label }}" class="form-label required-mark">
-                                    {{ form.contact_number.label }}
-                                </label>
-                                {{ form.contact_number }}
-                                {% if form.contact_number.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.contact_number.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                                {% if form.contact_number.help_text %}
-                                    <small class="help-text">{{ form.contact_number.help_text }}</small>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="{{ form.gender.id_for_label }}" class="form-label required-mark">
-                                    {{ form.gender.label }}
-                                </label>
-                                {{ form.gender }}
-                                {% if form.gender.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.gender.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="{{ form.type_of_data.id_for_label }}" class="form-label required-mark">
-                                    {{ form.type_of_data.label }}
-                                </label>
-                                {{ form.type_of_data }}
-                                {% if form.type_of_data.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.type_of_data.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Educational Details Section -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
-                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
-                            </svg>
-                            Educational Details
-                        </h3>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="{{ form.degree.id_for_label }}" class="form-label required-mark">
-                                    {{ form.degree.label }}
-                                </label>
-                                {{ form.degree }}
-                                {% if form.degree.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.degree.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="{{ form.stream.id_for_label }}" class="form-label required-mark">
-                                    {{ form.stream.label }}
-                                </label>
-                                {{ form.stream }}
-                                {% if form.stream.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.stream.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="{{ form.yop.id_for_label }}" class="form-label required-mark">
-                                    {{ form.yop.label }}
-                                </label>
-                                {{ form.yop }}
-                                {% if form.yop.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.yop.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="{{ form.overall_technical_rating.id_for_label }}" class="form-label">
-                                    {{ form.overall_technical_rating.label }}
-                                </label>
-                                {{ form.overall_technical_rating }}
-                                {% if form.overall_technical_rating.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.overall_technical_rating.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Academic Performance Section -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                            </svg>
-                            Academic Performance
-                        </h3>
-                        
-                        <div class="form-row">
-                            <div class="input-group">
-                                <label for="{{ form.tenth_percent.id_for_label }}" class="form-label required-mark">
-                                    {{ form.tenth_percent.label }}
-                                </label>
-                                {{ form.tenth_percent }}
-                                {% if form.tenth_percent.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.tenth_percent.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="{{ form.twelfth_percent.id_for_label }}" class="form-label required-mark">
-                                    {{ form.twelfth_percent.label }}
-                                </label>
-                                {{ form.twelfth_percent }}
-                                {% if form.twelfth_percent.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.twelfth_percent.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="input-group">
-                                <label for="{{ form.degree_percent.id_for_label }}" class="form-label required-mark">
-                                    {{ form.degree_percent.label }}
-                                </label>
-                                {{ form.degree_percent }}
-                                {% if form.degree_percent.errors %}
-                                    <ul class="error-list">
-                                        {% for error in form.degree_percent.errors %}
-                                            <li>{{ error }}</li>
-                                        {% endfor %}
-                                    </ul>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Dropout Information Section -->
-                    <div class="form-section">
-                        <h3 class="section-title">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                                <polyline points="14 2 14 8 20 8"></polyline>
-                                <line x1="9" y1="15" x2="15" y2="15"></line>
-                            </svg>
-                            Dropout Information
-                        </h3>
-                        
-                        <div class="checkbox-group">
-                            {{ form.is_dropout }}
-                            <label for="{{ form.is_dropout.id_for_label }}">
-                                {{ form.is_dropout.label }}
-                            </label>
-                        </div>
-                        
-                        <div class="dropout-fields" id="dropoutFields">
-                            <div class="form-row">
-                                <div class="input-group">
-                                    <label for="{{ form.dropout_date.id_for_label }}" class="form-label">
-                                        {{ form.dropout_date.label }}
-                                    </label>
-                                    {{ form.dropout_date }}
-                                    {% if form.dropout_date.errors %}
-                                        <ul class="error-list">
-                                            {% for error in form.dropout_date.errors %}
-                                                <li>{{ error }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                                
-                                <div class="input-group">
-                                    <label for="{{ form.dropout_reason.id_for_label }}" class="form-label">
-                                        {{ form.dropout_reason.label }}
-                                    </label>
-                                    {{ form.dropout_reason }}
-                                    {% if form.dropout_reason.errors %}
-                                        <ul class="error-list">
-                                            {% for error in form.dropout_reason.errors %}
-                                                <li>{{ error }}</li>
-                                            {% endfor %}
-                                        </ul>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="pattern-1 bg-pattern"></div>
-                    <div class="pattern-2 bg-pattern"></div>
-                    
-                    <div class="btn-group">
-                        <a href="{% url 'student_data:student_list' %}" class="cancel-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="18" y1="6" x2="6" y2="18"></line>
-                                <line x1="6" y1="6" x2="18" y2="18"></line>
-                            </svg>
-                            Cancel
-                        </a>
-                        <button type="submit" class="submit-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                                <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                                <polyline points="7 3 7 8 15 8"></polyline>
-                            </svg>
-                            Register Student
-                        </button>
-                    </div>
-                </form>
-            </div>
+                <!-- Submit Section -->
+                <div class="submit-section">
+                    <button type="submit" class="submit-btn" id="submitBtn">
+                        <i class="fas fa-save me-2"></i>
+                        Save Student
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
+
+<script type="application/json" id="subject-data">
+    [
+        {% for subj in subjects %}
+            {"id": "{{ subj.id }}", "name": "{{ subj.get_name_display }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+
+<script type="application/json" id="rating-data">
+    [
+        {% for value, label in rating_choices %}
+            {"value": "{{ value }}", "label": "{{ label }}" }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ]
+</script>
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Apply form-control class to all form elements
-        document.querySelectorAll('.student-registration-page input:not([type="checkbox"]), .student-registration-page select, .student-registration-page textarea').forEach(el => {
-            if (!el.classList.contains('form-control')) {
-                el.classList.add('form-control');
+document.addEventListener('DOMContentLoaded', function() {
+    // Validation rules
+    const validationRules = {
+        name: {
+            required: true,
+            pattern: /^[A-Za-z\s]+$/,
+            message: 'Name should contain only alphabets and spaces'
+        },
+        contact_number: {
+            required: true,
+            pattern: /^[0-9]{10}$/,
+            message: 'Please enter a valid 10-digit mobile number'
+        },
+        yop: {
+            required: true,
+            pattern: /^(19|20)\d{2}$/,
+            message: 'Please enter a valid year (1900-2099)'
+        },
+        tenth_percent: {
+            required: true,
+            min: 0,
+            max: 100,
+            message: 'Percentage should be between 0 and 100'
+        },
+        twelfth_percent: {
+            required: true,
+            min: 0,
+            max: 100,
+            message: 'Percentage should be between 0 and 100'
+        },
+        degree_percent: {
+            required: true,
+            min: 0,
+            max: 100,
+            message: 'Percentage should be between 0 and 100'
+        },
+        degree: {
+            required: true,
+            message: 'Please select a degree'
+        },
+        stream: {
+            required: true,
+            message: 'Please select a stream'
+        },
+        gender: {
+            required: true,
+            message: 'Please select gender'
+        },
+        type_of_data: {
+            required: true,
+            message: 'Please select type of data'
+        }
+    };
+
+    // Form elements
+    const form = document.getElementById('studentForm');
+    const submitBtn = document.getElementById('submitBtn');
+    const progressFill = document.getElementById('progressFill');
+    const progressText = document.getElementById('progressText');
+    const dropoutCheckbox = document.getElementById('id_is_dropout');
+    const dropoutFields = document.getElementById('dropoutFields');
+
+    // Validation state
+    const validationState = {};
+    let totalFields = Object.keys(validationRules).length;
+
+    // Initialize validation for all fields
+    Object.keys(validationRules).forEach(fieldName => {
+        const field = document.getElementById(`id_${fieldName}`);
+        if (field) {
+            validationState[fieldName] = false;
+            
+            // Real-time validation
+            field.addEventListener('input', () => validateField(fieldName));
+            field.addEventListener('blur', () => validateField(fieldName));
+            field.addEventListener('change', () => validateField(fieldName));
+        }
+    });
+
+    // Validate individual field
+    function validateField(fieldName) {
+        const field = document.getElementById(`id_${fieldName}`);
+        const rule = validationRules[fieldName];
+        const validationMsg = document.getElementById(`${fieldName.replace('_', '-')}-validation`);
+        
+        if (!field || !rule) return true;
+
+        let isValid = true;
+        let message = '';
+
+        const value = field.value.trim();
+
+        // Required field check
+        if (rule.required && !value) {
+            isValid = false;
+            message = `${fieldName.replace('_', ' ').toUpperCase()} is required`;
+        }
+        // Pattern validation
+        else if (value && rule.pattern && !rule.pattern.test(value)) {
+            isValid = false;
+            message = rule.message;
+        }
+        // Number range validation
+        else if (value && (rule.min !== undefined || rule.max !== undefined)) {
+            const numValue = parseFloat(value);
+            if (isNaN(numValue)) {
+                isValid = false;
+                message = 'Please enter a valid number';
+            } else if (rule.min !== undefined && numValue < rule.min) {
+                isValid = false;
+                message = rule.message;
+            } else if (rule.max !== undefined && numValue > rule.max) {
+                isValid = false;
+                message = rule.message;
             }
-        });
-        
-        // Handle dropout fields visibility
-        const isDropoutCheckbox = document.getElementById('{{ form.is_dropout.id_for_label }}');
-        const dropoutFields = document.getElementById('dropoutFields');
-        const dropoutDateInput = document.getElementById('{{ form.dropout_date.id_for_label }}');
-        const dropoutReasonInput = document.getElementById('{{ form.dropout_reason.id_for_label }}');
-        
-        if (isDropoutCheckbox && dropoutFields) {
-            // Initial state
-            if (isDropoutCheckbox.checked) {
-                dropoutFields.classList.add('active');
-                if (dropoutDateInput) dropoutDateInput.removeAttribute('disabled');
-                if (dropoutReasonInput) dropoutReasonInput.removeAttribute('disabled');
+        }
+
+        // Update field appearance
+        field.classList.remove('is-valid', 'is-invalid');
+        if (value) {
+            field.classList.add(isValid ? 'is-valid' : 'is-invalid');
+        }
+
+        // Update validation message
+        if (validationMsg) {
+            const span = validationMsg.querySelector('span');
+            const icon = validationMsg.querySelector('i');
+            
+            if (isValid && value) {
+                validationMsg.classList.remove('error');
+                validationMsg.classList.add('success', 'show');
+                icon.className = 'fas fa-check-circle';
+                span.textContent = 'Looks good!';
+            } else if (!isValid && value) {
+                validationMsg.classList.remove('success');
+                validationMsg.classList.add('error', 'show');
+                icon.className = 'fas fa-exclamation-circle';
+                span.textContent = message;
             } else {
-                dropoutFields.classList.remove('active');
-                if (dropoutDateInput) dropoutDateInput.setAttribute('disabled', true);
-                if (dropoutReasonInput) dropoutReasonInput.setAttribute('disabled', true);
+                validationMsg.classList.remove('show');
+            }
+        }
+
+        // Update validation state
+        validationState[fieldName] = isValid && value;
+        updateProgress();
+        
+        return isValid;
+    }
+
+    // Update progress bar
+    function updateProgress() {
+        const validFields = Object.values(validationState).filter(Boolean).length;
+        const percentage = Math.round((validFields / totalFields) * 100);
+        
+        progressFill.style.width = `${percentage}%`;
+        progressText.textContent = `${percentage}%`;
+        
+        // Enable/disable submit button
+        const allValid = Object.values(validationState).every(Boolean);
+        submitBtn.disabled = !allValid;
+    }
+
+    // Dropout checkbox handler
+    dropoutCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            dropoutFields.classList.add('show');
+            // Make dropout fields required when checkbox is checked
+            const dropoutDate = document.getElementById('id_dropout_date');
+            const dropoutReason = document.getElementById('id_dropout_reason');
+            
+            if (dropoutDate) dropoutDate.required = true;
+            if (dropoutReason) dropoutReason.required = true;
+        } else {
+            dropoutFields.classList.remove('show');
+            // Remove requirement when checkbox is unchecked
+            const dropoutDate = document.getElementById('id_dropout_date');
+            const dropoutReason = document.getElementById('id_dropout_reason');
+            
+            if (dropoutDate) {
+                dropoutDate.required = false;
+                dropoutDate.value = '';
+            }
+            if (dropoutReason) {
+                dropoutReason.required = false;
+                dropoutReason.value = '';
+            }
+        }
+    });
+
+    // Dynamic rating forms management
+    let ratingFormCount = document.querySelectorAll('.rating-row').length;
+    const addRatingBtn = document.getElementById('addRatingBtn');
+    const ratingsContainer = document.getElementById('ratingsContainer');
+
+    addRatingBtn.addEventListener('click', function() {
+        const newRow = createRatingRow(ratingFormCount);
+        ratingsContainer.appendChild(newRow);
+        ratingFormCount++;
+        
+        // Update formset management form
+        updateFormsetCount();
+    });
+    // Create a new rating row
+    
+    // Get subject and rating data from template
+    const subjectData = JSON.parse(document.getElementById('subject-data').textContent);
+    const ratingData = JSON.parse(document.getElementById('rating-data').textContent);
+
+    let formIndex = document.querySelectorAll('.rating-row').length;
+
+    function createRatingRow(index) {
+        const div = document.createElement('div');
+        div.className = 'rating-row mb-3';
+        div.setAttribute('data-form-index', index);
+
+        // Build subject options
+        let subjectOptions = '<option value="">Select Subject</option>';
+        subjectData.forEach(subject => {
+            subjectOptions += `<option value="${subject.id}">${subject.name}</option>`;
+        });
+
+        // Build rating options
+        let ratingOptions = '<option value="">Select Rating</option>';
+        ratingData.forEach(rating => {
+            ratingOptions += `<option value="${rating.value}">${rating.label}</option>`;
+        });
+
+        console.log(subjectOptions, ratingOptions);
+
+        div.innerHTML = `
+            <div class="row align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label">Subject</label>
+                    <select name="ratings-${index}-subject" class="form-select" required>
+                        ${subjectOptions}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Rating</label>
+                    <select name="ratings-${index}-rating" class="form-select" required>
+                        ${ratingOptions}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label">Remarks</label>
+                    <input type="text" name="ratings-${index}-remarks" class="form-control" placeholder="Optional remarks">
+                </div>
+                <div class="col-md-1 text-center">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeRatingRow(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                    <input type="checkbox" name="ratings-${index}-DELETE" class="form-check-input mt-2 d-none">
+                </div>
+            </div>
+        `;
+
+        return div;
+    }
+
+    function addRatingRow() {
+        const container = document.getElementById('ratings-container');
+        const totalFormsInput = document.querySelector('[name="ratings-TOTAL_FORMS"]');
+        const totalForms = parseInt(totalFormsInput.value);
+
+        const newRow = createRatingRow(totalForms);
+        container.appendChild(newRow);
+
+        totalFormsInput.value = totalForms + 1;
+    }
+
+    function removeRatingRow(btn) {
+        const row = btn.closest('.rating-row');
+        const deleteCheckbox = row.querySelector('input[type="checkbox"]');
+        if (deleteCheckbox) {
+            deleteCheckbox.checked = true;
+            row.style.display = 'none';
+        } else {
+            row.remove();
+        }
+    }
+
+    // Attach event listener to "Add More Subjects" button
+    document.addEventListener("DOMContentLoaded", function () {
+        const addButton = document.getElementById("add-rating-btn");
+        if (addButton) {
+            addButton.addEventListener("click", addRatingRow);
+        }
+    });
+
+
+    function updateFormsetCount() {
+        const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
+        if (totalForms) {
+            totalForms.value = ratingFormCount;
+        }
+    }
+
+    // Remove rating row function (global scope for onclick)
+    window.removeRatingRow = function(button) {
+        const row = button.closest('.rating-row');
+        const deleteInput = row.querySelector('input[name*="DELETE"]');
+        
+        if (deleteInput) {
+            // Mark for deletion if it's an existing form
+            deleteInput.value = 'on';
+            row.style.display = 'none';
+        } else {
+            // Remove completely if it's a new form
+            row.remove();
+            ratingFormCount--;
+            updateFormsetCount();
+        }
+    };
+
+    // Form submission handler
+    form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Validate all fields before submission
+        let allValid = true;
+        Object.keys(validationRules).forEach(fieldName => {
+            if (!validateField(fieldName)) {
+                allValid = false;
+            }
+        });
+
+        // Validate dropout fields if checkbox is checked
+        if (dropoutCheckbox.checked) {
+            const dropoutDate = document.getElementById('id_dropout_date');
+            const dropoutReason = document.getElementById('id_dropout_reason');
+            
+            if (dropoutDate && !dropoutDate.value.trim()) {
+                showValidationMessage('dropout-date', 'Dropout date is required', false);
+                allValid = false;
             }
             
-            // Toggle on change
-            isDropoutCheckbox.addEventListener('change', function() {
-                if (this.checked) {
-                    dropoutFields.classList.add('active');
-                    if (dropoutDateInput) dropoutDateInput.removeAttribute('disabled');
-                    if (dropoutReasonInput) dropoutReasonInput.removeAttribute('disabled');
-                } else {
-                    dropoutFields.classList.remove('active');
-                    if (dropoutDateInput) dropoutDateInput.setAttribute('disabled', true);
-                    if (dropoutReasonInput) dropoutReasonInput.setAttribute('disabled', true);
-                }
-            });
-        }
-        
-        // Animation and visual effects
-        const tl = gsap.timeline();
-        
-        // Form container entrance animation
-        tl.from('.form-container', {
-            duration: 1,
-            y: 40,
-            opacity: 0,
-            ease: "power3.out"
-        });
-        
-        // Header elements animation
-        tl.from('.form-header h2, .header-subtitle', {
-            duration: 0.7,
-            y: 20,
-            opacity: 0,
-            stagger: 0.2,
-            ease: "back.out(1.4)"
-        }, "-=0.5");
-        
-        // Form sections animation
-        tl.from('.form-section', {
-            duration: 0.8,
-            y: 30,
-            opacity: 0,
-            stagger: 0.15,
-            ease: "power2.out"
-        }, "-=0.3");
-        
-        // Button group animation
-        tl.from('.btn-group', {
-            duration: 0.6,
-            y: 20,
-            opacity: 0,
-            ease: "power2.out"
-        }, "-=0.2");
-        
-        // Background patterns animation
-        tl.from('.bg-pattern', {
-            duration: 1.2,
-            scale: 0.7,
-            opacity: 0,
-            stagger: 0.2,
-            ease: "power1.inOut"
-        }, "-=1");
-        
-        // Section title hover effect
-        document.querySelectorAll('.section-title').forEach(title => {
-            title.addEventListener('mouseenter', function() {
-                gsap.to(this, {
-                    x: 5,
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-            });
-            
-            title.addEventListener('mouseleave', function() {
-                gsap.to(this, {
-                    x: 0,
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-            });
-        });
-        
-        // Input focus animations
-        document.querySelectorAll('.form-control').forEach(input => {
-            input.addEventListener('focus', function() {
-                gsap.to(this, {
-                    scale: 1.01,
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-                
-                // Animate the parent form section
-                const formSection = this.closest('.form-section');
-                if (formSection) {
-                    gsap.to(formSection, {
-                        boxShadow: '0 10px 25px rgba(255, 107, 53, 0.12)',
-                        backgroundColor: 'rgba(255, 249, 245, 0.8)',
-                        duration: 0.3
-                    });
-                }
-            });
-            
-            input.addEventListener('blur', function() {
-                gsap.to(this, {
-                    scale: 1,
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-                
-                // Reset the parent form section
-                const formSection = this.closest('.form-section');
-                if (formSection) {
-                    gsap.to(formSection, {
-                        boxShadow: '0 4px 12px rgba(255, 107, 53, 0.08)',
-                        backgroundColor: 'white',
-                        duration: 0.3
-                    });
-                }
-            });
-        });
-        
-        // Submit button animations
-        const submitBtn = document.querySelector('.submit-btn');
-        if (submitBtn) {
-            submitBtn.addEventListener('mouseenter', () => {
-                gsap.to(submitBtn, {
-                    y: -4,
-                    boxShadow: '0 12px 25px rgba(255, 119, 0, 0.35)',
-                    duration: 0.3,
-                    ease: "power2.out"
-                });
-            });
-            
-            submitBtn.addEventListener('mouseleave', () => {
-                gsap.to(submitBtn, {
-                    y: 0,
-                    boxShadow: '0 8px 15px rgba(255, 119, 0, 0.25)',
-                    duration: 0.3,
-                    ease: "power2.in"
-                });
-            });
-            
-            // Click effect
-            submitBtn.addEventListener('mousedown', () => {
-                gsap.to(submitBtn, {
-                    scale: 0.97,
-                    duration: 0.1
-                });
-            });
-            
-            submitBtn.addEventListener('mouseup', () => {
-                gsap.to(submitBtn, {
-                    scale: 1,
-                    duration: 0.1
-                });
-            });
-        }
-        
-        // Alert message animation if present
-        if (document.getElementById('alertMessage')) {
-            gsap.from('#alertMessage', {
-                duration: 0.7,
-                y: -20,
-                opacity: 0,
-                ease: "back.out(1.2)",
-                onComplete: function() {
-                    // Auto dismiss after 6 seconds
-                    setTimeout(() => {
-                        gsap.to('#alertMessage', {
-                            opacity: 0,
-                            y: -20,
-                            duration: 0.5,
-                            ease: "power2.in"
-                        });
-                    }, 6000);
-                }
-            });
+            if (dropoutReason && !dropoutReason.value.trim()) {
+                showValidationMessage('dropout-reason', 'Dropout reason is required', false);
+                allValid = false;
+            }
         }
 
-        // MutationObserver to ensure styles are applied to dynamically added elements
-        const observer = new MutationObserver((mutations) => {
-            mutations.forEach((mutation) => {
-                if (mutation.addedNodes && mutation.addedNodes.length > 0) {
-                    mutation.addedNodes.forEach((node) => {
-                        if (node.nodeType === 1) { // Only process Element nodes
-                            const formControls = node.querySelectorAll('input:not([type="checkbox"]), select, textarea');
-                            formControls.forEach(el => {
-                                if (!el.classList.contains('form-control')) {
-                                    el.classList.add('form-control');
-                                }
-                            });
-                        }
-                    });
-                }
-            });
-        });
+        if (allValid) {
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
+            submitBtn.disabled = true;
+            
+            // Submit the form
+            setTimeout(() => {
+                form.submit();
+            }, 500);
+        } else {
+            // Scroll to first error
+            const firstError = document.querySelector('.is-invalid');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                firstError.focus();
+            }
+            
+            // Show error message
+            showNotification('Please correct all errors before submitting', 'error');
+        }
+    });
 
-        // Start observing the form for changes
-        observer.observe(document.querySelector('.student-form'), { 
-            childList: true, 
-            subtree: true 
+    // Helper function to show validation messages
+    function showValidationMessage(fieldId, message, isValid) {
+        const validationMsg = document.getElementById(`${fieldId}-validation`);
+        if (validationMsg) {
+            const span = validationMsg.querySelector('span');
+            const icon = validationMsg.querySelector('i');
+            
+            validationMsg.classList.remove('success', 'error');
+            validationMsg.classList.add(isValid ? 'success' : 'error', 'show');
+            icon.className = isValid ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+            span.textContent = message;
+        }
+    }
+
+    // Helper function to show notifications
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        `;
+        
+        notification.innerHTML = `
+            <div class="d-flex align-items-center">
+                <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                <span>${message}</span>
+                <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Auto remove after 5 seconds
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+        // Ctrl+S to save
+        if (e.ctrlKey && e.key === 's') {
+            e.preventDefault();
+            if (!submitBtn.disabled) {
+                form.dispatchEvent(new Event('submit'));
+            }
+        }
+        
+        // Escape to clear current field
+        if (e.key === 'Escape') {
+            const activeElement = document.activeElement;
+            if (activeElement && activeElement.tagName !== 'BODY') {
+                activeElement.blur();
+            }
+        }
+    });
+
+    // Auto-save to session storage (optional)
+    function autoSave() {
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            if (!key.includes('csrfmiddlewaretoken')) {
+                data[key] = value;
+            }
+        }
+        
+        // Note: sessionStorage is not available in Claude artifacts
+        // This would work in a real environment
+        // sessionStorage.setItem('studentFormData', JSON.stringify(data));
+    }
+
+    // Auto-save every 30 seconds
+    setInterval(autoSave, 30000);
+
+    // Initialize progress
+    updateProgress();
+    
+    // Initialize tooltips (if Bootstrap is available)
+    if (typeof bootstrap !== 'undefined') {
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+
+    // Smooth scrolling for section navigation
+    const sectionDividers = document.querySelectorAll('.section-divider');
+    sectionDividers.forEach(divider => {
+        divider.style.cursor = 'pointer';
+        divider.addEventListener('click', function() {
+            this.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
+
+    // Form field animations
+    const formControls = document.querySelectorAll('.form-control, .form-select');
+    formControls.forEach(control => {
+        control.addEventListener('focus', function() {
+            this.parentElement.style.transform = 'scale(1.02)';
+        });
+        
+        control.addEventListener('blur', function() {
+            this.parentElement.style.transform = 'scale(1)';
+        });
+    });
+
+    console.log('Student form initialized successfully!');
+});
 </script>
 {% endblock %}

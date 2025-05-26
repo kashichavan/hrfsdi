@@ -100,13 +100,43 @@ class RequirementEditForm(BaseRequirementForm):
 
 
 
+# forms.py
+
+# forms.py
+
 from django import forms
-from .models import Student
+from .models import Student, Subject, StudentSubjectRating
+
+class StudentSubjectRatingForm(forms.ModelForm):
+    class Meta:
+        model = StudentSubjectRating
+        fields = ['subject', 'rating', 'remarks']
+        widgets = {
+            'subject': forms.Select(attrs={'class': 'form-control'}),
+            'rating': forms.Select(choices=StudentSubjectRating.RATING_CHOICES, attrs={'class': 'form-control'}),
+            'remarks': forms.Textarea(attrs={'rows': 2, 'class': 'form-control'}),
+        }
+
+# Use formset factory to allow multiple subject ratings
+StudentSubjectRatingFormSet = forms.inlineformset_factory(
+    Student,
+    StudentSubjectRating,
+    form=StudentSubjectRatingForm,
+    extra=1,
+    can_delete=True
+)
+
 
 class StudentForm(forms.ModelForm):
     class Meta:
         model = Student
-        fields = '__all__'
+        exclude = [
+            'created_at', 
+            'total_requirements', 
+            'scheduled_requirements', 
+            'is_placed',
+            'overall_technical_rating'  # Removed this field
+        ]
         widgets = {
             'name': forms.TextInput(attrs={'class': 'form-control'}),
             'contact_number': forms.TextInput(attrs={'class': 'form-control'}),
@@ -133,8 +163,32 @@ class StudentForm(forms.ModelForm):
             }),
             'gender': forms.Select(attrs={'class': 'form-control'}),
             'type_of_data': forms.TextInput(attrs={'class': 'form-control'}),
+            'dropout_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'dropout_reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if 'is_dropout' in self.data:
+            is_dropout = self.data.get('is_dropout') == 'on'
+        else:
+            is_dropout = self.instance.is_dropout if self.instance else False
+
+        if not is_dropout:
+            self.fields['dropout_date'].required = False
+            self.fields['dropout_reason'].required = False
+        else:
+            self.fields['dropout_date'].required = True
+            
+    def clean_contact_number(self):
+        contact_number = self.cleaned_data.get('contact_number')
+        if Student.objects.filter(contact_number=contact_number).exists():
+            raise forms.ValidationError("A student with this contact number already exists.")
+        return contact_number
+            
+            
+            
 from django import forms
 from .models import GotPlacedOutside, Student
 
@@ -194,9 +248,11 @@ class BulkOutsidePlacementForm(forms.Form):
     )
     
     
+# forms.py
+
 from django import forms
 from django.forms import inlineformset_factory
-from .models import StudentSubjectRating
+from .models import StudentSubjectRating, Subject
 
 class StudentSubjectRatingForm(forms.ModelForm):
     class Meta:
@@ -208,25 +264,29 @@ class StudentSubjectRatingForm(forms.ModelForm):
             'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'evaluated_by': forms.TextInput(attrs={'class': 'form-control'}),
         }
-    
+
     def __init__(self, *args, **kwargs):
+        # Pop request if passed from view
+        self.request = kwargs.pop('request', None)
+
         super().__init__(*args, **kwargs)
+
         # Only show active subjects
         self.fields['subject'].queryset = Subject.objects.filter(is_active=True)
-        
-        # Set initial evaluated_by to current user if empty
-        if not self.initial.get('evaluated_by') and hasattr(self, 'request'):
-            self.initial['evaluated_by'] = self.request.user.get_full_name()
+
+        # Set default evaluated_by if available
+        if not self.initial.get('evaluated_by') and self.request:
+            user = self.request.user
+            self.initial['evaluated_by'] = user.get_full_name() if user.is_authenticated else ''
 
 # Create formset factory
 StudentSubjectRatingFormSet = inlineformset_factory(
     parent_model=Student,
     model=StudentSubjectRating,
     form=StudentSubjectRatingForm,
-    extra=0,
+    extra=1,
     can_delete=True
 )
-
 
 # forms.py
 from django import forms
