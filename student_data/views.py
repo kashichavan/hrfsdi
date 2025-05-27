@@ -244,11 +244,18 @@ from django.contrib.auth.decorators import login_required
 from .models import Student, RequirementStudent
 
 
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Q
+from django.shortcuts import render
+from .models import Student
+
+
 @login_required
 def student_list(request):
-    # Get filter parameters from request
+    # Get filter parameters
     search_query = request.GET.get('search', '')
-    sort_by = request.GET.get('sort', '-scheduled_requirements')  # Default to high-to-low
+    sort_by = request.GET.get('sort', '-scheduled_requirements')
     page_number = request.GET.get('page', 1)
     type_filter = request.GET.get('type_filter', '')
     degree_filter = request.GET.get('degree', '')
@@ -260,34 +267,31 @@ def student_list(request):
     min_yop = request.GET.get('min_yop', '')
     max_yop = request.GET.get('max_yop', '')
 
-    # Start with base queryset
-    students = Student.objects.all()
-    students = students.exclude(requirementstudent__status='selected')
-    students = students.exclude(is_placed=True)
+    # Base queryset (dropouts removed)
+    students = Student.objects.exclude(requirementstudent__status='selected') \
+                              .exclude(is_placed=True) \
+                              .exclude(is_dropout=True)
 
-    # Known types for "others" filtering
+    # Type handling
     known_types = [
         'fsdi', 'super100', 'tuition', 'legend',
         'placement_activity', 'placement activity',
         'early_placement', 'early placement'
     ]
 
-    # Apply type_of_data filter
     if type_filter:
         type_filter_lower = type_filter.lower()
         if type_filter_lower != 'all':
             if type_filter_lower == 'placement_activity':
                 students = students.filter(
-                    Q(type_of_data__iexact='placement_activity') | 
+                    Q(type_of_data__iexact='placement_activity') |
                     Q(type_of_data__iexact='placement activity')
                 )
             elif type_filter_lower == 'early_placement':
                 students = students.filter(
-                    Q(type_of_data__iexact='early_placement') | 
+                    Q(type_of_data__iexact='early_placement') |
                     Q(type_of_data__iexact='early placement')
                 )
-            elif type_filter_lower == 'dropout':
-                students = students.filter(is_dropout=True)
             elif type_filter_lower == 'others':
                 students = students.exclude(type_of_data__iexact='fsdi') \
                                    .exclude(type_of_data__iexact='super100') \
@@ -296,16 +300,15 @@ def student_list(request):
                                    .exclude(Q(type_of_data__iexact='placement_activity') |
                                             Q(type_of_data__iexact='placement activity')) \
                                    .exclude(Q(type_of_data__iexact='early_placement') |
-                                            Q(type_of_data__iexact='early placement')) \
-                                   .exclude(is_dropout=True)
+                                            Q(type_of_data__iexact='early placement'))
             else:
                 students = students.filter(type_of_data__iexact=type_filter_lower)
 
-    # Filter by degree (case-insensitive)
+    # Degree filter
     if degree_filter:
         students = students.filter(degree__iexact=degree_filter)
 
-    # Filter by stream(s) (case-insensitive)
+    # Stream filter
     if stream_filters:
         stream_query = Q()
         for stream in stream_filters:
@@ -314,7 +317,7 @@ def student_list(request):
         if stream_query:
             students = students.filter(stream_query)
 
-    # Filter by percentages and year
+    # Percentage and YOP filters
     try:
         if min_tenth:
             students = students.filter(tenth_percent__gte=float(min_tenth))
@@ -327,20 +330,20 @@ def student_list(request):
         if max_yop:
             students = students.filter(yop__lte=int(max_yop))
     except ValueError:
-        pass  # Ignore bad inputs
+        pass
 
-    # Filter by gender
+    # Gender
     if gender_filter:
         students = students.filter(gender__iexact=gender_filter)
 
-    # Search filter
+    # Search
     if search_query:
         students = students.filter(
             Q(name__icontains=search_query) |
             Q(contact_number__icontains=search_query)
         )
 
-    # Sorting configuration
+    # Valid sort options
     valid_sorts = {
         'name', '-name',
         'yop', '-yop',
@@ -362,18 +365,15 @@ def student_list(request):
     else:
         students = students.order_by('-scheduled_requirements', 'name')
 
-    # Get cleaned unique values for filters
+    # Cleaned values for filters
     def get_cleaned_unique_values(field_name):
         values = Student.objects.exclude(**{f'{field_name}__isnull': True}) \
-                               .exclude(**{f'{field_name}__exact': ''}) \
-                               .values_list(field_name, flat=True) \
-                               .distinct()
-        
+                                .exclude(**{f'{field_name}__exact': ''}) \
+                                .values_list(field_name, flat=True).distinct()
         cleaned = set()
-        for value in values:
-            if value:
-                clean_val = ' '.join(word.strip().title() for word in str(value).split())
-                cleaned.add(clean_val)
+        for val in values:
+            if val:
+                cleaned.add(' '.join(word.strip().title() for word in str(val).split()))
         return sorted(cleaned)
 
     unique_degrees = get_cleaned_unique_values('degree')
@@ -383,12 +383,10 @@ def student_list(request):
     paginator = Paginator(students, 50)
     try:
         page_obj = paginator.get_page(page_number)
-    except PageNotAnInteger:
+    except (PageNotAnInteger, EmptyPage):
         page_obj = paginator.get_page(1)
-    except EmptyPage:
-        page_obj = paginator.get_page(paginator.num_pages)
 
-    # Standardize display values
+    # Display formatting
     for student in page_obj:
         if student.name:
             student.display_name = ' '.join(word.title() for word in student.name.split())
@@ -397,8 +395,10 @@ def student_list(request):
         if student.stream:
             student.display_stream = ' '.join(word.title() for word in student.stream.split())
 
-    # Type counts for quick filters
-    base_query = Student.objects.exclude(requirementstudent__status='selected').exclude(is_placed=True)
+    # Type counts for filters (excluding dropouts)
+    base_query = Student.objects.exclude(requirementstudent__status='selected') \
+                                .exclude(is_placed=True) \
+                                .exclude(is_dropout=True)
 
     others_count = base_query.exclude(type_of_data__iexact='fsdi') \
                              .exclude(type_of_data__iexact='super100') \
@@ -407,8 +407,7 @@ def student_list(request):
                              .exclude(Q(type_of_data__iexact='placement_activity') |
                                       Q(type_of_data__iexact='placement activity')) \
                              .exclude(Q(type_of_data__iexact='early_placement') |
-                                      Q(type_of_data__iexact='early placement')) \
-                             .exclude(is_dropout=True).count()
+                                      Q(type_of_data__iexact='early placement')).count()
 
     type_counts = {
         'all': base_query.count(),
@@ -417,18 +416,17 @@ def student_list(request):
         'tuition': base_query.filter(type_of_data__iexact='tuition').count(),
         'legend': base_query.filter(type_of_data__iexact='legend').count(),
         'placement_activity': base_query.filter(
-            Q(type_of_data__iexact='placement_activity') | 
+            Q(type_of_data__iexact='placement_activity') |
             Q(type_of_data__iexact='placement activity')
         ).count(),
         'early_placement': base_query.filter(
-            Q(type_of_data__iexact='early_placement') | 
+            Q(type_of_data__iexact='early_placement') |
             Q(type_of_data__iexact='early placement')
         ).count(),
-        'dropout': base_query.filter(is_dropout=True).count(),
         'others': others_count,
     }
 
-    # Context data
+    # Render
     context = {
         'page_obj': page_obj,
         'search_query': search_query,
@@ -464,8 +462,218 @@ def student_list(request):
             ('-degree_percent', 'Degree % (High)'),
         ]
     }
-
     return render(request, 'student_list.html', context)
+
+
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.db.models import Q
+from django.shortcuts import render
+from .models import Student
+
+
+@login_required
+def dropout_student_list(request):
+    # Get filter parameters
+    search_query = request.GET.get('search', '')
+    sort_by = request.GET.get('sort', '-scheduled_requirements')
+    page_number = request.GET.get('page', 1)
+    type_filter = request.GET.get('type_filter', '')
+    degree_filter = request.GET.get('degree', '')
+    stream_filters = request.GET.getlist('stream')
+    min_tenth = request.GET.get('min_tenth', '')
+    min_twelfth = request.GET.get('min_twelfth', '')
+    min_degree = request.GET.get('min_degree', '')
+    gender_filter = request.GET.get('gender', '')
+    min_yop = request.GET.get('min_yop', '')
+    max_yop = request.GET.get('max_yop', '')
+
+    # Base queryset (only dropouts)
+    students = Student.objects.filter(is_dropout=True)
+
+    # Type filter
+    if type_filter:
+        type_filter_lower = type_filter.lower()
+        if type_filter_lower != 'all':
+            if type_filter_lower == 'placement_activity':
+                students = students.filter(
+                    Q(type_of_data__iexact='placement_activity') |
+                    Q(type_of_data__iexact='placement activity')
+                )
+            elif type_filter_lower == 'early_placement':
+                students = students.filter(
+                    Q(type_of_data__iexact='early_placement') |
+                    Q(type_of_data__iexact='early placement')
+                )
+            elif type_filter_lower == 'others':
+                students = students.exclude(type_of_data__iexact='fsdi') \
+                                   .exclude(type_of_data__iexact='super100') \
+                                   .exclude(type_of_data__iexact='tuition') \
+                                   .exclude(type_of_data__iexact='legend') \
+                                   .exclude(Q(type_of_data__iexact='placement_activity') |
+                                            Q(type_of_data__iexact='placement activity')) \
+                                   .exclude(Q(type_of_data__iexact='early_placement') |
+                                            Q(type_of_data__iexact='early placement'))
+            else:
+                students = students.filter(type_of_data__iexact=type_filter_lower)
+
+    # Degree filter
+    if degree_filter:
+        students = students.filter(degree__iexact=degree_filter)
+
+    # Stream filter
+    if stream_filters:
+        stream_query = Q()
+        for stream in stream_filters:
+            if stream:
+                stream_query |= Q(stream__iexact=stream)
+        if stream_query:
+            students = students.filter(stream_query)
+
+    # Percentage and YOP filters
+    try:
+        if min_tenth:
+            students = students.filter(tenth_percent__gte=float(min_tenth))
+        if min_twelfth:
+            students = students.filter(twelfth_percent__gte=float(min_twelfth))
+        if min_degree:
+            students = students.filter(degree_percent__gte=float(min_degree))
+        if min_yop:
+            students = students.filter(yop__gte=int(min_yop))
+        if max_yop:
+            students = students.filter(yop__lte=int(max_yop))
+    except ValueError:
+        pass
+
+    # Gender
+    if gender_filter:
+        students = students.filter(gender__iexact=gender_filter)
+
+    # Search
+    if search_query:
+        students = students.filter(
+            Q(name__icontains=search_query) |
+            Q(contact_number__icontains=search_query)
+        )
+
+    # Sorting
+    valid_sorts = {
+        'name', '-name',
+        'yop', '-yop',
+        'tenth_percent', '-tenth_percent',
+        'twelfth_percent', '-twelfth_percent',
+        'degree_percent', '-degree_percent',
+        'total_requirements', '-total_requirements',
+        'scheduled_requirements', '-scheduled_requirements',
+        'gender', '-gender',
+        'type_of_data', '-type_of_data',
+        'created_at', '-created_at'
+    }
+
+    if sort_by in valid_sorts:
+        if sort_by not in ['scheduled_requirements', '-scheduled_requirements']:
+            students = students.order_by('-scheduled_requirements', sort_by, 'name')
+        else:
+            students = students.order_by(sort_by, 'name')
+    else:
+        students = students.order_by('-scheduled_requirements', 'name')
+
+    # Cleaned values for filters
+    def get_cleaned_unique_values(field_name):
+        values = Student.objects.exclude(**{f'{field_name}__isnull': True}) \
+                                .exclude(**{f'{field_name}__exact': ''}) \
+                                .values_list(field_name, flat=True).distinct()
+        cleaned = set()
+        for val in values:
+            if val:
+                cleaned.add(' '.join(word.strip().title() for word in str(val).split()))
+        return sorted(cleaned)
+
+    unique_degrees = get_cleaned_unique_values('degree')
+    unique_streams = get_cleaned_unique_values('stream')
+
+    # Pagination
+    paginator = Paginator(students, 50)
+    try:
+        page_obj = paginator.get_page(page_number)
+    except (PageNotAnInteger, EmptyPage):
+        page_obj = paginator.get_page(1)
+
+    # Display formatting
+    for student in page_obj:
+        if student.name:
+            student.display_name = ' '.join(word.title() for word in student.name.split())
+        if student.degree:
+            student.display_degree = ' '.join(word.title() for word in student.degree.split())
+        if student.stream:
+            student.display_stream = ' '.join(word.title() for word in student.stream.split())
+
+    # Type counts (from dropout students only)
+    base_query = Student.objects.filter(is_dropout=True)
+    others_count = base_query.exclude(type_of_data__iexact='fsdi') \
+                             .exclude(type_of_data__iexact='super100') \
+                             .exclude(type_of_data__iexact='tuition') \
+                             .exclude(type_of_data__iexact='legend') \
+                             .exclude(Q(type_of_data__iexact='placement_activity') |
+                                      Q(type_of_data__iexact='placement activity')) \
+                             .exclude(Q(type_of_data__iexact='early_placement') |
+                                      Q(type_of_data__iexact='early placement')).count()
+
+    type_counts = {
+        'all': base_query.count(),
+        'fsdi': base_query.filter(type_of_data__iexact='fsdi').count(),
+        'super100': base_query.filter(type_of_data__iexact='super100').count(),
+        'tuition': base_query.filter(type_of_data__iexact='tuition').count(),
+        'legend': base_query.filter(type_of_data__iexact='legend').count(),
+        'placement_activity': base_query.filter(
+            Q(type_of_data__iexact='placement_activity') |
+            Q(type_of_data__iexact='placement activity')
+        ).count(),
+        'early_placement': base_query.filter(
+            Q(type_of_data__iexact='early_placement') |
+            Q(type_of_data__iexact='early placement')
+        ).count(),
+        'others': others_count,
+    }
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'sort_by': sort_by,
+        'type_filter': type_filter,
+        'total_count': students.count(),
+        'type_counts': type_counts,
+        'degree_filter': degree_filter,
+        'stream_filters': stream_filters,
+        'min_tenth': min_tenth,
+        'min_twelfth': min_twelfth,
+        'min_degree': min_degree,
+        'gender_filter': gender_filter,
+        'min_yop': min_yop,
+        'max_yop': max_yop,
+        'unique_degrees': unique_degrees,
+        'unique_streams': unique_streams,
+        'current_sort': sort_by,
+        'sort_options': [
+            ('-scheduled_requirements', 'Scheduled (High to Low)'),
+            ('scheduled_requirements', 'Scheduled (Low to High)'),
+            ('-total_requirements', 'Total (High to Low)'),
+            ('total_requirements', 'Total (Low to High)'),
+            ('name', 'Name (A-Z)'),
+            ('-name', 'Name (Z-A)'),
+            ('yop', 'YOP (Oldest)'),
+            ('-yop', 'YOP (Newest)'),
+            ('tenth_percent', '10th % (Low)'),
+            ('-tenth_percent', '10th % (High)'),
+            ('twelfth_percent', '12th % (Low)'),
+            ('-twelfth_percent', '12th % (High)'),
+            ('degree_percent', 'Degree % (Low)'),
+            ('-degree_percent', 'Degree % (High)'),
+        ]
+    }
+    return render(request, 'dropout_student_list.html', context)
+
+
 @login_required
 def student_detail(request, student_id):
     student = get_object_or_404(
