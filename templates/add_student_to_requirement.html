@@ -1,9 +1,27 @@
 {% extends 'base.html' %}
 {% load custom_filters %}
+{% load url_replace %}
 
 {% block title %}Add Students to Requirement{% endblock %}
 
 {% block content %}
+<nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb custom-breadcrumb">
+            <li class="breadcrumb-item">
+                <a href="{% url 'student_data:requirement_list' %}" class="breadcrumb-link">
+                    <i class="fas fa-building mr-1"></i>Requirements
+                </a>
+            </li>
+            <li class="breadcrumb-item">
+                <a href="{% url 'student_data:requirement_detail' requirement.id %}" class="breadcrumb-link">
+                    {{ requirement.company_name|truncatechars:30 }}
+                </a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+                <i class="fas fa-user-plus mr-1"></i>Add Students
+            </li>
+        </ol>
+    </nav>
 <div class="container mt-4" id="app">
     <h2 class="text-orange">Add Students to Requirement: {{ requirement.company_name }}</h2>
     <p class="text-muted">{{ requirement.description }}</p>

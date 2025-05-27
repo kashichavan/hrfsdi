@@ -667,6 +667,10 @@
     </div>
 </div>
 
+<input type="hidden" name="ratings-TOTAL_FORMS" id="id_ratings-TOTAL_FORMS" value="1">
+<input type="hidden" name="ratings-INITIAL_FORMS" value="0">
+<input type="hidden" name="ratings-MIN_NUM_FORMS" value="0">
+<input type="hidden" name="ratings-MAX_NUM_FORMS" value="1000">
 
 <script type="application/json" id="subject-data">
     [
@@ -685,7 +689,7 @@
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Validation rules
     const validationRules = {
         name: {
@@ -756,8 +760,6 @@ document.addEventListener('DOMContentLoaded', function() {
         const field = document.getElementById(`id_${fieldName}`);
         if (field) {
             validationState[fieldName] = false;
-            
-            // Real-time validation
             field.addEventListener('input', () => validateField(fieldName));
             field.addEventListener('blur', () => validateField(fieldName));
             field.addEventListener('change', () => validateField(fieldName));
@@ -769,26 +771,19 @@ document.addEventListener('DOMContentLoaded', function() {
         const field = document.getElementById(`id_${fieldName}`);
         const rule = validationRules[fieldName];
         const validationMsg = document.getElementById(`${fieldName.replace('_', '-')}-validation`);
-        
         if (!field || !rule) return true;
 
         let isValid = true;
         let message = '';
-
         const value = field.value.trim();
 
-        // Required field check
         if (rule.required && !value) {
             isValid = false;
             message = `${fieldName.replace('_', ' ').toUpperCase()} is required`;
-        }
-        // Pattern validation
-        else if (value && rule.pattern && !rule.pattern.test(value)) {
+        } else if (value && rule.pattern && !rule.pattern.test(value)) {
             isValid = false;
             message = rule.message;
-        }
-        // Number range validation
-        else if (value && (rule.min !== undefined || rule.max !== undefined)) {
+        } else if (value && (rule.min !== undefined || rule.max !== undefined)) {
             const numValue = parseFloat(value);
             if (isNaN(numValue)) {
                 isValid = false;
@@ -802,17 +797,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Update field appearance
         field.classList.remove('is-valid', 'is-invalid');
         if (value) {
             field.classList.add(isValid ? 'is-valid' : 'is-invalid');
         }
 
-        // Update validation message
         if (validationMsg) {
             const span = validationMsg.querySelector('span');
             const icon = validationMsg.querySelector('i');
-            
             if (isValid && value) {
                 validationMsg.classList.remove('error');
                 validationMsg.classList.add('success', 'show');
@@ -828,10 +820,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Update validation state
         validationState[fieldName] = isValid && value;
         updateProgress();
-        
         return isValid;
     }
 
@@ -839,31 +829,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateProgress() {
         const validFields = Object.values(validationState).filter(Boolean).length;
         const percentage = Math.round((validFields / totalFields) * 100);
-        
         progressFill.style.width = `${percentage}%`;
         progressText.textContent = `${percentage}%`;
-        
-        // Enable/disable submit button
         const allValid = Object.values(validationState).every(Boolean);
         submitBtn.disabled = !allValid;
     }
 
     // Dropout checkbox handler
-    dropoutCheckbox.addEventListener('change', function() {
+    dropoutCheckbox.addEventListener('change', function () {
         if (this.checked) {
             dropoutFields.classList.add('show');
-            // Make dropout fields required when checkbox is checked
             const dropoutDate = document.getElementById('id_dropout_date');
             const dropoutReason = document.getElementById('id_dropout_reason');
-            
             if (dropoutDate) dropoutDate.required = true;
             if (dropoutReason) dropoutReason.required = true;
         } else {
             dropoutFields.classList.remove('show');
-            // Remove requirement when checkbox is unchecked
             const dropoutDate = document.getElementById('id_dropout_date');
             const dropoutReason = document.getElementById('id_dropout_reason');
-            
             if (dropoutDate) {
                 dropoutDate.required = false;
                 dropoutDate.value = '';
@@ -880,40 +863,31 @@ document.addEventListener('DOMContentLoaded', function() {
     const addRatingBtn = document.getElementById('addRatingBtn');
     const ratingsContainer = document.getElementById('ratingsContainer');
 
-    addRatingBtn.addEventListener('click', function() {
+    addRatingBtn.addEventListener('click', function () {
         const newRow = createRatingRow(ratingFormCount);
         ratingsContainer.appendChild(newRow);
         ratingFormCount++;
-        
-        // Update formset management form
         updateFormsetCount();
     });
-    // Create a new rating row
-    
+
     // Get subject and rating data from template
     const subjectData = JSON.parse(document.getElementById('subject-data').textContent);
     const ratingData = JSON.parse(document.getElementById('rating-data').textContent);
-
-    let formIndex = document.querySelectorAll('.rating-row').length;
 
     function createRatingRow(index) {
         const div = document.createElement('div');
         div.className = 'rating-row mb-3';
         div.setAttribute('data-form-index', index);
 
-        // Build subject options
         let subjectOptions = '<option value="">Select Subject</option>';
         subjectData.forEach(subject => {
             subjectOptions += `<option value="${subject.id}">${subject.name}</option>`;
         });
 
-        // Build rating options
         let ratingOptions = '<option value="">Select Rating</option>';
         ratingData.forEach(rating => {
             ratingOptions += `<option value="${rating.value}">${rating.label}</option>`;
         });
-
-        console.log(subjectOptions, ratingOptions);
 
         div.innerHTML = `
             <div class="row align-items-end">
@@ -941,59 +915,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
             </div>
         `;
-
         return div;
     }
 
-    function addRatingRow() {
-        const container = document.getElementById('ratings-container');
-        const totalFormsInput = document.querySelector('[name="ratings-TOTAL_FORMS"]');
-        const totalForms = parseInt(totalFormsInput.value);
-
-        const newRow = createRatingRow(totalForms);
-        container.appendChild(newRow);
-
-        totalFormsInput.value = totalForms + 1;
-    }
-
-    function removeRatingRow(btn) {
-        const row = btn.closest('.rating-row');
-        const deleteCheckbox = row.querySelector('input[type="checkbox"]');
-        if (deleteCheckbox) {
-            deleteCheckbox.checked = true;
-            row.style.display = 'none';
-        } else {
-            row.remove();
-        }
-    }
-
-    // Attach event listener to "Add More Subjects" button
-    document.addEventListener("DOMContentLoaded", function () {
-        const addButton = document.getElementById("add-rating-btn");
-        if (addButton) {
-            addButton.addEventListener("click", addRatingRow);
-        }
-    });
-
-
     function updateFormsetCount() {
-        const totalForms = document.querySelector('#id_form-TOTAL_FORMS');
-        if (totalForms) {
-            totalForms.value = ratingFormCount;
-        }
+    const totalFormsInput = document.getElementById('id_ratings-TOTAL_FORMS');
+    if (totalFormsInput) {
+        totalFormsInput.value = ratingFormCount;
     }
+}
 
     // Remove rating row function (global scope for onclick)
-    window.removeRatingRow = function(button) {
+    window.removeRatingRow = function (button) {
         const row = button.closest('.rating-row');
         const deleteInput = row.querySelector('input[name*="DELETE"]');
-        
         if (deleteInput) {
-            // Mark for deletion if it's an existing form
             deleteInput.value = 'on';
             row.style.display = 'none';
         } else {
-            // Remove completely if it's a new form
             row.remove();
             ratingFormCount--;
             updateFormsetCount();
@@ -1001,10 +940,9 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     // Form submission handler
-    form.addEventListener('submit', function(e) {
+    form.addEventListener('submit', function (e) {
         e.preventDefault();
-        
-        // Validate all fields before submission
+
         let allValid = true;
         Object.keys(validationRules).forEach(fieldName => {
             if (!validateField(fieldName)) {
@@ -1012,16 +950,13 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
 
-        // Validate dropout fields if checkbox is checked
         if (dropoutCheckbox.checked) {
             const dropoutDate = document.getElementById('id_dropout_date');
             const dropoutReason = document.getElementById('id_dropout_reason');
-            
             if (dropoutDate && !dropoutDate.value.trim()) {
                 showValidationMessage('dropout-date', 'Dropout date is required', false);
                 allValid = false;
             }
-            
             if (dropoutReason && !dropoutReason.value.trim()) {
                 showValidationMessage('dropout-reason', 'Dropout reason is required', false);
                 allValid = false;
@@ -1029,34 +964,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         if (allValid) {
-            // Show loading state
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Saving...';
             submitBtn.disabled = true;
-            
-            // Submit the form
             setTimeout(() => {
                 form.submit();
             }, 500);
         } else {
-            // Scroll to first error
             const firstError = document.querySelector('.is-invalid');
             if (firstError) {
                 firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 firstError.focus();
             }
-            
-            // Show error message
             showNotification('Please correct all errors before submitting', 'error');
         }
     });
 
-    // Helper function to show validation messages
+    // Helper functions
     function showValidationMessage(fieldId, message, isValid) {
         const validationMsg = document.getElementById(`${fieldId}-validation`);
         if (validationMsg) {
             const span = validationMsg.querySelector('span');
             const icon = validationMsg.querySelector('i');
-            
             validationMsg.classList.remove('success', 'error');
             validationMsg.classList.add(isValid ? 'success' : 'error', 'show');
             icon.className = isValid ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
@@ -1064,7 +992,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Helper function to show notifications
     function showNotification(message, type = 'info') {
         const notification = document.createElement('div');
         notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
@@ -1076,7 +1003,6 @@ document.addEventListener('DOMContentLoaded', function() {
             min-width: 300px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         `;
-        
         notification.innerHTML = `
             <div class="d-flex align-items-center">
                 <i class="fas fa-${type === 'error' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
@@ -1084,10 +1010,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close ms-auto" onclick="this.parentElement.parentElement.remove()"></button>
             </div>
         `;
-        
         document.body.appendChild(notification);
-        
-        // Auto remove after 5 seconds
         setTimeout(() => {
             if (notification.parentElement) {
                 notification.remove();
@@ -1096,16 +1019,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        // Ctrl+S to save
+    document.addEventListener('keydown', function (e) {
         if (e.ctrlKey && e.key === 's') {
             e.preventDefault();
             if (!submitBtn.disabled) {
                 form.dispatchEvent(new Event('submit'));
             }
         }
-        
-        // Escape to clear current field
         if (e.key === 'Escape') {
             const activeElement = document.activeElement;
             if (activeElement && activeElement.tagName !== 'BODY') {
@@ -1114,29 +1034,23 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-save to session storage (optional)
+    // Auto-save (optional)
     function autoSave() {
         const formData = new FormData(form);
         const data = {};
-        
         for (let [key, value] of formData.entries()) {
             if (!key.includes('csrfmiddlewaretoken')) {
                 data[key] = value;
             }
         }
-        
-        // Note: sessionStorage is not available in Claude artifacts
-        // This would work in a real environment
-        // sessionStorage.setItem('studentFormData', JSON.stringify(data));
     }
 
-    // Auto-save every 30 seconds
     setInterval(autoSave, 30000);
 
     // Initialize progress
     updateProgress();
-    
-    // Initialize tooltips (if Bootstrap is available)
+
+    // Initialize tooltips
     if (typeof bootstrap !== 'undefined') {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
         tooltipTriggerList.map(function (tooltipTriggerEl) {
@@ -1148,7 +1062,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sectionDividers = document.querySelectorAll('.section-divider');
     sectionDividers.forEach(divider => {
         divider.style.cursor = 'pointer';
-        divider.addEventListener('click', function() {
+        divider.addEventListener('click', function () {
             this.scrollIntoView({ behavior: 'smooth', block: 'start' });
         });
     });
@@ -1156,11 +1070,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Form field animations
     const formControls = document.querySelectorAll('.form-control, .form-select');
     formControls.forEach(control => {
-        control.addEventListener('focus', function() {
+        control.addEventListener('focus', function () {
             this.parentElement.style.transform = 'scale(1.02)';
         });
-        
-        control.addEventListener('blur', function() {
+        control.addEventListener('blur', function () {
             this.parentElement.style.transform = 'scale(1)';
         });
     });

@@ -121,11 +121,13 @@ urlpatterns = [
      path('ajax/search-students/', views.ajax_search_students, name='ajax_search_students'),
     path('export/students-csv/', views.export_students_csv, name='export_students_csv'),
 
- path('ajax/today-requirements/', views.TodaysRequirementsAjaxView.as_view(), name='ajax_todays_requirements'),
+    path('ajax/today-requirements/', views.TodaysRequirementsAjaxView.as_view(), name='ajax_todays_requirements'),
     path('ajax/tomorrow-requirements/', views.TomorrowsRequirementsAjaxView.as_view(), name='ajax_tomorrow_requirements'),
     path('ajax/today-students/', views.TodaysStudentsAjaxView.as_view(), name='ajax_today_students'),
     path('ajax/tomorrow-students/', views.TomorrowsStudentsAjaxView.as_view(), name='ajax_tomorrow_students'),
     path('export_placed/',views.export_placed_students_excel,name='export_placed_students_excel'),
+    path('student-search/', views.student_search, name='student_search'),
+    path('api/student-search/', views.student_search_api, name='student_search_api')
 ]
 
 

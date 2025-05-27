@@ -298,25 +298,3 @@ class BulkStudentRatingUploadForm(forms.Form):
         validators=[FileExtensionValidator(allowed_extensions=['xlsx', 'csv'])],
         help_text="File format: MobileNo, Subject1, Subject1_Rating, Subject2, Subject2_Rating, ... (2-5 subjects)"
     )
-    
-from django import forms
-from .models import StudentSubjectRating
-
-class StudentSubjectRatingForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
-        self.student = kwargs.pop('student', None)
-        super().__init__(*args, **kwargs)
-        if self.student:
-            rated_subjects = StudentSubjectRating.objects.filter(
-                student=self.student
-            ).values_list('subject', flat=True)
-            self.fields['subject'].queryset = Subject.objects.exclude(
-                id__in=rated_subjects
-            )
-
-    class Meta:
-        model = StudentSubjectRating
-        fields = ['subject', 'rating', 'remarks']
-        widgets = {
-            'remarks': forms.Textarea(attrs={'rows': 3}),
-        }

@@ -110,11 +110,19 @@ def replace(value, arg):
     old, new = arg.split(',')
     return value.replace(old, new)
 
+from django import template
+from urllib.parse import urlencode
+
+register = template.Library()
+
 @register.simple_tag(takes_context=True)
 def url_replace(context, **kwargs):
     query = context['request'].GET.copy()
-    for k, v in kwargs.items():
-        query[k] = v
+    for key, value in kwargs.items():
+        if value is not None:
+            query[key] = value
+        else:
+            query.pop(key, None)
     return query.urlencode()
 
 
@@ -125,3 +133,13 @@ register = template.Library()
 @register.filter
 def zip(a, b):
     return zip(a, b)
+
+
+# your_app/templatetags/custom_filters.py
+from django import template
+
+register = template.Library()
+
+@register.filter
+def lookup(d, key):
+    return d.get(key)

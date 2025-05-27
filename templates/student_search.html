@@ -1,0 +1,787 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Student Search{% endblock %}
+
+{% block content %}
+<div class="search-container">
+    <div class="background-gradient"></div>
+    <div class="floating-elements">
+        <div class="float-element float-1"></div>
+        <div class="float-element float-2"></div>
+        <div class="float-element float-3"></div>
+    </div>
+    
+    <div class="content-wrapper">
+        <div class="search-card">
+            <div class="card-header">
+                <div class="header-icon">
+                    <i class="fas fa-search"></i>
+                </div>
+                <h1 class="header-title">Student Search</h1>
+                <p class="header-subtitle">Find students instantly with advanced search</p>
+            </div>
+            
+            <div class="search-section">
+                <div class="search-box-wrapper">
+                    <div class="search-box">
+                        <input type="text" 
+                               id="searchInput" 
+                               placeholder="Search by name or mobile number..."
+                               aria-label="Search students"
+                               autocomplete="off">
+                        <button type="button" id="searchButton" class="search-btn">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                    <div class="search-hint">
+                        <i class="fas fa-info-circle"></i>
+                        Start typing to search students by name or mobile number
+                    </div>
+                </div>
+            </div>
+            
+            <div id="searchResults" class="results-container"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const searchButton = document.getElementById('searchButton');
+    const resultsContainer = document.getElementById('searchResults');
+    let debounceTimer;
+
+    function showLoading() {
+        resultsContainer.innerHTML = `
+            <div class="loading-container">
+                <div class="loading-spinner">
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                    <div class="spinner-ring"></div>
+                </div>
+                <p class="loading-text">Searching students...</p>
+            </div>
+        `;
+    }
+
+    function performSearch(query) {
+        if (query.length < 2) {
+            resultsContainer.innerHTML = `
+                <div class="info-message">
+                    <i class="fas fa-info-circle"></i>
+                    <span>Please enter at least 2 characters</span>
+                </div>
+            `;
+            return;
+        }
+
+        showLoading();
+        
+        fetch(`{% url 'student_data:student_search_api' %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                let html = '';
+                if (data.results.length > 0) {
+                    html += '<div class="results-grid">';
+                    data.results.forEach((student, index) => {
+                        html += `
+                            <a href="${student.url}" class="student-card" style="animation-delay: ${index * 0.1}s">
+                                <div class="student-avatar">
+                                    <i class="fas fa-user-graduate"></i>
+                                </div>
+                                <div class="student-info">
+                                    <h3 class="student-name">${student.name}</h3>
+                                    <p class="student-degree">${student.degree}</p>
+                                </div>
+                                <div class="student-mobile">
+                                    <i class="fas fa-phone"></i>
+                                    <span>${student.mobile}</span>
+                                </div>
+                                <div class="card-arrow">
+                                    <i class="fas fa-arrow-right"></i>
+                                </div>
+                            </a>
+                        `;
+                    });
+                    html += '</div>';
+                    html += `<div class="results-count">${data.results.length} student${data.results.length !== 1 ? 's' : ''} found</div>`;
+                } else {
+                    html = `
+                        <div class="no-results">
+                            <div class="no-results-icon">
+                                <i class="fas fa-search-minus"></i>
+                            </div>
+                            <h3>No students found</h3>
+                            <p>Try adjusting your search terms for "${query}"</p>
+                        </div>
+                    `;
+                }
+                resultsContainer.innerHTML = html;
+            })
+            .catch(error => {
+                resultsContainer.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <span>Error loading results: ${error.message}</span>
+                    </div>
+                `;
+            });
+    }
+
+    // Handle search button click
+    searchButton.addEventListener('click', function() {
+        const query = searchInput.value.trim();
+        performSearch(query);
+    });
+
+    // Handle Enter key
+    searchInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const query = searchInput.value.trim();
+            performSearch(query);
+        }
+    });
+
+    // Handle input with debounce
+    searchInput.addEventListener('input', function() {
+        const query = this.value.trim();
+        clearTimeout(debounceTimer);
+        
+        if (query.length >= 2) {
+            debounceTimer = setTimeout(() => performSearch(query), 300);
+        } else if (query.length === 0) {
+            resultsContainer.innerHTML = '';
+        }
+    });
+
+    // Add focus effects
+    searchInput.addEventListener('focus', function() {
+        this.parentElement.classList.add('focused');
+    });
+
+    searchInput.addEventListener('blur', function() {
+        this.parentElement.classList.remove('focused');
+    });
+});
+</script>
+
+<style>
+/* Import trending fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+    --primary-orange: #ff6b35;
+    --secondary-orange: #ff8c42;
+    --light-orange: #ffb380;
+    --pale-orange: #fff4f0;
+    --pure-white: #ffffff;
+    --off-white: #fafafa;
+    --text-dark: #2d3748;
+    --text-light: #718096;
+    --shadow-light: rgba(255, 107, 53, 0.1);
+    --shadow-medium: rgba(255, 107, 53, 0.2);
+    --shadow-heavy: rgba(255, 107, 53, 0.3);
+    --gradient-primary: linear-gradient(135deg, #ff6b35 0%, #ff8c42 50%, #ffb380 100%);
+    --gradient-secondary: linear-gradient(135deg, #fff4f0 0%, #ffffff 100%);
+    --gradient-card: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 244, 240, 0.8) 100%);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--gradient-secondary);
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+.search-container {
+    position: relative;
+    min-height: 100vh;
+    padding: 2rem 1rem;
+}
+
+.background-gradient {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-primary);
+    opacity: 0.05;
+    z-index: -2;
+}
+
+.floating-elements {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.float-element {
+    position: absolute;
+    border-radius: 50%;
+    background: var(--gradient-primary);
+    opacity: 0.1;
+    animation: float 6s ease-in-out infinite;
+}
+
+.float-1 {
+    width: 300px;
+    height: 300px;
+    top: 10%;
+    right: -10%;
+    animation-delay: 0s;
+}
+
+.float-2 {
+    width: 200px;
+    height: 200px;
+    bottom: 20%;
+    left: -5%;
+    animation-delay: 2s;
+}
+
+.float-3 {
+    width: 150px;
+    height: 150px;
+    top: 60%;
+    right: 20%;
+    animation-delay: 4s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+.content-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.search-card {
+    background: var(--gradient-card);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 24px;
+    box-shadow: 
+        0 20px 40px var(--shadow-light),
+        0 0 0 1px rgba(255, 255, 255, 0.8),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+    animation: slideUp 0.8s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.card-header {
+    text-align: center;
+    padding: 3rem 2rem 2rem;
+    background: var(--gradient-primary);
+    background-size: 200% 200%;
+    animation: gradientShift 4s ease infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+.card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+}
+
+@keyframes gradientShift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.header-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 80px;
+    height: 80px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.header-icon i {
+    font-size: 2rem;
+    color: white;
+}
+
+.header-title {
+    font-size: 3rem;
+    font-weight: 800;
+    color: white;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+    letter-spacing: -0.02em;
+}
+
+.header-subtitle {
+    font-size: 1.1rem;
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 400;
+    margin: 0;
+}
+
+.search-section {
+    padding: 3rem 2rem;
+}
+
+.search-box-wrapper {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 
+        0 10px 30px var(--shadow-light),
+        0 0 0 1px rgba(255, 107, 53, 0.1);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.search-box.focused {
+    box-shadow: 
+        0 20px 40px var(--shadow-medium),
+        0 0 0 2px var(--primary-orange);
+    transform: translateY(-2px);
+}
+
+.search-box input {
+    flex: 1;
+    padding: 1.25rem 1.5rem;
+    border: none;
+    outline: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-dark);
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+}
+
+.search-box input::placeholder {
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+.search-btn {
+    padding: 1.25rem 1.5rem;
+    background: var(--gradient-primary);
+    border: none;
+    color: white;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+}
+
+.search-btn:hover {
+    background-size: 150% 150%;
+    transform: scale(1.05);
+}
+
+.search-btn:active {
+    transform: scale(0.95);
+}
+
+.search-hint {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    text-align: center;
+    justify-content: center;
+}
+
+.search-hint i {
+    color: var(--primary-orange);
+}
+
+.results-container {
+    padding: 0 2rem 2rem;
+    min-height: 200px;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+}
+
+.loading-spinner {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1.5rem;
+}
+
+.spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 3px solid transparent;
+    border-top: 3px solid var(--primary-orange);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner-ring:nth-child(2) {
+    animation-delay: 0.3s;
+    border-top-color: var(--secondary-orange);
+}
+
+.spinner-ring:nth-child(3) {
+    animation-delay: 0.6s;
+    border-top-color: var(--light-orange);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.results-grid {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.student-card {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+    background: white;
+    border-radius: 16px;
+    text-decoration: none;
+    color: inherit;
+    box-shadow: 0 4px 20px var(--shadow-light);
+    border: 1px solid rgba(255, 107, 53, 0.1);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: slideInUp 0.6s ease-out forwards;
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+@keyframes slideInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.student-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: var(--gradient-primary);
+    opacity: 0.05;
+    transition: left 0.5s ease;
+}
+
+.student-card:hover::before {
+    left: 0;
+}
+
+.student-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px var(--shadow-medium);
+    border-color: var(--primary-orange);
+}
+
+.student-avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: var(--gradient-primary);
+    border-radius: 50%;
+    margin-right: 1.5rem;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+.student-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.student-name {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.25rem;
+    line-height: 1.2;
+}
+
+.student-degree {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin: 0;
+    line-height: 1.3;
+}
+
+.student-mobile {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--pale-orange);
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--primary-orange);
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.student-mobile i {
+    font-size: 0.8rem;
+}
+
+.card-arrow {
+    color: var(--primary-orange);
+    font-size: 1.2rem;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.student-card:hover .card-arrow {
+    transform: translateX(5px);
+}
+
+.results-count {
+    text-align: center;
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+    padding: 1rem;
+    background: var(--pale-orange);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 107, 53, 0.1);
+}
+
+.info-message,
+.error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease;
+}
+
+.info-message {
+    background: var(--pale-orange);
+    color: var(--primary-orange);
+    border: 1px solid rgba(255, 107, 53, 0.2);
+}
+
+.error-message {
+    background: #fff5f5;
+    color: #e53e3e;
+    border: 1px solid rgba(229, 62, 62, 0.2);
+}
+
+.no-results {
+    text-align: center;
+    padding: 4rem 2rem;
+    animation: fadeIn 0.5s ease;
+}
+
+.no-results-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 100px;
+    background: var(--pale-orange);
+    border-radius: 50%;
+    margin-bottom: 2rem;
+    color: var(--primary-orange);
+    font-size: 3rem;
+}
+
+.no-results h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    margin-bottom: 0.5rem;
+}
+
+.no-results p {
+    font-size: 1rem;
+    color: var(--text-light);
+    margin: 0;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .search-container {
+        padding: 1rem;
+    }
+    
+    .header-title {
+        font-size: 2.5rem;
+    }
+    
+    .header-subtitle {
+        font-size: 1rem;
+    }
+    
+    .search-section {
+        padding: 2rem 1.5rem;
+    }
+    
+    .student-card {
+        flex-direction: column;
+        text-align: center;
+        padding: 2rem 1.5rem;
+    }
+    
+    .student-avatar {
+        margin: 0 0 1rem 0;
+    }
+    
+    .student-mobile {
+        margin: 1rem 0 0 0;
+    }
+    
+    .card-arrow {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-title {
+        font-size: 2rem;
+    }
+    
+    .search-box {
+        flex-direction: column;
+    }
+    
+    .search-btn {
+        border-radius: 0 0 16px 16px;
+        padding: 1rem;
+    }
+    
+    .search-box input {
+        border-radius: 16px 16px 0 0;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --text-dark: #f7fafc;
+        --text-light: #a0aec0;
+        --off-white: #1a202c;
+        --pure-white: #2d3748;
+        --gradient-secondary: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        --gradient-card: linear-gradient(145deg, rgba(45, 55, 72, 0.9) 0%, rgba(26, 32, 44, 0.8) 100%);
+        --pale-orange: rgba(255, 107, 53, 0.1);
+    }
+    
+    .search-box,
+    .student-card {
+        background: var(--pure-white);
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* Focus states for accessibility */
+.search-box input:focus,
+.search-btn:focus,
+.student-card:focus {
+    outline: 2px solid var(--primary-orange);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .search-card {
+        border: 2px solid var(--primary-orange);
+    }
+    
+    .student-card {
+        border: 2px solid var(--text-light);
+    }
+}
+</style>
+{% endblock %}

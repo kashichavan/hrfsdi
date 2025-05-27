@@ -1,1217 +1,750 @@
 {% extends "base.html" %}
-{% load custom_filters %}
+{% load static %}
 
 {% block title %}Placed Students{% endblock %}
 
 {% block extra_head %}
-<!-- Google Fonts -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<!-- DataTables CSS -->
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css">
-
-<!-- jQuery and DataTables JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-<!-- GSAP for animations -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Roboto+Mono&display=swap" rel="stylesheet">
+<link href="https://cdn.datatables.net/1.13.1/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.bootstrap5.min.css">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
 <style>
-  :root {
-    --primary-orange: #FF6B35;
-    --secondary-orange: #FF8A65;
-    --light-orange: #FFE0B2;
-    --cream-white: #FFFBF7;
-    --pure-white: #FFFFFF;
-    --dark-text: #1A1A1A;
-    --medium-text: #4A4A4A;
-    --light-text: #7A7A7A;
-    --border-light: #F0F0F0;
-    --success-green: #10B981;
-    --warning-amber: #F59E0B;
-    --gradient-primary: linear-gradient(135deg, #FF6B35 0%, #FF8A65 100%);
-    --gradient-light: linear-gradient(135deg, #FFFBF7 0%, #FFE0B2 100%);
-    --shadow-light: 0 4px 6px -1px rgba(255, 107, 53, 0.1), 0 2px 4px -1px rgba(255, 107, 53, 0.06);
-    --shadow-medium: 0 10px 15px -3px rgba(255, 107, 53, 0.1), 0 4px 6px -2px rgba(255, 107, 53, 0.05);
-    --shadow-heavy: 0 25px 50px -12px rgba(255, 107, 53, 0.25);
-  }
-
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
-
-  body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-    background: var(--cream-white);
-    color: var(--dark-text);
-    line-height: 1.6;
-  }
-
-  .page-container {
-    min-height: 100vh;
-    background: var(--gradient-light);
-    position: relative;
-    overflow-x: hidden;
-  }
-
-  .page-container::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 300px;
-    background: var(--gradient-primary);
-    opacity: 0.05;
-    z-index: 0;
-  }
-
-  .header-section {
-    padding: 3rem 0 2rem;
-    position: relative;
-    z-index: 1;
-  }
-
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 0 2rem;
-  }
-
-  .page-title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 3.5rem;
-    font-weight: 800;
-    background: var(--gradient-primary);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-align: center;
-    margin-bottom: 0.5rem;
-    opacity: 0;
-    transform: translateY(-30px);
-  }
-
-  .page-subtitle {
-    text-align: center;
-    color: var(--medium-text);
-    font-size: 1.2rem;
-    font-weight: 500;
-    margin-bottom: 2rem;
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 3rem;
-    opacity: 0;
-    transform: translateY(30px);
-  }
-
-  .stat-card {
-    background: var(--pure-white);
-    border-radius: 16px;
-    padding: 2rem;
-    box-shadow: var(--shadow-light);
-    border: 1px solid var(--border-light);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
-  }
-
-  .stat-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: var(--gradient-primary);
-  }
-
-  .stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-medium);
-  }
-
-  .stat-number {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--primary-orange);
-    line-height: 1;
-  }
-
-  .stat-label {
-    color: var(--medium-text);
-    font-weight: 600;
-    margin-top: 0.5rem;
-    font-size: 1rem;
-  }
-
-  .action-buttons {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    margin-bottom: 3rem;
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  .btn {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    padding: 1rem 2rem;
-    border-radius: 12px;
-    border: none;
-    font-weight: 600;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .btn-primary {
-    background: var(--gradient-primary);
-    color: var(--pure-white);
-    box-shadow: var(--shadow-light);
-  }
-
-  .btn-primary:hover {
-    box-shadow: var(--shadow-heavy);
-    transform: translateY(-2px);
-  }
-
-  .btn-secondary {
-    background: var(--pure-white);
-    color: var(--primary-orange);
-    border: 2px solid var(--primary-orange);
-  }
-
-  .btn-secondary:hover {
-    background: var(--primary-orange);
-    color: var(--pure-white);
-    transform: translateY(-2px);
-  }
-
-  .table-container {
-    background: var(--pure-white);
-    border-radius: 20px;
-    box-shadow: var(--shadow-medium);
-    overflow: hidden;
-    margin-bottom: 2rem;
-    border: 1px solid var(--border-light);
-    opacity: 0;
-    transform: translateY(40px);
-  }
-
-  .table-header {
-    background: var(--gradient-primary);
-    color: var(--pure-white);
-    padding: 2rem;
-    position: relative;
-  }
-
-  .table-header::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .table-title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin: 0;
-  }
-
-  .table-description {
-    opacity: 0.9;
-    margin-top: 0.5rem;
-    font-size: 1rem;
-  }
-
-  .dataTables_wrapper {
-    padding: 2rem;
-  }
-
-  .dataTables_length,
-  .dataTables_filter,
-  .dataTables_info,
-  .dataTables_paginate {
-    font-family: 'Inter', sans-serif;
-  }
-
-  .dataTables_length label,
-  .dataTables_filter label {
-    font-weight: 600;
-    color: var(--medium-text);
-    margin-bottom: 0.5rem;
-    display: block;
-  }
-
-  .dataTables_length select,
-  .dataTables_filter input {
-    font-family: 'Inter', sans-serif;
-    padding: 0.75rem 1rem;
-    border: 2px solid var(--border-light);
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: all 0.3s ease;
-    background: var(--pure-white);
-  }
-
-  .dataTables_length select:focus,
-  .dataTables_filter input:focus {
-    outline: none;
-    border-color: var(--primary-orange);
-    box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
-  }
-
-  .dataTables_wrapper .dataTables_length {
-    float: left;
-  }
-
-  .dataTables_wrapper .dataTables_filter {
-    float: right;
-  }
-
-  .dataTables_wrapper .dataTables_filter input {
-    margin-left: 0.5rem;
-  }
-
-  table.dataTable {
-    width: 100% !important;
-    border-collapse: separate;
-    border-spacing: 0;
-    margin-top: 1rem !important;
-  }
-
-  table.dataTable thead th {
-    background: var(--light-orange);
-    color: var(--dark-text);
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 700;
-    font-size: 0.95rem;
-    padding: 1.25rem 1rem;
-    border: none;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    position: relative;
-  }
-
-  table.dataTable thead th:first-child {
-    border-radius: 12px 0 0 0;
-  }
-
-  table.dataTable thead th:last-child {
-    border-radius: 0 12px 0 0;
-  }
-
-  table.dataTable tbody td {
-    padding: 1.25rem 1rem;
-    border-bottom: 1px solid var(--border-light);
-    font-size: 0.95rem;
-    vertical-align: middle;
-  }
-
-  table.dataTable tbody tr {
-    transition: all 0.2s ease;
-  }
-
-  table.dataTable tbody tr:hover {
-    background-color: rgba(255, 107, 53, 0.02);
-  }
-
-  table.dataTable tbody tr:last-child td {
-    border-bottom: none;
-  }
-
-  .student-name {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 700;
-    font-size: 1.1rem;
-    color: var(--dark-text);
-    margin-bottom: 0.25rem;
-  }
-
-  .student-details {
-    color: var(--light-text);
-    font-size: 0.85rem;
-  }
-
-  .company-name {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--primary-orange);
-    margin-bottom: 0.25rem;
-  }
-
-  .company-details {
-    color: var(--light-text);
-    font-size: 0.85rem;
-  }
-
-  .status-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .status-placed {
-    background: rgba(16, 185, 129, 0.1);
-    color: var(--success-green);
-  }
-
-  .status-scheduled {
-    background: rgba(245, 158, 11, 0.1);
-    color: var(--warning-amber);
-  }
-
-  .date-badge {
-    background: var(--light-orange);
-    color: var(--dark-text);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 0.85rem;
-  }
-
-  .action-links {
-    display: flex;
-    gap: 0.75rem;
-    flex-wrap: wrap;
-  }
-
-  .action-link {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    color: var(--primary-orange);
-    text-decoration: none;
-    font-weight: 600;
-    font-size: 0.9rem;
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
-    border: 1px solid var(--primary-orange);
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
-  .action-link:hover {
-    background: var(--primary-orange);
-    color: var(--pure-white);
-    transform: translateY(-1px);
-  }
-
-  .dataTables_info {
-    color: var(--medium-text);
-    font-weight: 500;
-    padding-top: 1rem;
-  }
-
-  .dataTables_paginate {
-    padding-top: 1rem;
-  }
-
-  .dataTables_paginate .paginate_button {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    padding: 0.75rem 1rem !important;
-    margin: 0 0.25rem;
-    border-radius: 8px !important;
-    border: 1px solid var(--border-light) !important;
-    background: var(--pure-white) !important;
-    color: var(--medium-text) !important;
-    font-weight: 600;
-    transition: all 0.2s ease;
-  }
-
-  .dataTables_paginate .paginate_button:hover {
-    background: var(--primary-orange) !important;
-    color: var(--pure-white) !important;
-    border-color: var(--primary-orange) !important;
-  }
-
-  .dataTables_paginate .paginate_button.current {
-    background: var(--gradient-primary) !important;
-    color: var(--pure-white) !important;
-    border-color: var(--primary-orange) !important;
-  }
-
-  .type-filter-container {
-    background: var(--pure-white);
-    border-radius: 16px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--shadow-light);
-    border: 1px solid var(--border-light);
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  .filter-title {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 700;
-    margin-bottom: 1rem;
-    color: var(--dark-text);
-  }
-
-  .filter-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .filter-btn {
-    font-family: 'Inter', sans-serif;
-    padding: 0.75rem 1.25rem;
-    border: 2px solid var(--border-light);
-    border-radius: 25px;
-    background: var(--pure-white);
-    color: var(--medium-text);
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .filter-btn:hover {
-    border-color: var(--primary-orange);
-    color: var(--primary-orange);
-    transform: translateY(-1px);
-  }
-
-  .filter-btn.active {
-    background: var(--gradient-primary);
-    color: var(--pure-white);
-    border-color: var(--primary-orange);
-  }
-
-  .filter-count {
-    background: rgba(255, 255, 255, 0.2);
-    padding: 0.25rem 0.5rem;
-    border-radius: 12px;
-    font-size: 0.8rem;
-    font-weight: 700;
-  }
-
-  .filter-btn.active .filter-count {
-    background: rgba(255, 255, 255, 0.2);
-  }
-
-  .filter-btn:not(.active) .filter-count {
-    background: var(--light-orange);
-    color: var(--dark-text);
-  }
-
-  /* Responsive Design */
-  @media (max-width: 768px) {
-    .container {
-      padding: 0 1rem;
+    /* Custom styles for placed students list - matching requirements list */
+    h1 {
+        font-weight: 600;
+        color: white;
+        background: none;
+        -webkit-background-clip: initial;
+        background-clip: initial;
+        -webkit-text-fill-color: white;
+        position: relative;
+        display: inline-block;
     }
-    
+
     .page-title {
-      font-size: 2.5rem;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        text-align: center;
+        background: linear-gradient(135deg, #FF5F1F, #FF8C44);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: all 0.3s ease;
     }
-    
-    .stats-row {
-      grid-template-columns: 1fr;
+
+    /* Status badges */
+    .status-scheduled { 
+        background: linear-gradient(90deg, #77f320, #5bae03);
+        border: none;
+        color: white;
     }
-    
-    .action-buttons {
-      flex-direction: column;
-      align-items: center;
+
+    /* Table styles */
+    .placed-students-table {
+        box-shadow: 0 8px 20px rgba(255, 95, 31, 0.1);
+        border-radius: 16px;
+        overflow: hidden;
     }
-    
-    .dataTables_wrapper {
-      padding: 1rem;
+
+    .table {
+        border-collapse: separate;
+        border-spacing: 0;
     }
-    
-    .table-header {
-      padding: 1.5rem;
+
+    .table th { 
+        position: relative;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        color: #FF5F1F;
+        border-bottom: 2px solid #FF8C44;
+        background-color: #FFF9F5;
+        padding: 15px 10px;
     }
-    
+
+    .table th:hover { 
+        background-color: #FFF3E9;
+    }
+
+    .table-hover tbody tr {
+        transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: #FFF3E9;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 15px rgba(255, 95, 31, 0.08);
+    }
+
+    /* Search form styles */
+    .search-form {
+        background: linear-gradient(135deg, #FFF9F5, #FFF1E6);
+        padding: 2rem;
+        border-radius: 16px;
+        margin-bottom: 2rem;
+        box-shadow: 0 5px 15px rgba(255, 95, 31, 0.08);
+    }
+
+    .search-form label {
+        font-weight: 500;
+        color: #FF7A3D;
+    }
+
+    .search-form .form-control {
+        border: 1px solid #FFD5BE;
+        border-radius: 8px;
+        padding: 10px 15px;
+        transition: all 0.3s ease;
+    }
+
+    .search-form .form-control:focus {
+        border-color: #FF5F1F;
+        box-shadow: 0 0 0 3px rgba(255, 95, 31, 0.15);
+    }
+
+    /* Override base button styles */
+    .search-form .btn-primary,
+    .heading-actions .btn-primary,
+    .btn-group .btn-primary {
+        background: linear-gradient(90deg, #FF5F1F, #FF8C44);
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 8px 16px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(255, 95, 31, 0.2);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(255, 95, 31, 0.3);
+        background: linear-gradient(90deg, #FF5F1F, #FF7A3D);
+    }
+
+    .btn-primary:active {
+        transform: translateY(1px);
+    }
+
+    .btn-outline-secondary {
+        color: #FF5F1F;
+        border-color: #FF8C44;
+        background: transparent;
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: #FFF1E6;
+        color: #FF5F1F;
+        border-color: #FF5F1F;
+    }
+
+    .btn-info {
+        background: linear-gradient(90deg, #48b0f7, #6bc1fc);
+        border: none;
+        color: white;
+    }
+
+    .btn-warning {
+        background: linear-gradient(90deg, #FFB766, #FFCF91);
+        border: none;
+        color: #212529;
+    }
+
+    /* Loading animation */
+    .loading-spinner {
+        display: inline-block;
+        width: 1.2rem;
+        height: 1.2rem;
+        border: 2px solid rgba(255, 95, 31, 0.2);
+        border-top-color: #FF5F1F;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    /* Row animation */
+    .row-enter-active {
+        animation: row-in 0.4s;
+    }
+
+    @keyframes row-in {
+        0% {
+            opacity: 0;
+            transform: translateY(15px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Empty state */
+    .empty-state {
+        padding: 3rem;
+        text-align: center;
+        background: linear-gradient(135deg, #FFF9F5, #FFF1E6);
+        border-radius: 16px;
+    }
+
+    /* Sort indicators */
+    .sort-indicator {
+        margin-left: 5px;
+        transition: all 0.3s ease;
+    }
+
+    .active-sort {
+        color: #FF5F1F;
+        font-weight: 700;
+    }
+
+    /* Badge styling */
+    .badge {
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-weight: 500;
+        font-size: 0.75rem;
+    }
+
+    .badge.bg-info {
+        background: linear-gradient(90deg, #48b0f7, #6bc1fc) !important;
+    }
+
+    .badge.bg-success {
+        background: linear-gradient(90deg, #34c759, #5dde7c) !important;
+    }
+
+    .badge.bg-danger {
+        background: linear-gradient(90deg, #ff3b30, #ff6b61) !important;
+    }
+
+    /* Student type badge */
+    .student-type {
+        display: inline-block;
+        padding: 6px 10px;
+        background: linear-gradient(90deg, #48b0f7, #6bc1fc);
+        color: white;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Count badges */
+    .count-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 6px 10px;
+        color: white;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        margin: 0.125rem;
+    }
+
+    .count-badge i {
+        font-size: 0.7rem;
+    }
+
+    .requirements-count {
+        background: linear-gradient(90deg, #FFB766, #FFCF91);
+        color: #212529;
+    }
+
+    .schedules-count {
+        background: linear-gradient(90deg, #34c759, #5dde7c);
+    }
+
+    /* Pagination */
+    .pagination .page-link {
+        color: #FF5F1F;
+        border-color: #FFD5BE;
+        margin: 0 3px;
+        border-radius: 6px;
+        transition: all 0.3s ease;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: linear-gradient(90deg, #FF5F1F, #FF8C44);
+        border-color: #FF5F1F;
+        color: white;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #FFF1E6;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(255, 95, 31, 0.1);
+    }
+
+    /* Data table enhancements */
+    .table td {
+        padding: 16px 10px;
+        vertical-align: middle;
+    }
+
+    .student-name {
+        font-weight: 500;
+        color: #444;
+    }
+
+    .company-name {
+        font-weight: 500;
+        color: #444;
+    }
+
+    .company-code {
+        font-family: 'Roboto Mono', monospace;
+        font-size: 0.85rem;
+        background: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+
+    /* Button group */
+    .btn-group .btn {
+        border-radius: 6px;
+        margin-right: 3px;
+        padding: 5px 10px;
+    }
+
+    /* Header section */
+    .placed-students-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+    }
+
+    .heading-actions {
+        display: flex;
+        gap: 8px;
+    }
+
+    /* Filter buttons */
     .filter-buttons {
-      justify-content: center;
+        margin: 0 0 2rem 0;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
     }
-  }
 
-  /* DataTables Responsive */
-  table.dataTable.dtr-inline.collapsed > tbody > tr > td.dtr-control:before {
-    background: var(--gradient-primary);
-  }
+    .filter-btn {
+        background: transparent;
+        border: 1px solid #FF8C44;
+        color: #FF5F1F;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(255, 95, 31, 0.2);
+    }
 
-  table.dataTable.dtr-inline.collapsed > tbody > tr.parent > td.dtr-control:before {
-    background: var(--success-green);
-  }
+    .filter-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 15px rgba(255, 95, 31, 0.3);
+        background: linear-gradient(90deg, #FF5F1F, #FF7A3D);
+        color: white;
+        border-color: #FF5F1F;
+    }
 
-  /* Loading Animation */
-  .loading-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(255, 251, 247, 0.9);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-  }
+    .filter-btn.active {
+        background: linear-gradient(90deg, #FF5F1F, #FF8C44);
+        color: white;
+        border-color: #FF5F1F;
+        box-shadow: 0 8px 15px rgba(255, 95, 31, 0.3);
+    }
 
-  .loading-overlay.show {
-    opacity: 1;
-    visibility: visible;
-  }
+    .filter-btn:active {
+        transform: translateY(1px);
+    }
 
-  .loading-spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid var(--light-orange);
-    border-top: 4px solid var(--primary-orange);
-    border-radius: 50%;
-    animation: spin 1s linear infinite;
-  }
+    /* Total count badge */
+    .total-count-badge {
+        background: linear-gradient(90deg, #FF5F1F, #FF8C44);
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        box-shadow: 0 4px 10px rgba(255, 95, 31, 0.2);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
 
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+    @media (max-width: 768px) {
+        .placed-students-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+
+        .heading-actions {
+            flex-wrap: wrap;
+            width: 100%;
+        }
+
+        .heading-actions .btn {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            min-width: 120px;
+        }
+
+        .filter-buttons {
+            justify-content: center;
+        }
+
+        .count-badge {
+            font-size: 0.7rem;
+            padding: 4px 8px;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+        }
+    }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="page-container">
-  <div class="loading-overlay" id="loadingOverlay">
-    <div class="loading-spinner"></div>
-  </div>
-
-  <div class="header-section">
-    <div class="container">
-      <h1 class="page-title">🎉 Placed Students</h1>
-      <p class="page-subtitle">Celebrating our successful student placements</p>
-      
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-number" id="totalPlaced">{{ total_count }}</div>
-          <div class="stat-label">Total Placed</div>
+<div id="placed-students-app">
+    <div class="placed-students-header">
+        <h1 class="page-title">
+            Placed Students
+            <small v-if="isLoading" class="ms-2">
+                <span class="loading-spinner"></span>
+            </small>
+        </h1>
+        <div class="heading-actions">
+            <a href="{% url 'student_data:placed_outside' %}" class="btn btn-primary">
+                <i class="fas fa-briefcase"></i> Placed Outside
+            </a>
+            <a href="{% url 'student_data:map_students' %}" class="btn btn-primary">
+                <i class="fas fa-users"></i> Map Students 
+            </a>
+            <div class="total-count-badge">
+                <i class="fas fa-graduation-cap me-2"></i>
+                Total Placed: <strong>{{ total_count }}</strong>
+            </div>
         </div>
-        <div class="stat-card">
-          <div class="stat-number" id="companiesCount">{{ type_counts|length }}</div>
-          <div class="stat-label">Data Types</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number" id="recentPlacements">{{ total_count }}</div>
-          <div class="stat-label">Active Placements</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-number">95%</div>
-          <div class="stat-label">Success Rate</div>
-        </div>
-      </div>
-
-      <div class="action-buttons">
-        <a href="{% url 'student_data:placed_outside' %}" class="btn btn-primary">
-          <span>🌍</span> Students Placed Outside
-        </a>
-        <a href="{% url 'student_data:export_placed_students_excel' %}" class="btn btn-secondary">
-          <span>📊</span> Export Excel
-        </a>
-      </div>
     </div>
-  </div>
+    <!-- Search Form -->
+    <div class="search-form">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label for="student_name" class="form-label">Student Name</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="fas fa-user text-orange"></i>
+                    </span>
+                    <input type="text" class="form-control" id="student_name" name="student_name" 
+                           placeholder="Search by student name" value="{{ request.GET.student_name }}">
+                </div>
+            </div>
+            <div class="col-md-4">
+                <label for="company_name" class="form-label">Company Name</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white">
+                        <i class="fas fa-building text-orange"></i>
+                    </span>
+                    <input type="text" class="form-control" id="company_name" name="company_name" 
+                           placeholder="Search by company name" value="{{ request.GET.company_name }}">
+                </div>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="fas fa-search"></i> Search
+                </button>
+                <a href="{% url 'student_data:placed_students' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-sync-alt"></i> Reset
+                </a>
+            </div>
+        </form>
+    </div>
 
-  <div class="container">
-    <!-- Type Filters -->
-    <div class="type-filter-container">
-      <h3 class="filter-title">Filter by Student Type</h3>
-      <div class="filter-buttons">
-        <button class="filter-btn active" data-type="all">
-          All Students
-          <span class="filter-count">{{ total_count }}</span>
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+        <button class="btn filter-btn active" data-filter="all">
+            <i class="fas fa-users me-2"></i>
+            All ({{ total_count }})
         </button>
         {% for type, count in type_counts.items %}
-        <button class="filter-btn" data-type="{{ type|slugify }}">
-          {{ type }}
-          <span class="filter-count">{{ count }}</span>
-        </button>
+            <button class="btn filter-btn" data-filter="{{ type|slugify }}">
+                <i class="fas fa-user-tag me-2"></i>
+                {{ type }} ({{ count }})
+            </button>
         {% endfor %}
-      </div>
     </div>
 
-    <!-- Data Table -->
-    <div class="table-container">
-      <div class="table-header">
-        <h2 class="table-title">Student Placement Records</h2>
-        <p class="table-description">Complete overview of all successfully placed students</p>
-      </div>
-      
-      <table id="placedStudentsTable" class="display responsive nowrap" width="100%">
-        <thead>
-          <tr>
-            <th>Student</th>
-            <th>Company</th>
-            <th>Type</th>
-            <th>Status</th>
-            <th>Schedule Date</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for entry in placed_students %}
-          <tr data-type="{{ entry.student.get_type_data|slugify }}">
-            <td>
-              <div class="student-name">{{ entry.student.name }}</div>
-              <div class="student-details">
-                Requirements: {{ entry.student.total_requirements|default:0 }} | 
-                Scheduled: {{ entry.student.scheduled_requirements|default:0 }}
-              </div>
-            </td>
-            <td>
-              <div class="company-name">{{ entry.requirement.company_name }}</div>
-              <div class="company-details">Placement Opportunity</div>
-            </td>
-            <td>
-              <span class="status-badge status-placed">{{ entry.student.type_of_data|default:"Not Specified" }}</span>
-            </td>
-            <td>
-              <span class="status-badge status-placed">✅ Placed</span>
-            </td>
-            <td>
-              {% if entry.requirement.schedule_date %}
-                <span class="date-badge">{{ entry.requirement.schedule_date }}</span>
-              {% else %}
-                <span class="status-badge status-scheduled">Not Scheduled</span>
-              {% endif %}
-            </td>
-            <td>
-              <div class="action-links">
-                <a href="{% url 'student_data:student_detail' entry.student.id %}" class="action-link">
-                  👤 Profile
-                </a>
-                <a href="{% url 'student_data:requirement_detail' entry.requirement.id %}" class="action-link">
-                  🏢 Company
-                </a>
-              </div>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-<script>
-$(document).ready(function() {
-    // Show loading overlay
-    $('#loadingOverlay').addClass('show');
-    
-    // GSAP Animations Timeline
-    const mainTimeline = gsap.timeline();
-    mainTimeline
-        .to('.page-title', { 
-            opacity: 1, 
-            y: 0, 
-            duration: 0.8, 
-            ease: 'power3.out' 
-        })
-        .to('.page-subtitle', { 
-            opacity: 1, 
-            y: 0, 
-            duration: 0.6, 
-            ease: 'power3.out' 
-        }, '-=0.4')
-        .to('.stats-row', { 
-            opacity: 1, 
-            y: 0, 
-            duration: 0.8, 
-            ease: 'power3.out' 
-        }, '-=0.3')
-        .to('.action-buttons', { 
-            opacity: 1, 
-            y: 0, 
-            duration: 0.6, 
-            ease: 'power3.out' 
-        }, '-=0.4')
-        .to('.type-filter-container', { 
-            opacity: 1, 
-            y: 0, 
-            duration: 0.6, 
-            ease: 'power3.out' 
-        }, '-=0.3')
-        .to('.table-container', { 
-            opacity: 1, 
-            y: 0, 
-            duration: 0.8, 
-            ease: 'power3.out' 
-        }, '-=0.4');
-
-    // Initialize DataTable
-    let table;
-    try {
-        table = $('#placedStudentsTable').DataTable({
-            responsive: true,
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-            order: [[0, 'asc']],
-            dom: '<"top"lf>rt<"bottom"ip>',
-            language: {
-                search: "Search students:",
-                lengthMenu: "Show _MENU_ students",
-                info: "Showing _START_ to _END_ of _TOTAL_ students",
-                paginate: {
-                    first: "First",
-                    last: "Last",
-                    next: "Next",
-                    previous: "Previous"
-                },
-                emptyTable: "No placed students found",
-                zeroRecords: "No matching students found"
-            },
-            drawCallback: function() {
-                // Animate table rows
-                gsap.fromTo('tbody tr', 
-                    { opacity: 0, y: 20 },
-                    {
-                        opacity: 1,
-                        y: 0,
-                        duration: 0.4,
-                        stagger: 0.05,
-                        ease: 'power2.out'
-                    }
-                );
-            },
-            initComplete: function() {
-                // Hide loading overlay
-                $('#loadingOverlay').removeClass('show');
-                
-                // Add custom styling to DataTable elements
-                $('.dataTables_length select, .dataTables_filter input').addClass('form-control');
-                
-                // Set custom placeholder
-                $('#placedStudentsTable_filter input').attr('placeholder', 'Search by name, company, or type...');
-                
-                // Start number animation after table is ready
-                setTimeout(animateNumbers, 500);
-            }
-        });
-    } catch (error) {
-        console.error('DataTable initialization failed:', error);
-        $('#loadingOverlay').removeClass('show');
-        showToast('Failed to load student data', 'error');
-    }
-
-    // Type filter functionality
-    let currentTypeFilter = 'all';
-    
-    $('.filter-btn').on('click', function() {
-        const filterType = $(this).data('type');
-        currentTypeFilter = filterType;
-        
-        // Update active state
-        $('.filter-btn').removeClass('active');
-        $(this).addClass('active');
-        
-        // Apply filter
-        if (table) {
-            if (filterType === 'all') {
-                table.column(2).search('').draw();
-            } else {
-                table.column(2).search(filterType, true, false).draw();
-            }
+    <!-- Placed Students Table -->
+    <div class="card placed-students-table">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover" id="placedStudentsTable">
+                    <thead>
+                        <tr>
+                            <th @click="sortBy('student_name')">
+                                <i class="fas fa-user me-2"></i>Student Name
+                                <span class="sort-indicator" :class="{'active-sort': sortField === 'student_name'}">
+                                    <i class="fas" :class="getSortIcon('student_name')"></i>
+                                </span>
+                            </th>
+                            <th @click="sortBy('company_name')">
+                                <i class="fas fa-building me-2"></i>Company
+                                <span class="sort-indicator" :class="{'active-sort': sortField === 'company_name'}">
+                                    <i class="fas" :class="getSortIcon('company_name')"></i>
+                                </span>
+                            </th>
+                            <th @click="sortBy('student_type')">
+                                <i class="fas fa-tag me-2"></i>Student Type
+                                <span class="sort-indicator" :class="{'active-sort': sortField === 'student_type'}">
+                                    <i class="fas" :class="getSortIcon('student_type')"></i>
+                                </span>
+                            </th>
+                            <th @click="sortBy('schedule_date')">
+                                <i class="fas fa-calendar-alt me-2"></i>Schedule Date
+                                <span class="sort-indicator" :class="{'active-sort': sortField === 'schedule_date'}">
+                                    <i class="fas" :class="getSortIcon('schedule_date')"></i>
+                                </span>
+                            </th>
+                            
+                            
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for entry in placed_students %}
+                        <tr class="student-row" data-type="{{ entry.student.type_of_data|slugify }}">
+                            <td><span class="student-name">{{ entry.student.name }}</span></td>
+                            <td><span class="company-name">{{ entry.requirement.company_name }}</span></td>
+                            <td>
+                                <span class="student-type">{{ entry.student.type_of_data|default:"N/A" }}</span>
+                            </td>
+                            <td>{{ entry.requirement.schedule_date|date:"M d, Y" }}</td>
             
-            // Animate filter change
-            gsap.to('.table-container', {
-                scale: 0.98,
-                duration: 0.1,
-                yoyo: true,
-                repeat: 1,
-                ease: 'power2.inOut'
-            });
-            
-            // Smooth scroll to table
-            $('html, body').animate({
-                scrollTop: $('.table-container').offset().top - 20
-            }, 300);
-        }
-    });
-
-    // Animate numbers function
-    function animateNumbers() {
-        $('.stat-number').each(function() {
-            const $this = $(this);
-            const finalNumber = parseInt($this.text()) || 0;
-            
-            if (finalNumber > 0) {
-                gsap.fromTo($this, 
-                    { textContent: 0 },
-                    {
-                        textContent: finalNumber,
-                        duration: 2,
-                        ease: 'power2.out',
-                        snap: { textContent: 1 },
-                        onUpdate: function() {
-                            $this.text(Math.ceil(this.targets()[0].textContent));
-                        }
-                    }
-                );
-            }
-        });
-    }
-
-    // Enhanced search with debouncing
-    let searchTimeout;
-    $(document).on('input', '#placedStudentsTable_filter input', function() {
-        clearTimeout(searchTimeout);
-        const searchTerm = $(this).val();
-        
-        searchTimeout = setTimeout(function() {
-            if (table) {
-                // Add subtle animation during search
-                gsap.to('.table-container tbody', {
-                    opacity: 0.7,
-                    duration: 0.2,
-                    onComplete: function() {
-                        gsap.to('.table-container tbody', {
-                            opacity: 1,
-                            duration: 0.3
-                        });
-                    }
-                });
-            }
-        }, 300);
-    });
-
-    // Export functionality with animation
-    $('.btn-secondary').on('click', function(e) {
-        e.preventDefault();
-        
-        const $btn = $(this);
-        const originalText = $btn.html();
-        const exportUrl = $btn.attr('href');
-        
-        if (!exportUrl) {
-            showToast('Export URL not found', 'error');
-            return;
-        }
-        
-        // Show loading animation
-        $btn.prop('disabled', true).html('<span class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid currentColor; border-top: 2px solid transparent; border-radius: 50%; display: inline-block; animation: spin 1s linear infinite;"></span> Exporting...');
-        
-        // Simulate export process
-        setTimeout(() => {
-            $btn.html('✅ Export Complete!');
-            setTimeout(() => {
-                $btn.prop('disabled', false).html(originalText);
-                // Trigger actual download
-                window.location.href = exportUrl;
-            }, 1500);
-        }, 2000);
-    });
-
-    // Keyboard shortcuts
-    $(document).on('keydown', function(e) {
-        // Ctrl/Cmd + F to focus search
-        if ((e.ctrlKey || e.metaKey) && e.keyCode === 70) {
-            e.preventDefault();
-            $('#placedStudentsTable_filter input').focus();
-        }
-        
-        // Escape to clear search
-        if (e.keyCode === 27) {
-            const searchInput = $('#placedStudentsTable_filter input');
-            if (searchInput.val()) {
-                searchInput.val('').trigger('input');
-                if (table) {
-                    table.search('').draw();
-                }
-            }
-        }
-    });
-
-    // Row interactions
-    $(document).on('click', '#placedStudentsTable tbody tr', function() {
-        // Remove previous highlights
-        $('tr.highlighted').removeClass('highlighted');
-        
-        // Add highlight to clicked row
-        $(this).addClass('highlighted');
-        
-        // Pulse animation
-        gsap.fromTo(this, 
-            { backgroundColor: 'rgba(255, 107, 53, 0.1)' },
-            {
-                backgroundColor: 'transparent',
-                duration: 0.5,
-                ease: 'power2.out'
-            }
-        );
-    });
-
-    // Context menu functionality
-    $(document).on('contextmenu', '#placedStudentsTable tbody tr', function(e) {
-        e.preventDefault();
-        
-        const $row = $(this);
-        const studentName = $row.find('.student-name').text() || 'Unknown Student';
-        
-        // Remove existing context menus
-        $('.context-menu').remove();
-        
-        // Create context menu
-        const contextMenu = $(`
-            <div class="context-menu" style="
-                position: fixed;
-                top: ${e.pageY}px;
-                left: ${e.pageX}px;
-                background: white;
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 8px 0;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-                z-index: 10000;
-                min-width: 150px;
-                font-family: inherit;
-            ">
-                <div class="context-item" data-action="profile" style="padding: 8px 16px; cursor: pointer; font-size: 14px;">View Student Profile</div>
-                <div class="context-item" data-action="company" style="padding: 8px 16px; cursor: pointer; font-size: 14px;">View Company Details</div>
-                <div class="context-item" data-action="copy" style="padding: 8px 16px; cursor: pointer; font-size: 14px;">Copy Student Name</div>
+                           
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'student_data:student_detail' entry.student.id %}" 
+                                       class="btn btn-sm btn-info" title="View Student Details">
+                                        <i class="fas fa-user"></i>
+                                    </a>
+                                    <a href="{% url 'student_data:requirement_detail' entry.requirement.id %}" 
+                                       class="btn btn-sm btn-warning" title="View Company Details">
+                                        <i class="fas fa-building"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7">
+                                <div class="empty-state">
+                                    <div class="alert alert-info mb-0">
+                                        <i class="fas fa-graduation-cap me-2"></i> No placed students found.
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-        `);
-        
-        $('body').append(contextMenu);
-        
-        // Handle context menu clicks
-        contextMenu.find('.context-item').on('click', function() {
-            const action = $(this).data('action');
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page=1{% if request.GET.student_name %}&student_name={{ request.GET.student_name }}{% endif %}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                        <i class="fas fa-angle-double-left"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.student_name %}&student_name={{ request.GET.student_name }}{% endif %}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </li>
+            {% endif %}
             
-            switch(action) {
-                case 'copy':
-                    if (navigator.clipboard) {
-                        navigator.clipboard.writeText(studentName).then(() => {
-                            showToast('Student name copied to clipboard!');
-                        }).catch(() => {
-                            showToast('Failed to copy to clipboard', 'error');
-                        });
-                    } else {
-                        showToast('Clipboard not supported', 'error');
-                    }
-                    break;
-                case 'profile':
-                    const profileLink = $row.find('.action-link').first();
-                    if (profileLink.length) {
-                        profileLink[0].click();
-                    }
-                    break;
-                case 'company':
-                    const companyLink = $row.find('.action-link').last();
-                    if (companyLink.length) {
-                        companyLink[0].click();
-                    }
-                    break;
-            }
+            <li class="page-item active">
+                <span class="page-link">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+            </li>
             
-            contextMenu.remove();
-        });
-        
-        // Remove context menu on outside click
-        $(document).one('click', function() {
-            contextMenu.remove();
-        });
-    });
-
-    // Toast notification function
-    function showToast(message, type = 'success') {
-        const bgColor = type === 'success' ? '#10B981' : '#EF4444';
-        const toast = $(`
-            <div class="toast" style="
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                background: ${bgColor};
-                color: white;
-                padding: 12px 24px;
-                border-radius: 8px;
-                font-weight: 600;
-                z-index: 10001;
-                transform: translateX(100%);
-                font-family: inherit;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            ">${message}</div>
-        `);
-        
-        $('body').append(toast);
-        
-        gsap.timeline()
-            .to(toast, { x: 0, duration: 0.3, ease: 'power2.out' })
-            .to(toast, { x: '100%', duration: 0.3, ease: 'power2.in', delay: 3 })
-            .call(() => toast.remove());
-    }
-
-    // Hover effects
-    $(document).on('mouseenter', '.btn', function() {
-        if (!$(this).prop('disabled')) {
-            gsap.to(this, { scale: 1.05, duration: 0.2, ease: 'power2.out' });
-        }
-    }).on('mouseleave', '.btn', function() {
-        gsap.to(this, { scale: 1, duration: 0.2, ease: 'power2.out' });
-    });
-
-    $(document).on('mouseenter', '.stat-card', function() {
-        gsap.to(this, { y: -8, duration: 0.3, ease: 'power2.out' });
-    }).on('mouseleave', '.stat-card', function() {
-        gsap.to(this, { y: 0, duration: 0.3, ease: 'power2.out' });
-    });
-
-    $(document).on('mouseenter', '.status-badge', function() {
-        gsap.to(this, {
-            scale: 1.1,
-            duration: 0.2,
-            ease: 'back.out(1.7)'
-        });
-    }).on('mouseleave', '.status-badge', function() {
-        gsap.to(this, {
-            scale: 1,
-            duration: 0.2,
-            ease: 'power2.out'
-        });
-    });
-
-    // Filter button animations
-    $(document).on('click', '.filter-btn', function() {
-        gsap.to(this, {
-            scale: 0.95,
-            duration: 0.1,
-            yoyo: true,
-            repeat: 1,
-            ease: 'power2.inOut'
-        });
-    });
-
-    // Keyboard navigation for filter buttons
-    $(document).on('keydown', '.filter-btn', function(e) {
-        if (e.keyCode === 13 || e.keyCode === 32) { // Enter or Space
-            e.preventDefault();
-            $(this).click();
-        }
-    });
-
-    // Responsive behavior
-    $(window).on('resize', function() {
-        if (table) {
-            table.responsive.recalc();
-        }
-    });
-
-    // Performance optimization for large datasets
-    if ($('#placedStudentsTable tbody tr').length > 100) {
-        if (table) {
-            table.page.len(50).draw();
-        }
-        console.log('Large dataset detected, optimizing display');
-    }
-
-    // Accessibility improvements
-    $('.filter-btn').attr('role', 'button').attr('tabindex', '0');
-    $('.action-link').each(function() {
-        const studentName = $(this).closest('tr').find('.student-name').text();
-        if (studentName) {
-            $(this).attr('aria-label', $(this).text() + ' for ' + studentName);
-        }
-    });
-
-    // Cleanup on page unload
-    $(window).on('beforeunload', function() {
-        if (searchTimeout) {
-            clearTimeout(searchTimeout);
-        }
-        $('.context-menu').remove();
-    });
-
-    console.log('Placed Students page fully initialized');
-});
-
-// Inject additional CSS styles
-$(function() {
-    const additionalStyles = `
-        <style>
-        .context-menu .context-item:hover {
-            background-color: rgba(255, 107, 53, 0.1);
-            color: #FF6B35;
-        }
-        
-        tr.highlighted {
-            background-color: rgba(255, 107, 53, 0.05) !important;
-            border-left: 4px solid #FF6B35;
-        }
-        
-        .toast {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        /* Smooth transitions for all interactive elements */
-        .filter-btn, .action-link, .status-badge, .btn {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        
-        /* Enhanced focus states for accessibility */
-        .filter-btn:focus, .action-link:focus, .btn:focus {
-            outline: 2px solid #FF6B35;
-            outline-offset: 2px;
-        }
-        
-        /* Loading state for buttons */
-        .btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-        
-        /* Loading spinner animation */
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
-        .loading-spinner {
-            animation: spin 1s linear infinite;
-        }
-        </style>
-    `;
-    
-    $('head').append(additionalStyles);
-});
-</script>
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.student_name %}&student_name={{ request.GET.student_name }}{% endif %}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                        <i class="fas fa-angle-right"></i>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.student_name %}&student_name={{ request.GET.student_name }}{% endif %}{% if request.GET.company_name %}&company_name={{ request.GET.company_name }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}">
+                        <i class="fas fa-angle-double-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+</div>
 {% endblock %}
 
+{% block extra_js %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.3.4/vue.global.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    // Initialize Vue app
+    document.addEventListener('DOMContentLoaded', function() {
+        const { createApp } = Vue;
+        
+        // Initialize DataTable for advanced features
+        if ($.fn.DataTable) {
+            // Initialize DataTable with responsive features
+            const table = $('#placedStudentsTable').DataTable({
+                responsive: true,
+                paging: false,  // We use Django's pagination
+                info: false,    // We already show page info
+                searching: false, // We have our own search form
+                ordering: false, // We handle ordering via Vue
+                autoWidth: false,
+                columnDefs: [
+                    { className: "align-middle", targets: "_all" }
+                ],
+                dom: 'Bfrtip',  // Buttons for export
+                buttons: [
+                    {
+                        extend: 'collection',
+                        text: '<i class="fas fa-download"></i> Export',
+                        className: 'btn-sm btn-primary',
+                        buttons: ['csv', 'excel', 'pdf']
+                    },
+                    {
+                        text: '<i class="fas fa-columns"></i> Columns',
+                        className: 'btn-sm btn-outline-secondary',
+                        action: function () {
+                            // Toggle column visibility
+                            $('.toggle-column').toggleClass('active');
+                        }
+                    }
+                ]
+            });
+        }
+        
+        createApp({
+            delimiters: ['${', '}'],
+            data() {
+                return {
+                    sortField: '{{ request.GET.sort|default:"-schedule_date" }}',
+                    sortDirection: '{{ request.GET.sort|default:"-schedule_date" }}'.startsWith('-') ? 'desc' : 'asc',
+                    isLoading: false,
+                    filterText: '',
+                }
+            },
+            methods: {
+                // Sort table by field
+                sortBy(field) {
+                    this.isLoading = true;
+                    
+                    // Toggle sort direction if clicking the same field
+                    let sortParam;
+                    if (this.sortField === field) {
+                        sortParam = this.sortDirection === 'asc' ? `-${field}` : field;
+                    } else {
+                        // Default to ascending for new field
+                        sortParam = field;
+                    }
+                    
+                    // Build URL with existing parameters
+                    let url = new URL(window.location.href);
+                    let params = new URLSearchParams(url.search);
+                    params.set('sort', sortParam);
+                    
+                    // Redirect to sorted view
+                    window.location.href = `${url.pathname}?${params.toString()}`;
+                },
+                
+                // Get sort icon class based on current sort state
+                getSortIcon(field) {
+                    if (this.sortField !== field) return 'fa-sort';
+                    return this.sortDirection === 'asc' ? 'fa-sort-up' : 'fa-sort-down';
+                },
+                
+                // Quick filter table rows
+                applyFilter() {
+                    const filter = this.filterText.toLowerCase();
+                    const rows = document.querySelectorAll('.student-row');
+                    
+                    rows.forEach(row => {
+                        const text = row.textContent.toLowerCase();
+                        row.style.display = text.includes(filter) ? '' : 'none';
+                    });
+                }
+            },
+            mounted() {
+                // Add animation to table rows
+                const rows = document.querySelectorAll('.student-row');
+                rows.forEach((row, index) => {
+                    row.style.opacity = '0';
+                    row.style.transform = 'translateY(10px)';
+                    
+                    setTimeout(() => {
+                        row.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                        row.style.opacity = '1';
+                        row.style.transform = 'translateY(0)';
+                    }, index * 50);
+                });
+                
+                // Add hover effect with gradient background
+                rows.forEach(row => {
+                    row.addEventListener('mouseenter', () => {
+                        row.style.background = 'linear-gradient(to right, #FFF3E9, #FFF9F5)';
+                    });
+                    row.addEventListener('mouseleave', () => {
+                        row.style.background = '';
+                    });
+                });
+                
+                // Add tooltip functionality
+                if (typeof bootstrap !== 'undefined') {
+                    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+                    tooltipTriggerList.map(function (tooltipTriggerEl) {
+                        return new bootstrap.Tooltip(tooltipTriggerEl);
+                    });
+                }
+            }
+        }).mount('#placed-students-app');
 
+        // Filter functionality
+        $('.filter-btn').on('click', function() {
+            var filter = $(this).data('filter');
+            var $this = $(this);
+            
+            // Remove active class from all buttons
+            $('.filter-btn').removeClass('active');
+            
+            // Add active class to clicked button
+            $this.addClass('active');
+            
+            // Apply filter
+            if (filter === 'all') {
+                $('.student-row').show();
+            } else {
+                $('.student-row').hide();
+                $('.student-row[data-type="' + filter + '"]').show();
+            }
+        });
+    });
+</script>
+{% endblock %}

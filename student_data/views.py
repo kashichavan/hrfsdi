@@ -2225,34 +2225,119 @@ def combined_view(request):
 
 from django.core.paginator import Paginator
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from .models import RequirementStudent, Requirement, Student
 
-from django.shortcuts import render
-from .models import RequirementStudent
 @login_required
 def placed_students_view(request):
-    placed_students = RequirementStudent.objects.filter(
+    # Get search parameters
+    student_name = request.GET.get('student_name', '').strip()
+    company_name = request.GET.get('company_name', '').strip()
+    sort_param = request.GET.get('sort', '-created_at')
+    
+    # Base queryset for placed students
+    placed_students_qs = RequirementStudent.objects.filter(
         status='selected',
         student__is_placed=True,
         student__is_dropout=False
     ).exclude(
         student__placed_outside__isnull=False
-    ).select_related('student').distinct().order_by('-created_at')
-
+    ).select_related('student', 'requirement').distinct()
+    
+    # Apply search filters
+    if student_name:
+        placed_students_qs = placed_students_qs.filter(
+            student__name__icontains=student_name
+        )
+    
+    if company_name:
+        placed_students_qs = placed_students_qs.filter(
+            requirement__company_name__icontains=company_name
+        )
+    
+    # Apply sorting
+    valid_sort_fields = [
+        'student__name', '-student__name',
+        'requirement__company_name', '-requirement__company_name',
+        'student__type_of_data', '-student__type_of_data',
+        'requirement__schedule_date', '-requirement__schedule_date',
+        'created_at', '-created_at'
+    ]
+    
+    if sort_param in valid_sort_fields:
+        placed_students_qs = placed_students_qs.order_by(sort_param)
+    else:
+        placed_students_qs = placed_students_qs.order_by('-created_at')
+    
+    # Build student data dictionary for counts
+    student_data = {}
+    all_students = Student.objects.filter(
+        id__in=placed_students_qs.values_list('student_id', flat=True)
+    )
+    
+    for student in all_students:
+        # Get all requirement IDs for this student
+        student_req_ids = RequirementStudent.objects.filter(
+            student=student,
+            status='selected'
+        ).values_list('requirement_id', flat=True).distinct()
+        
+        # Total requirements count
+        total_reqs = len(student_req_ids)
+        
+        # Scheduled requirements count
+        scheduled_reqs = Requirement.objects.filter(
+            id__in=student_req_ids,
+            schedule_status=True
+        ).count() if student_req_ids else 0
+        
+        student_data[student.id] = {
+            'student': student,
+            'requirement_count': total_reqs,
+            'scheduled_count': scheduled_reqs
+        }
+    
     # Get unique student types and their counts
     student_types = Student.objects.filter(
         is_placed=True,
         is_dropout=False
     ).exclude(placed_outside__isnull=False).values_list('type_of_data', flat=True).distinct()
-
+    
     type_counts = {}
     for stype in student_types:
-        type_counts[stype] = placed_students.filter(student__type_of_data=stype).count()
-
-    return render(request, 'placed_students.html', {
-        'placed_students': placed_students,
-        'total_count': placed_students.count(),
+        if stype:  # Only count non-null types
+            count = placed_students_qs.filter(student__type_of_data=stype).count()
+            if count > 0:  # Only include types with students
+                type_counts[stype] = count
+    
+    # Pagination
+    paginator = Paginator(placed_students_qs, 25)  # Show 25 students per page
+    page_number = request.GET.get('page', 1)
+    
+    try:
+        page_obj = paginator.get_page(page_number)
+    except:
+        page_obj = paginator.get_page(1)
+    
+    # Calculate total count
+    total_count = placed_students_qs.count()
+    
+    context = {
+        'placed_students': page_obj,
+        'page_obj': page_obj,
+        'total_count': total_count,
         'type_counts': type_counts,
-    })
+        'student_data': student_data,
+        'current_sort': sort_param,
+        'search_params': {
+            'student_name': student_name,
+            'company_name': company_name,
+        }
+    }
+    
+    return render(request, 'placed_students.html', context)
+
 
 from django.http import HttpResponse
 import csv
@@ -2460,6 +2545,13 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from .models import Student
 from .forms import StudentForm, StudentSubjectRatingFormSet
+from django.shortcuts import render
+from django.urls import reverse_lazy
+from django.views.generic.edit import CreateView
+from django.contrib import messages
+from .models import Student, Subject
+from .forms import StudentForm, StudentSubjectRatingFormSet
+
 
 class StudentCreateView(CreateView):
     model = Student
@@ -2471,51 +2563,48 @@ class StudentCreateView(CreateView):
         context = super().get_context_data(**kwargs)
         context['title'] = "Add New Student"
         context['subjects'] = Subject.objects.all()
-    
+
         rating_field = StudentSubjectRating._meta.get_field('rating')
         context['rating_choices'] = rating_field.choices
 
+        # Initialize formset with correct prefix
         if 'rating_formset' not in kwargs:
-        # Initialize formset with request-aware forms
-            rating_formset = StudentSubjectRatingFormSet()
-        
+            rating_formset = StudentSubjectRatingFormSet(
+                prefix='ratings'
+            )
             for form in rating_formset.forms:
                 form.request = self.request
                 if not form.initial.get('evaluated_by'):
                     form.initial['evaluated_by'] = self.request.user.get_full_name() if self.request.user.is_authenticated else ''
-
             context['rating_formset'] = rating_formset
 
         return context
 
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        rating_formset = StudentSubjectRatingFormSet(request.POST)
+        rating_formset = StudentSubjectRatingFormSet(
+            request.POST,
+            prefix='ratings'
+        )
 
         if form.is_valid() and rating_formset.is_valid():
             return self.form_valid(form, rating_formset)
         else:
             return self.form_invalid(form, rating_formset)
 
-    # views.py
     def form_valid(self, form, rating_formset):
-    # Step 1: Save Student first
-        instance = form.save()  # This assigns an ID to the student
+        instance = form.save()
 
-    # Step 2: Update dropout fields if needed
         is_dropout = form.cleaned_data.get('is_dropout')
         if not is_dropout:
             instance.dropout_date = None
             instance.dropout_reason = None
-
-    # Step 3: Save the student again if dropout fields changed
         instance.save()
 
-    # Step 4: Assign student to each rating and set evaluated_by
         for rating_form in rating_formset.forms:
-            if rating_form.has_changed():  # Only save forms with changes
+            if rating_form.has_changed():
                 rating = rating_form.save(commit=False)
-                rating.student = instance  # Now student has an ID
+                rating.student = instance
                 if self.request.user.is_authenticated:
                     rating.evaluated_by = self.request.user.get_full_name() or self.request.user.username
                 rating.save()
@@ -2523,13 +2612,11 @@ class StudentCreateView(CreateView):
         messages.success(self.request, 'Student added successfully!')
         return super().form_valid(form)
 
-
     def form_invalid(self, form, rating_formset):
         messages.error(self.request, 'Please correct the errors below.')
-        return self.render_to_response(self.get_context_data(form=form, rating_formset=rating_formset))
-
-
-
+        return self.render_to_response(
+            self.get_context_data(form=form, rating_formset=rating_formset)
+        )
 from django.http import HttpResponse
 import openpyxl
 from openpyxl.styles import Protection
@@ -4013,3 +4100,30 @@ class TomorrowsStudentsAjaxView(View):
         ]
 
         return JsonResponse({"students": data})
+    
+    
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.db.models import Q
+
+def student_search(request):
+    # Show HTML template for GET requests
+    return render(request, 'student_search.html')
+
+def student_search_api(request):
+    # Handle AJAX requests
+    query = request.GET.get('q', '')
+    students = Student.objects.filter(
+        Q(name__icontains=query) | 
+        Q(contact_number__icontains=query)
+    )[:10]
+    
+    results = [{
+        'id': s.id,
+        'name': s.name,
+        'mobile': s.contact_number,
+        'degree': s.degree,
+        'url': s.get_absolute_url()
+    } for s in students]
+    
+    return JsonResponse({'results': results})
