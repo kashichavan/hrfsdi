@@ -1494,6 +1494,8 @@ def bulk_remove_requirement_students(request, requirement_id):
         messages.error(request, f"Error removing students: {str(e)}")
     
     return redirect('requirement_students', pk=requirement_id)
+
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
 from django.db.models import Q, Count, F, Prefetch
