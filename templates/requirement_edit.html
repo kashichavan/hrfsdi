@@ -389,7 +389,7 @@
                                             {% endfor %}
                                         </div>
                                     </div>
-                                    <div class="col-md-4" id="scheduleDateField">
+                                    <div class="col-md-4" id="scheduleDateField" style="display: none;">
                                         <div class="form-floating form-floating-custom mb-3">
                                             {{ form.schedule_date }}
                                             <label for="{{ form.schedule_date.id_for_label }}">{{ form.schedule_date.label }}</label>
@@ -425,44 +425,46 @@
 
                         <!-- Subjects -->
                         <div class="form-section mb-4">
-                            <div class="section-header">
-                                <i class="fas fa-book me-2"></i>
-                                <h5 class="font-space-grotesk">Subjects</h5>
-                            </div>
-                            <div class="section-body">
-                                <div class="row">
-                                    <div class="col-12">
-                                        <label class="form-label mb-2">{{ form.subjects.label }}</label>
-                                        <div class="checkbox-container">
-                                            {% for checkbox in form.subjects %}
-                                                <div class="checkbox-item">
-                                                    {{ checkbox.tag }}
-                                                    <label class="checkbox-label" for="{{ checkbox.id_for_label }}">
-                                                        {{ checkbox.choice_label }}
-                                                    </label>
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                        {% if form.subjects.errors %}
-                                            <div class="invalid-feedback d-block">
-                                                {{ form.subjects.errors.0 }}
-                                            </div>
-                                        {% endif %}
-                                        <div id="otherSubjectContainer" class="mt-3">
-                                            <div class="form-floating form-floating-custom">
-                                                {{ form.other_subject_name }}
-                                                <label for="{{ form.other_subject_name.id_for_label }}">{{ form.other_subject_name.label }}</label>
-                                                {% if form.other_subject_name.errors %}
-                                                    <div class="invalid-feedback d-block">
-                                                        {{ form.other_subject_name.errors.0 }}
-                                                    </div>
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+    <div class="section-header">
+        <i class="fas fa-book me-2"></i>
+        <h5 class="font-space-grotesk">Subjects</h5>
+    </div>
+    <div class="section-body">
+        <div class="row">
+            <div class="col-12">
+                <label class="form-label mb-2">{{ form.subjects.label }}</label>
+                <div class="checkbox-container">
+                    {% for checkbox in form.subjects %}
+                        <div class="checkbox-item">
+                            {{ checkbox.tag }}
+                            <label class="checkbox-label" for="{{ checkbox.id_for_label }}">
+                                {{ checkbox.choice_label }}
+                            </label>
                         </div>
+                    {% endfor %}
+                </div>
+                {% if form.subjects.errors %}
+                    <div class="invalid-feedback d-block">
+                        {{ form.subjects.errors.0 }}
+                    </div>
+                {% endif %}
+
+                <!-- Other Subject Name input (conditionally shown) -->
+                <div id="otherSubjectContainer" class="mt-3" style="{% if form.other_subject_name.value %}display:block;{% else %}display:none;{% endif %}">
+    <div class="form-floating form-floating-custom">
+        {{ form.other_subject_name }}
+        <label for="{{ form.other_subject_name.id_for_label }}">{{ form.other_subject_name.label }}</label>
+        {% if form.other_subject_name.errors %}
+            <div class="invalid-feedback d-block">
+                {{ form.other_subject_name.errors.0 }}
+            </div>
+        {% endif %}
+    </div>
+</div>
+            </div>
+        </div>
+    </div>
+</div>
 
                         <!-- Academic Criteria -->
                         <div class="form-section mb-4 academic-criteria-section">
@@ -542,7 +544,7 @@
                                             <div class="file-upload-area">
                                                 <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
                                                 <p>Drag & drop Excel file here or</p>
-                                                <button type="button" class="btn btn-outline-primary">
+                                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('id_student_file').click();">
                                                     Browse Files
                                                 </button>
                                                 {{ form.student_file }}
@@ -577,7 +579,7 @@
                             <a href="{% url 'student_data:requirement_detail' pk=requirement.id %}" class="btn btn-secondary">
                                 <i class="fas fa-times me-1"></i> Cancel
                             </a>
-                            <button type="submit" class="btn btn-primary btn-custom-primary">
+                            <button type="submit" class="btn btn-primary btn-custom-primary" id="submitButton">
                                 <i class="fas fa-save me-1"></i> Update Requirement
                             </button>
                         </div>
@@ -587,6 +589,11 @@
         </div>
     </div>
 </div>
+
+<pre>
+
+Other Subject Name: {{ form.other_subject_name.value }}
+</pre>
 {% endblock %}
 
 {% block extra_js %}
@@ -595,101 +602,206 @@
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Form loaded successfully');
     
+    // Get form elements
+    const form = document.getElementById('requirementForm');
+    const submitButton = document.getElementById('submitButton');
+    
+    if (!form) {
+        console.error('Form not found!');
+        return;
+    }
+    
     // Animation
-    gsap.from(".form-section", {
-        duration: 0.5,
-        y: 20,
-        opacity: 0,
-        stagger: 0.1,
-        ease: "power2.out"
-    });
+    if (typeof gsap !== 'undefined') {
+        gsap.from(".form-section", {
+            duration: 0.5,
+            y: 20,
+            opacity: 0,
+            stagger: 0.1,
+            ease: "power2.out"
+        });
+    }
 
-    // Schedule Date Toggle
+    // Schedule Date Toggle - FIXED VERSION
+function initScheduleToggle() {
+    console.log('=== Schedule Toggle Debug Info ===');
+    
     const isScheduledRadios = document.querySelectorAll('input[name="is_scheduled"]');
     const scheduleDateField = document.getElementById('scheduleDateField');
+    const scheduleInput = document.getElementById('id_schedule_date');
+
+    console.log('Elements found:', {
+        radios: isScheduledRadios.length,
+        scheduleDateField: !!scheduleDateField,
+        scheduleInput: !!scheduleInput
+    });
+
+    // Log all radio buttons found
+    isScheduledRadios.forEach((radio, index) => {
+        console.log(`Radio ${index}:`, {
+            name: radio.name,
+            value: radio.value,
+            id: radio.id,
+            checked: radio.checked
+        });
+    });
 
     function toggleScheduleDate() {
-        const isScheduled = document.querySelector('input[name="is_scheduled"]:checked')?.value === 'True';
+        console.log('=== Toggle Function Called ===');
+        
+        const checkedRadio = document.querySelector('input[name="is_scheduled"]:checked');
+        let isScheduled = false;
+        
+        if (checkedRadio) {
+            console.log('Checked radio found:', {
+                value: checkedRadio.value,
+                id: checkedRadio.id,
+                name: checkedRadio.name
+            });
+            
+            // FIXED: Handle Django's boolean field values properly
+            const value = checkedRadio.value;
+            // Check for various possible "true" values that Django might send
+            isScheduled = (value === 'True' || value === 'true' || value === '1' || value === 'on' || value === 'yes');
+            
+            console.log('Is scheduled?', isScheduled, 'Raw value:', value);
+        } else {
+            console.log('No checked radio found');
+        }
+        
+        // Toggle the schedule date field
         if (scheduleDateField) {
-            scheduleDateField.style.display = isScheduled ? 'block' : 'none';
-            const scheduleInput = document.getElementById('id_schedule_date');
-            if (scheduleInput) {
-                scheduleInput.required = isScheduled;
+            console.log('Toggling field visibility:', isScheduled);
+            
+            if (isScheduled) {
+                scheduleDateField.style.display = 'block';
+                scheduleDateField.style.visibility = 'visible';
+                scheduleDateField.style.opacity = '1';
+                
+                // Make the input required
+                if (scheduleInput) {
+                    scheduleInput.required = true;
+                    console.log('Schedule input made required');
+                }
+            } else {
+                scheduleDateField.style.display = 'none';
+                scheduleDateField.style.visibility = 'hidden';
+                scheduleDateField.style.opacity = '0';
+                
+                // Remove requirement and clear value
+                if (scheduleInput) {
+                    scheduleInput.required = false;
+                    scheduleInput.value = '';
+                    scheduleInput.classList.remove('is-invalid', 'is-valid');
+                    console.log('Schedule input cleared and made optional');
+                }
             }
+            
+            console.log('Field display style:', scheduleDateField.style.display);
+        } else {
+            console.log('Schedule date field not found!');
         }
     }
 
-    isScheduledRadios.forEach(radio => {
-        radio.addEventListener('change', toggleScheduleDate);
-    });
-    toggleScheduleDate();
+    // Add event listeners
+    if (isScheduledRadios.length > 0) {
+        isScheduledRadios.forEach((radio, index) => {
+            // Use 'change' event which is most reliable for radio buttons
+            radio.addEventListener('change', function(e) {
+                console.log(`Radio ${index} change event:`, {
+                    value: this.value,
+                    checked: this.checked,
+                    target: e.target.value
+                });
+                
+                // Small delay to ensure DOM is updated
+                setTimeout(() => {
+                    toggleScheduleDate();
+                }, 10);
+            });
+            
+            // Also add click for immediate feedback
+            radio.addEventListener('click', function(e) {
+                console.log(`Radio ${index} click event:`, {
+                    value: this.value,
+                    checked: this.checked
+                });
+                
+                setTimeout(() => {
+                    toggleScheduleDate();
+                }, 10);
+            });
+        });
+    } else {
+        console.error('No radio buttons found for is_scheduled!');
+    }
+    
+    // Initial state check - run multiple times to ensure it works
+    const checkInitialState = () => {
+        console.log('=== Initial State Check ===');
+        toggleScheduleDate();
+    };
+    
+    // Try immediately
+    checkInitialState();
+    
+    // Try after short delay (for form pre-population)
+    setTimeout(checkInitialState, 100);
+    
+    // Try after form is fully rendered
+    setTimeout(checkInitialState, 500);
+}
 
-    // Other Subject Toggle - Fixed Implementation
+    // Other Subject Toggle
+    function initOtherSubjectToggle() {
+    const subjectCheckboxes = document.querySelectorAll('input[name="subjects"]');
     const otherSubjectContainer = document.getElementById('otherSubjectContainer');
     const otherSubjectInput = document.getElementById('id_other_subject_name');
-    
+
+    // Try to identify "Other" checkbox more reliably
+    let otherCheckbox = null;
+    subjectCheckboxes.forEach(checkbox => {
+        const label = document.querySelector(`label[for="${checkbox.id}"]`);
+        const labelText = label ? label.textContent.trim().toLowerCase() : '';
+        const checkboxValueText = checkbox.value.toLowerCase();
+
+        // Match by label or checkbox value containing "other"
+        if (labelText.includes('other') || checkboxValueText.includes('other')) {
+            otherCheckbox = checkbox;
+        }
+    });
+
     function toggleOtherSubject() {
-        // Find the "other" checkbox - it might have different values
-        const otherCheckbox = document.querySelector('input[name="subjects"][value="other"]') || 
-                             document.querySelector('input[name="subjects"]').closest('form').querySelector('input[value*="Other"]') ||
-                             Array.from(document.querySelectorAll('input[name="subjects"]')).find(cb => 
-                                 cb.nextElementSibling && cb.nextElementSibling.textContent.toLowerCase().includes('other')
-                             );
-        
-        console.log('Other checkbox found:', otherCheckbox);
-        
         if (otherCheckbox && otherSubjectContainer) {
             const isOtherChecked = otherCheckbox.checked;
-            console.log('Other checkbox checked:', isOtherChecked);
-            
             otherSubjectContainer.style.display = isOtherChecked ? 'block' : 'none';
-            
+
             if (otherSubjectInput) {
                 otherSubjectInput.required = isOtherChecked;
-                // Clear the field if unchecked
                 if (!isOtherChecked) {
                     otherSubjectInput.value = '';
+                    otherSubjectInput.classList.remove('is-invalid');
                 }
             }
         }
     }
 
-    // Add event listeners to all subject checkboxes
-    const subjectCheckboxes = document.querySelectorAll('input[name="subjects"]');
-    console.log('Found subject checkboxes:', subjectCheckboxes.length);
-    
-    subjectCheckboxes.forEach((checkbox, index) => {
-        console.log(`Checkbox ${index}:`, checkbox.value, checkbox.nextElementSibling?.textContent);
-        checkbox.addEventListener('change', function() {
-            console.log('Checkbox changed:', this.value, this.checked);
-            toggleOtherSubject();
-        });
+    subjectCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', toggleOtherSubject);
     });
-    
-    // Initial toggle on page load
-    toggleOtherSubject();
 
-    // Percentage Validation
-    const percentageFields = document.querySelectorAll('input[id^="id_percentage_"]');
-    percentageFields.forEach(field => {
-        field.addEventListener('input', function() {
-            const value = parseFloat(this.value);
-            if (isNaN(value) || value < 0 || value > 100) {
-                this.setCustomValidity('Percentage must be between 0 and 100');
-                this.classList.add('is-invalid');
-            } else {
-                this.setCustomValidity('');
-                this.classList.remove('is-invalid');
-            }
-        });
-    });
+    // Trigger once on load
+    toggleOtherSubject();
+}
 
     // File Upload Functionality
-    const fileInput = document.getElementById('id_student_file');
-    const fileNameDisplay = document.getElementById('fileNameDisplay');
-    const fileUploadContainer = document.getElementById('fileUploadContainer');
+    function initFileUpload() {
+        const fileInput = document.getElementById('id_student_file');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileUploadContainer = document.getElementById('fileUploadContainer');
 
-    if (fileInput && fileUploadContainer) {
+        if (!fileInput) return;
+
         // File selection change
         fileInput.addEventListener('change', function() {
             const fileName = this.files[0]?.name || '';
@@ -699,230 +811,207 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('File selected:', fileName);
         });
 
-        // Drag and drop functionality
-        ['dragenter', 'dragover'].forEach(eventName => {
-            fileUploadContainer.addEventListener(eventName, highlight);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            fileUploadContainer.addEventListener(eventName, unhighlight);
-        });
-
-        function highlight(e) {
-            e.preventDefault();
-            fileUploadContainer.classList.add('dragover');
-        }
-
-        function unhighlight(e) {
-            e.preventDefault();
-            fileUploadContainer.classList.remove('dragover');
-            
-            if (e.type === 'drop' && e.dataTransfer?.files.length > 0) {
-                fileInput.files = e.dataTransfer.files;
-                fileInput.dispatchEvent(new Event('change'));
-            }
-        }
-
-        // Click to select file
-        fileUploadContainer.addEventListener('click', function(e) {
-            if (e.target.tagName !== 'INPUT') {
-                fileInput.click();
-            }
-        });
-    }
-
-    // Form Validation and Submission
-    const requirementForm = document.getElementById('requirementForm');
-    if (requirementForm) {
-        requirementForm.addEventListener('submit', function(e) {
-            console.log('Form submission attempted');
-            
-            // Add Bootstrap validation classes
-            this.classList.add('was-validated');
-            
-            // Custom validation
-            let isValid = true;
-            
-            // Check if form is valid
-            if (!this.checkValidity()) {
-                e.preventDefault();
-                isValid = false;
-                
-                // Animate invalid fields
-                const invalidFields = document.querySelectorAll(':invalid');
-                invalidFields.forEach(field => {
-                    gsap.fromTo(field, 
-                        { x: -10 }, 
-                        { x: 0, duration: 0.3, ease: "elastic.out(1, 0.3)" }
-                    );
+        if (fileUploadContainer) {
+            // Drag and drop functionality
+            ['dragenter', 'dragover'].forEach(eventName => {
+                fileUploadContainer.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragover');
                 });
-                
-                // Scroll to first invalid field
-                const firstInvalid = document.querySelector(':invalid');
-                if (firstInvalid) {
-                    firstInvalid.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                }
-            }
-            
-            // Additional custom validations
-            const companyName = document.getElementById('id_company_name');
-            const companyCode = document.getElementById('id_company_code');
-            const requirementDate = document.getElementById('id_requirement_date');
-            
-            // Company name validation
-            if (companyName && companyName.value.trim().length < 2) {
-                companyName.setCustomValidity('Company name must be at least 2 characters long');
-                companyName.classList.add('is-invalid');
-                isValid = false;
-            } else if (companyName) {
-                companyName.setCustomValidity('');
-                companyName.classList.remove('is-invalid');
-            }
-            
-            // Company code validation
-            if (companyCode && companyCode.value.trim().length < 2) {
-                companyCode.setCustomValidity('Company code must be at least 2 characters long');
-                companyCode.classList.add('is-invalid');
-                isValid = false;
-            } else if (companyCode) {
-                companyCode.setCustomValidity('');
-                companyCode.classList.remove('is-invalid');
-            }
-            
-            // Date validation - ensure requirement date is not in the past
-            if (requirementDate && requirementDate.value) {
-                const selectedDate = new Date(requirementDate.value);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                if (selectedDate < today) {
-                    requirementDate.setCustomValidity('Requirement date cannot be in the past');
-                    requirementDate.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    requirementDate.setCustomValidity('');
-                    requirementDate.classList.remove('is-invalid');
-                }
-            }
-            
-            // Schedule date validation
-            const isScheduled = document.querySelector('input[name="is_scheduled"]:checked')?.value === 'True';
-            const scheduleDate = document.getElementById('id_schedule_date');
-            
-            if (isScheduled && scheduleDate) {
-                if (!scheduleDate.value) {
-                    scheduleDate.setCustomValidity('Schedule date is required when scheduled');
-                    scheduleDate.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    const scheduledDate = new Date(scheduleDate.value);
-                    const reqDate = new Date(requirementDate.value);
+            });
+
+            ['dragleave', 'drop'].forEach(eventName => {
+                fileUploadContainer.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
                     
-                    if (scheduledDate <= reqDate) {
-                        scheduleDate.setCustomValidity('Schedule date must be after requirement date');
-                        scheduleDate.classList.add('is-invalid');
-                        isValid = false;
-                    } else {
-                        scheduleDate.setCustomValidity('');
-                        scheduleDate.classList.remove('is-invalid');
+                    if (e.type === 'drop' && e.dataTransfer?.files.length > 0) {
+                        fileInput.files = e.dataTransfer.files;
+                        const event = new Event('change', { bubbles: true });
+                        fileInput.dispatchEvent(event);
                     }
-                }
-            }
-            
-            // Subject validation - at least one subject must be selected
-            const selectedSubjects = document.querySelectorAll('input[name="subjects"]:checked');
-            if (selectedSubjects.length === 0) {
-                const subjectsContainer = document.querySelector('.checkbox-container');
-                if (subjectsContainer) {
-                    // Create or update error message
-                    let errorDiv = subjectsContainer.parentNode.querySelector('.subjects-error');
-                    if (!errorDiv) {
-                        errorDiv = document.createElement('div');
-                        errorDiv.className = 'invalid-feedback d-block subjects-error';
-                        subjectsContainer.parentNode.appendChild(errorDiv);
-                    }
-                    errorDiv.textContent = 'Please select at least one subject';
+                });
+            });
+        }
+    }
+
+    // Form Validation
+    function validateForm() {
+        let isValid = true;
+        const errors = [];
+
+        // Clear previous custom validation
+        form.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        form.querySelectorAll('.custom-error').forEach(el => {
+            el.remove();
+        });
+
+        // Company name validation
+        const companyName = document.getElementById('id_company_name');
+        if (companyName && companyName.value.trim().length < 2) {
+            companyName.classList.add('is-invalid');
+            errors.push('Company name must be at least 2 characters long');
+            isValid = false;
+        }
+
+        // Company code validation
+        const companyCode = document.getElementById('id_company_code');
+        if (companyCode && companyCode.value.trim().length < 2) {
+            companyCode.classList.add('is-invalid');
+            errors.push('Company code must be at least 2 characters long');
+            isValid = false;
+        }
+
+        // Requirement date validation - removed past date restriction
+        const requirementDate = document.getElementById('id_requirement_date');
+        // Requirement date can be any date (past, present, or future)
+
+        // Schedule date validation
+        const isScheduledChecked = document.querySelector('input[name="is_scheduled"]:checked');
+        const isScheduled = isScheduledChecked ? (isScheduledChecked.value === 'True' || isScheduledChecked.value === 'true') : false;
+        const scheduleDate = document.getElementById('id_schedule_date');
+        
+        if (isScheduled && scheduleDate) {
+            if (!scheduleDate.value) {
+                scheduleDate.classList.add('is-invalid');
+                errors.push('Schedule date is required when scheduled');
+                isValid = false;
+            } else if (requirementDate && requirementDate.value) {
+                const scheduledDate = new Date(scheduleDate.value);
+                const reqDate = new Date(requirementDate.value);
+                
+                if (scheduledDate <= reqDate) {
+                    scheduleDate.classList.add('is-invalid');
+                    errors.push('Schedule date must be after requirement date');
                     isValid = false;
                 }
-            } else {
-                // Remove error message if exists
-                const errorDiv = document.querySelector('.subjects-error');
-                if (errorDiv) {
-                    errorDiv.remove();
-                }
             }
-            
-            // Other subject validation
-            const otherCheckbox = Array.from(document.querySelectorAll('input[name="subjects"]')).find(cb => 
-                cb.nextElementSibling && cb.nextElementSibling.textContent.toLowerCase().includes('other')
-            );
+        }
+
+        // Subject validation
+        const selectedSubjects = document.querySelectorAll('input[name="subjects"]:checked');
+        if (selectedSubjects.length === 0) {
+            const subjectsContainer = document.querySelector('.checkbox-container');
+            if (subjectsContainer) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback d-block custom-error';
+                errorDiv.textContent = 'Please select at least one subject';
+                subjectsContainer.parentNode.appendChild(errorDiv);
+                errors.push('Please select at least one subject');
+                isValid = false;
+            }
+        }
+
+        // Other subject validation
+        const otherCheckbox = Array.from(document.querySelectorAll('input[name="subjects"]')).find(cb => {
+            const label = cb.nextElementSibling;
+            return label && (label.textContent.toLowerCase().includes('other') || 
+                           cb.value.toLowerCase().includes('other'));
+        });
+        
+        if (otherCheckbox && otherCheckbox.checked) {
             const otherSubjectInput = document.getElementById('id_other_subject_name');
-            
-            if (otherCheckbox && otherCheckbox.checked && otherSubjectInput) {
-                if (!otherSubjectInput.value.trim()) {
-                    otherSubjectInput.setCustomValidity('Please specify the other subject');
-                    otherSubjectInput.classList.add('is-invalid');
-                    isValid = false;
-                } else if (otherSubjectInput.value.trim().length < 2) {
-                    otherSubjectInput.setCustomValidity('Subject name must be at least 2 characters long');
-                    otherSubjectInput.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    otherSubjectInput.setCustomValidity('');
-                    otherSubjectInput.classList.remove('is-invalid');
-                }
+            if (otherSubjectInput && !otherSubjectInput.value.trim()) {
+                otherSubjectInput.classList.add('is-invalid');
+                errors.push('Please specify the other subject');
+                isValid = false;
             }
-            
-            // File validation (if file upload exists)
-            if (fileInput && fileInput.files.length > 0) {
-                const file = fileInput.files[0];
-                const allowedTypes = [
-                    'application/vnd.ms-excel',
-                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                    'text/csv'
-                ];
-                
-                if (!allowedTypes.includes(file.type)) {
-                    fileInput.setCustomValidity('Please upload a valid Excel or CSV file');
+        }
+
+        // Percentage validations
+        const percentageFields = document.querySelectorAll('input[id^="id_percentage_"]');
+        percentageFields.forEach(field => {
+            if (field.value) {
+                const value = parseFloat(field.value);
+                if (isNaN(value) || value < 0 || value > 100) {
+                    field.classList.add('is-invalid');
+                    errors.push(`${field.labels[0]?.textContent || 'Percentage'} must be between 0 and 100`);
                     isValid = false;
-                } else if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                    fileInput.setCustomValidity('File size must be less than 5MB');
-                    isValid = false;
-                } else {
-                    fileInput.setCustomValidity('');
-                }
-            }
-            
-            if (!isValid) {
-                e.preventDefault();
-                console.log('Form validation failed');
-                
-                // Show error message
-                showNotification('Please fix the errors before submitting', 'error');
-                
-                // Scroll to first error
-                const firstError = document.querySelector('.is-invalid, .subjects-error');
-                if (firstError) {
-                    firstError.scrollIntoView({ 
-                        behavior: 'smooth',
-                        block: 'center'
-                    });
-                }
-            } else {
-                console.log('Form validation passed, submitting...');
-                
-                // Show loading state
-                const submitBtn = document.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.disabled = true;
-                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Updating...';
                 }
             }
         });
+
+        // File validation
+        const fileInput = document.getElementById('id_student_file');
+        if (fileInput && fileInput.files.length > 0) {
+            const file = fileInput.files[0];
+            const allowedTypes = [
+                'application/vnd.ms-excel',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'text/csv'
+            ];
+            
+            if (!allowedTypes.includes(file.type) && !file.name.match(/\.(xlsx?|csv)$/i)) {
+                errors.push('Please upload a valid Excel or CSV file');
+                isValid = false;
+            } else if (file.size > 5 * 1024 * 1024) {
+                errors.push('File size must be less than 5MB');
+                isValid = false;
+            }
+        }
+
+        if (!isValid) {
+            console.log('Validation errors:', errors);
+            
+            // Show first error
+            if (errors.length > 0) {
+                alert('Please fix the following errors:\n' + errors.join('\n'));
+            }
+            
+            // Scroll to first invalid field
+            const firstInvalid = document.querySelector('.is-invalid');
+            if (firstInvalid) {
+                firstInvalid.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                firstInvalid.focus();
+            }
+        }
+
+        return isValid;
     }
+
+    // Form submission
+    form.addEventListener('submit', function(e) {
+        console.log('Form submission attempted');
+        
+        // Prevent default submission
+        e.preventDefault();
+        
+        // Add Bootstrap validation classes
+        this.classList.add('was-validated');
+        
+        // Run custom validation
+        if (!validateForm()) {
+            console.log('Custom validation failed');
+            return false;
+        }
+        
+        // Check HTML5 validation
+        if (!this.checkValidity()) {
+            console.log('HTML5 validation failed');
+            return false;
+        }
+        
+        console.log('All validation passed, submitting form...');
+        
+        // Show loading state
+        if (submitButton) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Updating...';
+        }
+        
+        // Submit the form
+        this.submit();
+    });
+
+    // Initialize all functionality
+    initScheduleToggle();
+    initOtherSubjectToggle();
+    initFileUpload();
     
     // Real-time validation feedback
     const formInputs = document.querySelectorAll('input, select, textarea');
@@ -931,144 +1020,37 @@ document.addEventListener('DOMContentLoaded', function() {
             if (this.checkValidity()) {
                 this.classList.remove('is-invalid');
                 this.classList.add('is-valid');
-            } else {
-                this.classList.remove('is-valid');
-                this.classList.add('is-invalid');
             }
         });
         
         input.addEventListener('input', function() {
             if (this.classList.contains('is-invalid') && this.checkValidity()) {
                 this.classList.remove('is-invalid');
-                this.classList.add('is-valid');
             }
-        });
-    });
-    
-    // Notification function
-    function showNotification(message, type = 'info') {
-        // Remove existing notifications
-        const existingNotifications = document.querySelectorAll('.custom-notification');
-        existingNotifications.forEach(notification => notification.remove());
-        
-        // Create notification
-        const notification = document.createElement('div');
-        notification.className = `alert alert-${type === 'error' ? 'danger' : type} custom-notification position-fixed`;
-        notification.style.cssText = `
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            min-width: 300px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        `;
-        notification.innerHTML = `
-            <i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'info-circle'} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" aria-label="Close"></button>
-        `;
-        
-        document.body.appendChild(notification);
-        
-        // Animate in
-        gsap.fromTo(notification, 
-            { x: 300, opacity: 0 }, 
-            { x: 0, opacity: 1, duration: 0.3, ease: "power2.out" }
-        );
-        
-        // Close button functionality
-        const closeBtn = notification.querySelector('.btn-close');
-        closeBtn.addEventListener('click', () => {
-            gsap.to(notification, {
-                x: 300,
-                opacity: 0,
-                duration: 0.3,
-                ease: "power2.in",
-                onComplete: () => notification.remove()
-            });
-        });
-        
-        // Auto remove after 5 seconds
-        setTimeout(() => {
-            if (notification.parentNode) {
-                gsap.to(notification, {
-                    x: 300,
-                    opacity: 0,
-                    duration: 0.3,
-                    ease: "power2.in",
-                    onComplete: () => notification.remove()
-                });
-            }
-        }, 5000);
-    }
-    
-    // Mobile column name suggestions
-    const mobileColumnInput = document.getElementById('id_mobile_column');
-    if (mobileColumnInput) {
-        const commonColumnNames = [
-            'mobile', 'phone', 'contact', 'mobile_number', 'phone_number',
-            'contact_number', 'Mobile', 'Phone', 'Contact', 'MOBILE', 'PHONE'
-        ];
-        
-        // Create datalist for suggestions
-        const datalist = document.createElement('datalist');
-        datalist.id = 'mobile-column-suggestions';
-        commonColumnNames.forEach(name => {
-            const option = document.createElement('option');
-            option.value = name;
-            datalist.appendChild(option);
-        });
-        
-        mobileColumnInput.setAttribute('list', 'mobile-column-suggestions');
-        mobileColumnInput.parentNode.appendChild(datalist);
-    }
-    
-    // Initialize tooltips if Bootstrap tooltips are available
-    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
-    }
-    
-    // Form auto-save functionality (optional)
-    let autoSaveTimeout;
-    const autoSaveFields = document.querySelectorAll('input:not([type="file"]), select, textarea');
-    
-    autoSaveFields.forEach(field => {
-        field.addEventListener('input', function() {
-            clearTimeout(autoSaveTimeout);
-            autoSaveTimeout = setTimeout(() => {
-                // Save form data to localStorage (if needed)
-                console.log('Auto-saving form data...');
-                // Implementation would depend on requirements
-            }, 2000);
         });
     });
     
     console.log('All form functionality initialized successfully');
 });
 
-// Additional utility functions
-function formatPercentage(input) {
-    let value = input.value.replace(/[^\d.]/g, '');
-    if (value.includes('.')) {
-        const parts = value.split('.');
-        if (parts[1].length > 2) {
-            value = parts[0] + '.' + parts[1].substring(0, 2);
+
+function toggleScheduleField() {
+        let yesRadio = document.querySelector('input[name="is_scheduled"][value="True"]');
+        if (yesRadio && yesRadio.checked) {
+            document.getElementById('scheduleDateField').style.display = 'block';
+        } else {
+            document.getElementById('scheduleDateField').style.display = 'none';
         }
     }
-    input.value = value;
-}
 
-// Apply percentage formatting to percentage fields
-document.addEventListener('DOMContentLoaded', function() {
-    const percentageInputs = document.querySelectorAll('input[id^="id_percentage_"]');
-    percentageInputs.forEach(input => {
-        input.addEventListener('input', function() {
-            formatPercentage(this);
+    // On page load
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleScheduleField();
+
+        // Listen to change
+        document.querySelectorAll('input[name="is_scheduled"]').forEach(function (radio) {
+            radio.addEventListener('change', toggleScheduleField);
         });
     });
-});
-
 </script>
 {% endblock %}

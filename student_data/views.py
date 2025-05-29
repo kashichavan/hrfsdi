@@ -1041,10 +1041,10 @@ def update_student_feedback(request, requirement_id):
         
         return redirect('student_data:requirement_detail',pk=requirement_id)
 
-# views.py
-from django.db import transaction
-from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
+from django.db import transaction
 from django.contrib.auth.decorators import login_required
 from .models import Requirement, RequirementSubject, Subject
 from .forms import RequirementEditForm
@@ -1059,33 +1059,49 @@ def requirement_edit(request, pk):
         form = RequirementEditForm(request.POST, instance=requirement)
         if form.is_valid():
             try:
-                # Save the main requirement first
                 requirement = form.save(commit=False)
-                requirement.schedule_status = 'scheduled' if requirement.is_scheduled else 'not_scheduled'
-                requirement.modified_by = request.user
+
+                # Determine schedule status
+                if requirement.is_scheduled:
+                    if requirement.schedule_date and requirement.schedule_date <= timezone.now().date():
+                        requirement.schedule_status = 'scheduled'
+                    else:
+                        requirement.schedule_status = 'not_scheduled'
+                else:
+                    requirement.schedule_status = 'not_scheduled'
+
                 requirement.save()
+                form.save_m2m()
 
-                # Now process subjects
+                # Get selected subjects
                 selected_subjects = request.POST.getlist('subjects')
+                selected_subject_ids = set(map(int, selected_subjects))  # Moved here
+                current_subject_ids = set(requirement.subjects.values_list('id', flat=True))
 
-                # Get existing subjects for this requirement
-                current_relations = RequirementSubject.objects.filter(requirement=requirement)
-                current_subject_ids = set(current_relations.values_list('subject_id', flat=True))
+                # Remove unselected subjects
+                RequirementSubject.objects.filter(
+                    requirement=requirement,
+                    subject_id__in=(current_subject_ids - selected_subject_ids)
+                ).delete()
 
-                new_subject_ids = set(map(int, selected_subjects))
+                # Add newly selected subjects
+                for subject_id in (selected_subject_ids - current_subject_ids):
+                    subject = Subject.objects.get(id=subject_id)
+                    RequirementSubject.objects.create(
+                        requirement=requirement,
+                        subject=subject,
+                        other_subject_name=form.cleaned_data.get('other_subject_name') if subject.name.lower() == 'other' else ''
+                    )
 
-                # Delete removed subjects
-                to_delete = current_subject_ids - new_subject_ids
-                RequirementSubject.objects.filter(requirement=requirement, subject_id__in=to_delete).delete()
-
-                # Add new subjects
-                for subject_id in new_subject_ids:
-                    if subject_id not in current_subject_ids:
-                        subject = Subject.objects.get(pk=subject_id)
-                        RequirementSubject.objects.create(
-                            requirement=requirement,
-                            subject=subject
-                        )
+                # Update "Other" subject name if already exists
+                other_subject = Subject.objects.filter(name__iexact='other').first()
+                if other_subject and other_subject.id in selected_subject_ids:
+                    req_subject, created = RequirementSubject.objects.get_or_create(
+                        requirement=requirement,
+                        subject=other_subject
+                    )
+                    req_subject.other_subject_name = form.cleaned_data.get('other_subject_name')
+                    req_subject.save()
 
                 messages.success(request, 'Requirement updated successfully!')
                 return redirect('student_data:requirement_detail', pk=requirement.id)
@@ -1100,6 +1116,7 @@ def requirement_edit(request, pk):
         'requirement': requirement,
         'title': 'Edit Requirement'
     })
+
 @login_required
 def requirement_students(request, pk):
     requirement = get_object_or_404(Requirement, pk=pk)

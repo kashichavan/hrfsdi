@@ -1,5 +1,5 @@
 from django import forms
-from .models import *
+from .models import Requirement, Subject, RequirementSubject
 
 
 class BaseRequirementForm(forms.ModelForm):
@@ -30,15 +30,62 @@ class BaseRequirementForm(forms.ModelForm):
     )
     percentage_master = forms.FloatField(
         required=False,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': 'Master\'s Percentage'})
+        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'placeholder': "Master's Percentage"})
     )
-    
     other_subject_name = forms.CharField(
         required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Specify other subject'}),
         label="Other Subject Name"
     )
-    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if self.instance.pk:
+            # Set initial subjects
+            self.fields['subjects'].initial = self.instance.subjects.values_list('pk', flat=True)
+
+            # Try to find "Other" subject and populate other_subject_name
+            other_subject = Subject.objects.filter(name__iexact='other').first()
+            if other_subject and self.instance.subjects.filter(pk=other_subject.pk).exists():
+                req_subject = RequirementSubject.objects.filter(
+                    requirement=self.instance,
+                    subject=other_subject
+                ).first()
+
+                if req_subject and req_subject.other_subject_name:
+                    self.fields['other_subject_name'].initial = req_subject.other_subject_name
+
+    def save(self, commit=True):
+        instance = super().save(commit=commit)
+        
+        if commit:
+            instance.save()
+            self.save_m2m()  # Required before handling m2m relations
+
+            # Get selected subjects
+            selected_subjects = self.cleaned_data.get('subjects', [])
+            other_subject = Subject.objects.filter(name__iexact='other').first()
+            other_name = self.cleaned_data.get('other_subject_name', '').strip()
+
+            current_subjects = set(instance.subjects.all())
+            new_subjects = set(selected_subjects)
+
+            # Remove unselected subjects
+            for subject in (current_subjects - new_subjects):
+                RequirementSubject.objects.filter(requirement=instance, subject=subject).delete()
+
+            # Add newly selected subjects and handle "Other"
+            for subject in new_subjects:
+                req_subject, created = RequirementSubject.objects.get_or_create(
+                    requirement=instance,
+                    subject=subject
+                )
+                if subject == other_subject:
+                    req_subject.other_subject_name = other_name
+                    req_subject.save()
+
+        return instance
 
     class Meta:
         model = Requirement
@@ -96,7 +143,12 @@ class SubjectPercentageForm(forms.Form):
     percentage = forms.IntegerField(min_value=1, max_value=100, initial=100)
 
 class RequirementEditForm(BaseRequirementForm):
-    pass
+    is_scheduled = forms.BooleanField(
+    required=False,
+    label="Is Scheduled",
+    widget=forms.RadioSelect(choices=[(True, 'Yes'), (False, 'No')])
+)
+
 
 
 
